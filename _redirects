@@ -2,33 +2,7 @@
 # chemcalc.cn/reliability/* 或 reliability.chemcalc.cn/*
 
 # 核心模块
-/weibull       /weibull/index.html       200
-/fmea          /fmea/index.html          200
-/lcc           /lcc/index.html           200
-/ram           /ram/index.html           200
-/rbi           /rbi/index.html           200
-/spa           /spa/index.html           200
-/sil           /sil/index.html           200
-/amsaa         /amsaa/index.html         200
-
-# v4.2+ 新模块
-/fta           /fta/index.html           200
-/alloc         /alloc/index.html         200
-
-# v4.5+ 新模块
-/rbd-mcs       /rbd_mcs/index.html       200
-/rbd_mcs       /rbd_mcs/index.html       200
-
-# v0.3 新模块
-/equipment     /equipment/index.html     200
-
-# RBD 画布
-/rbd           /rbd/rbd_v2.html          200
-
-# 主页（两个路径都指向同一个index.html）
-/home          /index.html               200
-
-/pm           /pm/index.html           200
+/* /index.html 200
 
 # 根路径 — 确保直接访问域名跳到主页
 /              /index.html               200
