@@ -2,5 +2,5 @@
 # chemcalc.cn/reliability/* 或 reliability.chemcalc.cn/*
 
 # 核心模块
+/:path /:path/ 301
 /* /index.html 200
-
