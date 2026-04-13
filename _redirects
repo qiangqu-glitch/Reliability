@@ -4,6 +4,3 @@
 # 核心模块
 /* /index.html 200
 
-# 根路径 — 确保直接访问域名跳到主页
-/              /index.html               200
-/about         /about/index.html         200
