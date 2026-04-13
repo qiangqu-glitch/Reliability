@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<!--
+  ReliToolbox v0.1 | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>备件库存优化 — ReliToolbox v0.1</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style></style>
+<script>
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+if(typeof window!=='undefined')window._rtv='0.1';})();
+</script>
+</head>
+<body>
+<header class="hdr" id="hdr">
+  <div style="max-width:860px;margin:0 auto" id="hdrInner">
+    <div class="bc"><a href="../index.html">ReliToolbox</a> › SPA</div>
+    <h1>🔧 备件库存优化</h1>
+    <p class="sub">Poisson模型 · 服务水平曲线 · 成本优化</p>
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+      <div class="lb">
+        <button class="lbtn on" onclick="setLang('zh')">中文</button>
+        <button class="lbtn" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="../index.html" class="btn btsm">← 首页</a>
+    </div>
+  <div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div>
+</header>
+<div class="ctn" id="app"></div>
+
+<script src="../shared/math.js"></script>
+<script>
+
+let LANG = 'zh';
+function setLang(l){LANG=l;document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===(l==='zh'?'中文':'EN')));
+ if(CUR_MOD)renderMod(CUR_MOD);else renderHome();}
+const zh=k=>LANG==='zh'?k[0]:k[1];
+
+let CUR_MOD=null;
+function goMod(id){CUR_MOD=id;renderMod(id);}
+function showHome(){CUR_MOD=null;renderHome();}
+
+const app=()=>document.getElementById('app');
+const DCOL={Weibull:'#0d9488',Exponential:'#6366f1',Lognormal:'#f59e0b',Normal:'#ec4899'};
+
+const MODS=[
+ {id:'wb',icon:'📉',name:'Weibull',zh:'Weibull 分析', desc_zh:'MLE拟合 · 4分布 · B-Life · 截尾数据',desc_en:'MLE fitting · 4 distributions · B-Life',t:'teal'},
+ {id:'fm',icon:'📋',name:'FMEA', zh:'FMEA 工作表', desc_zh:'RPN自动计算 · Pareto图 · CSV导出', desc_en:'Auto RPN · Pareto chart · CSV export',t:'amber'},
+ {id:'lc',icon:'💰',name:'LCC', zh:'生命周期成本', desc_zh:'NPV比较 · EAC · 累积成本曲线', desc_en:'NPV · EAC · Cumulative cost',t:'amber'},
+ {id:'rm',icon:'⚙️',name:'RAM', zh:'RAM 仿真', desc_zh:'事件驱动MC · 产能传递 · 三级维修', desc_en:'Event-driven MC · Capacity propagation',t:'purple'},
+ {id:'rb',icon:'🛡️',name:'RBI', zh:'基于风险检验', desc_zh:'API 580/581 · 5×5风险矩阵', desc_en:'API 580/581 · 5×5 risk matrix',t:'purple'},
+ {id:'sp',icon:'🔧',name:'Spare', zh:'备件库存优化', desc_zh:'泊松模型 · 服务水平 · 成本曲线', desc_en:'Poisson model · Service level curve',t:'indigo'},
+ {id:'sl',icon:'🚨',name:'SIL', zh:'SIL 计算', desc_zh:'IEC 61508/61511',desc_en:'IEC 61508/61511',t:'',soon:true},
+];
+
+function renderHome(){
+ const live=MODS.filter(m=>!m.soon),soon=MODS.filter(m=>m.soon);
+ app().innerHTML=`
+ <div class="sl" style="margin-top:6px">${zh(['已上线模块','Live Modules'])}</div>
+ <div class="mgrid">${live.map(m=>`
+ <div class="mc" style="border-top:2px solid var(--${m.t})" onclick="goMod('${m.id}')">
+ <span class="mbg bl">${zh(['已上线','Live'])}</span>
+ <div class="mi">${m.icon}</div>
+ <div class="mn">${m.name}</div>
+ <div class="mz">${m.zh}</div>
+ <div class="md">${LANG==='zh'?m.desc_zh:m.desc_en}</div>
+ </div>`).join('')}</div>
+ <div class="sl" style="margin-top:16px">${zh(['即将上线','Coming Soon'])}</div>
+ <div class="mgrid">${soon.map(m=>`
+ <div class="mc sn"><span class="mbg bs">${zh(['待上线','Soon'])}</span>
+ <div class="mi">${m.icon}</div><div class="mn">${m.name}</div><div class="mz">${m.zh}</div>
+ </div>`).join('')}</div>`;}
+
+function renderMod(id){
+ const mod=MODS.find(m=>m.id===id);
+ document.getElementById('hdrInner').innerHTML=`
+ <div class="bc" style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div>
+ <h1 style="font-size:18px">${mod.icon} ${mod.zh}</h1>
+ <div style="display:flex;gap:7px;margin-top:8px">
+ <div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button>
+ <button class="lbtn ${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>
+ <button class="btn btsm" onclick="showHome()">← ${zh(['首页','Home'])}</button>
+ </div>`;
+ ({wb:renderWB,fm:renderFM,lc:renderLC,rm:renderRAM,rb:renderRBI,sp:renderSPA})[id]();}
+
+function mkCanvas(id,H){return`<canvas id="${id}" height="${H}"></canvas>`;}
+function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.width=cv.offsetWidth||720;return{cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height};}
+
+function drawGrid(c,PAD,minY,maxY,yFmt){
+ const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ x.strokeStyle='rgba(255,255,255,0.05)';x.lineWidth=.5;
+ [0,.2,.4,.6,.8,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+ x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+ x.fillText(yFmt(minY+(maxY-minY)*v),PAD.l-3,y+3);});}
+
+function drawLines(c,PAD,data,series,xKey,xFmt,refY){
+ const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const xs=data.map(d=>d[xKey]),minX=Math.min(...xs),maxX=Math.max(...xs);
+ const ys=series.flatMap(s=>data.map(d=>d[s.k])).filter(v=>isFinite(v)&&v>=0);
+ if(!ys.length)return;
+ const minY=0,maxY=Math.max(...ys)*1.08;
+ const tX=v=>PAD.l+iW*(v-minX)/(maxX-minX||1);
+ const tY=v=>PAD.t+iH*(1-(v-minY)/(maxY-minY||1));
+ drawGrid(c,PAD,minY,maxY,v=>v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(1));
+ if(refY!=null){x.strokeStyle='#ef444466';x.lineWidth=1;x.setLineDash([4,3]);
+ x.beginPath();x.moveTo(PAD.l,tY(refY));x.lineTo(W-PAD.r,tY(refY));x.stroke();x.setLineDash([]);}
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+ [0,.25,.5,.75,1].forEach(v=>{const val=minX+(maxX-minX)*v;x.fillText(xFmt(val),tX(val),H-PAD.b+13);});
+ series.forEach(s=>{x.strokeStyle=s.col;x.lineWidth=s.bold?2.2:1.2;
+ if(!s.bold)x.setLineDash([5,3]);x.beginPath();let first=true;
+ data.forEach(d=>{const v=d[s.k];if(!isFinite(v)||v<0)return;
+ first?x.moveTo(tX(d[xKey]),tY(v)):x.lineTo(tX(d[xKey]),tY(v));first=false;});
+ x.stroke();x.setLineDash([]);});
+ 
+ x.textAlign='left';let lx=PAD.l+6,ly=PAD.t+13;
+ series.forEach(s=>{x.fillStyle=s.col;x.fillRect(lx,ly-6,12,2.5);
+ x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(s.lbl,lx+15,ly);
+ lx+=Math.max(90,x.measureText(s.lbl).width+20);if(lx>W-60){lx=PAD.l+6;ly+=12;}});}
+
+function drawHist(id,vals,bins=22){
+ const c=ctx(id);if(!c)return;const{ctx:x,W,H}=c;
+ x.clearRect(0,0,W,H);const PAD={l:10,r:10,t:16,b:24};
+ const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const mn=Math.min(...vals),mx=Math.max(...vals),bw=(mx-mn)/bins||.1;
+ const counts=new Array(bins).fill(0);
+ vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/bw));counts[b]++;});
+ const maxC=Math.max(...counts),bpx=iW/bins;
+ counts.forEach((c,i)=>{const bh=iH*c/maxC,bx=PAD.l+i*bpx;
+ const midV=mn+i*bw+bw/2;const col=midV>=95?'#10b981':midV>=85?'#f59e0b':'#ef4444';
+ x.fillStyle=col+'88';x.fillRect(bx,PAD.t+iH-bh,bpx-1,bh);
+ x.strokeStyle=col;x.lineWidth=.5;x.strokeRect(bx,PAD.t+iH-bh,bpx-1,bh);});
+ const mV=(mn+mx)/2,mx2=PAD.l+iW*(mV-mn)/(mx-mn||1);
+ x.strokeStyle='#0d9488';x.lineWidth=1.5;x.setLineDash([4,3]);
+ x.beginPath();x.moveTo(mx2,PAD.t);x.lineTo(mx2,PAD.t+iH);x.stroke();x.setLineDash([]);
+ x.fillStyle='#0d9488';x.font='8px monospace';x.textAlign='center';
+ x.fillText('μ='+mV.toFixed(1)+'%',mx2,PAD.t-1);
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+ [0,.25,.5,.75,1].forEach(v=>{x.fillText((mn+v*(mx-mn)).toFixed(1)+'%',PAD.l+v*iW,H-6);});}
+
+function dl(content,filename){const blob=new Blob([content],{type:'text/csv'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();}
+
+(function(){
+ CUR_MOD='spa';
+ document.title='备件库存优化 — ReliToolbox';
+})();
+</script>
+<script>
+
+let SP={parts:[
+ {id:1,name:'机械密封',cost:5000,lt:12,dem:2.5,crit:'high',stk:3},
+ {id:2,name:'轴承组',cost:1200,lt:4,dem:6,crit:'medium',stk:8},
+ {id:3,name:'联轴器',cost:8000,lt:16,dem:.8,crit:'high',stk:1}],
+ sl:95,nid:4};
+
+function renderSPA(){
+ const z=LANG==='zh';
+ app().innerHTML=`
+ <div class="card">
+ <label class="lbl">${z?'目标服务水平':'Target Service Level'}</label>
+ <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+ <input type="range" min="80" max="99.9" step=".1" value="${SP.sl}" style="flex:1;accent-color:#0d9488"
+ oninput="SP.sl=+this.value;document.getElementById('spSlVal').textContent=SP.sl.toFixed(1)+'%'">
+ <span id="spSlVal" style="font-family:monospace;font-weight:700;font-size:15px;min-width:48px">${SP.sl.toFixed(1)}%</span>
+ </div>
+ </div>
+ ${SP.parts.map((p,i)=>`
+ <div class="card" style="border-left:3px solid ${PCOL[i%4]}">
+ <div class="g2" style="margin-bottom:7px">
+ <div style="grid-column:1"><label class="lbl">${z?'备件名称':'Part Name'}</label>
+ <input value="${esc(p.name)}" oninput="SP.parts[${i}].name=this.value"></div>
+ </div>
+ <div class="g4">
+ <div><label class="lbl">${z?'单价':'Unit Cost'}</label><input type="number" value="${p.cost}" oninput="SP.parts[${i}].cost=+this.value||0"></div>
+ <div><label class="lbl">${z?'交货期(月)':'Lead Time'}</label><input type="number" value="${p.lt}" oninput="SP.parts[${i}].lt=+this.value||1"></div>
+ <div><label class="lbl">${z?'年需求':'Demand/yr'}</label><input type="number" step=".1" value="${p.dem}" oninput="SP.parts[${i}].dem=+this.value||0"></div>
+ <div><label class="lbl">${z?'当前库存':'Current Stock'}</label><input type="number" value="${p.stk}" oninput="SP.parts[${i}].stk=+this.value||0"></div>
+ </div>
+ <div style="display:flex;gap:4px;margin-top:7px">
+ ${[['high',z?'高':'High'],['medium',z?'中':'Med'],['low',z?'低':'Low']].map(([k,l])=>`
+ <button class="btn btsm${p.crit===k?' btp':''}" onclick="SP.parts[${i}].crit='${k}';renderSPA()">${l}</button>`).join('')}
+ ${SP.parts.length>1?`<button class="btn btsm" style="color:var(--danger);margin-left:auto" onclick="SP.parts.splice(${i},1);renderSPA()">×</button>`:''}
+ </div>
+ </div>`).join('')}
+ <div style="display:flex;gap:7px;margin-bottom:10px">
+ <button class="btn btsm" onclick="SP.parts.push({id:SP.nid++,name:'Part-'+SP.nid,cost:1000,lt:6,dem:2,crit:'medium',stk:2});renderSPA()">+ ${z?'添加备件':'Add Part'}</button>
+ <button class="btn btp" style="flex:1" onclick="calcSPA()">▶ ${z?'优化库存':'Optimize'}</button>
+ </div>
+ <div id="spaRes"></div>`;}
+
+function calcSPA(){
+ const z=LANG==='zh';const tgt=SP.sl/100;
+ const res=SP.parts.map(p=>{
+ const dLT=p.dem*p.lt/12;
+ let opt=0;while(opt<80&&RM.pCDF(opt,dLT)<tgt)opt++;
+ const mult=p.crit==='high'?1.2:p.crit==='medium'?1:0.8;
+ const adj=Math.ceil(opt*mult);
+ const adjSL=RM.pCDF(adj,dLT)*100,actSL=RM.pCDF(p.stk,dLT)*100;
+ const delta=adj-p.stk;
+ const st=p.stk>=adj?'OK':p.stk>=opt?'Review':'Shortage';
+ const sc=st==='OK'?'#10b981':st==='Review'?'#f59e0b':'#ef4444';
+ return{...p,dLT:dLT.toFixed(2),opt,adj,adjSL:adjSL.toFixed(1),actSL:actSL.toFixed(1),delta,st,sc,
+ curC:p.stk*p.cost,optC:adj*p.cost};});
+ const totCur=res.reduce((s,r)=>s+r.curC,0),totOpt=res.reduce((s,r)=>s+r.optC,0);
+ const dC=totOpt-totCur;
+ document.getElementById('spaRes').innerHTML=`
+ <div class="gkpi" style="margin-bottom:10px">
+ <div class="kpi"><div class="kl">${z?'当前成本':'Current Cost'}</div><div class="kv">${(totCur/1000).toFixed(0)}k</div></div>
+ <div class="kpi" style="border-top:2px solid var(--teal)"><div class="kl">${z?'优化后':'Optimized'}</div><div class="kv gd">${(totOpt/1000).toFixed(0)}k</div></div>
+ <div class="kpi"><div class="kl">${z?'差异':'Delta'}</div><div class="kv ${dC>0?'bd':'gd'}">${dC>0?'+':''}${(dC/1000).toFixed(0)}k</div></div>
+ </div>
+ <div class="card">
+ <div class="ct">${z?'优化结果':'Optimization Results'}</div>
+ <div style="overflow-x:auto"><table>
+ <thead><tr><th>${z?'备件':'Part'}</th><th>${z?'当前':'Cur'}</th><th>${z?'建议':'Rec'}</th>
+ <th>Δ</th><th>SL%</th><th>${z?'状态':'Status'}</th><th>${z?'成本':'Cost'}</th></tr></thead>
+ <tbody>${res.map(r=>`<tr>
+ <td style="font-weight:600">${r.name}</td><td style="font-family:monospace">${r.stk}</td>
+ <td style="font-family:monospace;font-weight:700">${r.adj}</td>
+ <td style="font-family:monospace;color:${r.delta>0?'#ef4444':r.delta<0?'#10b981':'var(--text)'}">${r.delta>0?'+':''}${r.delta}</td>
+ <td style="font-family:monospace">${r.adjSL}%</td>
+ <td><span style="font-size:9px;padding:2px 6px;border-radius:5px;background:${r.sc}22;color:${r.sc};font-weight:700">${r.st}</span></td>
+ <td style="font-family:monospace">${(r.optC/1000).toFixed(1)}k</td>
+ </tr>`).join('')}</tbody>
+ </table></div>
+ </div>
+ <div class="card"><div class="ct">${z?'服务水平 vs 总库存成本':'Service Level vs Total Cost'}</div>${mkCanvas('spaSLC',180)}</div>`;
+ setTimeout(()=>{
+
+ const c=ctx('spaSLC');if(c){const{ctx:x,W,H}=c;x.clearRect(0,0,W,H);
+ const PAD={l:56,r:16,t:12,b:28};const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const pts=[];for(let sl=80;sl<=99.9;sl+=.5){
+ const t2=sl/100;let tc=0;
+ SP.parts.forEach(p=>{const dLT=p.dem*p.lt/12;const mult=p.crit==='high'?1.2:p.crit==='medium'?1:.8;
+ let opt=0;while(opt<80&&RM.pCDF(opt,dLT)<t2)opt++;tc+=Math.ceil(opt*mult)*p.cost;});
+ pts.push({sl,c:tc});}
+ const maxC=Math.max(...pts.map(d=>d.c));
+ const tX=sl=>PAD.l+iW*(sl-80)/19.9;const tY=v=>PAD.t+iH*(1-v/maxC);
+ drawGrid(c,PAD,0,maxC,v=>v>=1000?(v/1000).toFixed(0)+'k':v.toFixed(0));
+ x.strokeStyle='#0d9488';x.lineWidth=2;x.beginPath();
+ pts.forEach((d,i)=>{i===0?x.moveTo(tX(d.sl),tY(d.c)):x.lineTo(tX(d.sl),tY(d.c));});x.stroke();
+ 
+ const cp=pts.find(d=>Math.abs(d.sl-SP.sl)<.3)||pts[0];
+ x.fillStyle='#f59e0b';x.beginPath();x.arc(tX(cp.sl),tY(cp.c),5,0,Math.PI*2);x.fill();
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+ [80,85,90,95,99].forEach(v=>x.fillText(v+'%',tX(v),H-PAD.b+12));}
+ },60);}
+
+</script>
+<script>
+
+(function(){
+ const render = window['renderSPA'] || window['renderSPA'];
+ if(render) render();
+ else document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Module load error</p>';
+ 
+ const obs=new MutationObserver(()=>{
+ if(typeof drawRAMCharts==='function'&&document.getElementById('rmAnn')&&RAM&&RAM.res)drawRAMCharts();
+ if(typeof drawWBChart==='function'&&document.getElementById('wChart')&&WB&&WB.res)setTimeout(drawWBChart,30);
+ });
+ obs.observe(document.getElementById('app'),{childList:true,subtree:true});
+})();
+</script>
+
+<div class="no-print" style="text-align:right;max-width:860px;margin:0 auto 8px;padding:0 10px"><button onclick="window.print()" style="padding:7px 18px;border-radius:18px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:600">&#x1F5A8;&#xFE0F; &#x6253;&#x5370; / &#x5BFC;&#x51FA; PDF</button></div>
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a>
+  </div>
+</footer>
+</body>
+</html>

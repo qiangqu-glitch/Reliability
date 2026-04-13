@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<!--
+  ReliToolbox v0.1 | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title data-zh="关于 ReliToolbox v0.1" data-en="About ReliToolbox v0.1">关于 ReliToolbox v0.1</title>
+<link rel="stylesheet" href="../shared/style.css"/>
+<script>
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+if(typeof window!=='undefined')window._rtv='0.1';})();
+</script>
+</head>
+<body>
+<header>
+  <div class="ctn" style="padding-bottom:0">
+    <div class="bc"><a href="../index.html">ReliToolbox</a> › <span data-zh="关于" data-en="About">关于</span></div>
+    <h1>🛠 ReliToolbox</h1>
+    <div class="sub" data-zh="可靠性工程师在线工具箱 — 关于本软件" data-en="Reliability Engineer Toolbox — About">
+      可靠性工程师在线工具箱 — 关于本软件
+    </div>
+    <div class="lang-bar" style="margin-top:6px">
+      <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+      <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="ctn">
+
+<!-- 简介 -->
+<div class="card" style="margin-top:12px">
+  <div class="ct" data-zh="项目简介" data-en="Overview">项目简介</div>
+  <p style="font-size:12px;color:var(--sec);line-height:1.8" 
+     data-zh="ReliToolbox 是面向过程/化工行业可靠性工程师的免费在线工具箱，旨在覆盖商业软件（ReliaSoft、Meridium、Maros、AvSim+）约80%的常用功能，帮助中小企业摆脱高昂的授权费用。所有计算在浏览器本地完成，无需服务器，数据完全私密。"
+     data-en="ReliToolbox is a free online toolbox for process/chemical industry reliability engineers, designed to cover ~80% of common commercial software (ReliaSoft, Meridium, Maros, AvSim+) functionality at zero cost. All calculations run locally in the browser — no server, fully private.">
+    ReliToolbox 是面向过程/化工行业可靠性工程师的免费在线工具箱，旨在覆盖商业软件（ReliaSoft、Meridium、Maros、AvSim+）约80%的常用功能，帮助中小企业摆脱高昂的授权费用。所有计算在浏览器本地完成，无需服务器，数据完全私密。
+  </p>
+</div>
+
+<!-- 模块详情 -->
+<div class="card">
+  <div class="ct" data-zh="功能模块详情（13个模块）" data-en="Module Details (13 Modules)">功能模块详情（13个模块）</div>
+
+  <div class="about-mod">
+    <div class="am-icon">📉</div>
+    <div class="am-body">
+      <div class="am-name">Weibull 分析 / Weibull Analysis</div>
+      <div class="am-desc" data-zh="寿命数据MLE拟合：Weibull / 指数 / 对数正态 / 正态四分布。B-Life特征寿命，AIC/BIC最优分布自动选择，支持右截尾数据，概率纸图，可靠度/危险率/CDF曲线，维修策略智能诊断（β<1早期故障/β≈1随机/β>1磨损）。高级模式：区间截尾+置信区间（Fisher信息矩阵）。"
+           data-en="MLE fitting for 4 distributions: Weibull/Exponential/Lognormal/Normal. B-Life, AIC/BIC auto-selection, right-censoring, probability plot, R(t)/h(t)/F(t) curves, maintenance strategy diagnosis. Advanced: interval censoring + confidence intervals via Fisher information matrix.">
+        寿命数据MLE拟合：Weibull / 指数 / 对数正态 / 正态四分布。B-Life特征寿命，AIC/BIC最优分布自动选择，支持右截尾数据，概率纸图，可靠度/危险率/CDF曲线，维修策略智能诊断（β&lt;1早期故障/β≈1随机/β&gt;1磨损）。高级模式：区间截尾+置信区间（Fisher信息矩阵）。
+      </div>
+      <div class="am-tech">MLE · AIC/BIC · Fisher CI · Nelder-Mead · 截尾数据</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">📋</div>
+    <div class="am-body">
+      <div class="am-name">FMEA/RCM 工作表 / FMEA Worksheet</div>
+      <div class="am-desc" data-zh="失效模式与影响分析：RPN自动计算（严重性×频率×可探测性），实时颜色预警（红≥200/橙≥100），Pareto图显示高风险失效模式，支持CSV导入/导出，IndexedDB本地持久化，多工作集管理，与设备台账联动。"
+           data-en="Failure Mode & Effects Analysis: auto RPN (S×O×D), real-time color alerts (red≥200/amber≥100), Pareto chart, CSV import/export, IndexedDB persistence, multi-worksheet management, linked to Equipment Registry.">
+        失效模式与影响分析：RPN自动计算（严重性×频率×可探测性），实时颜色预警（红≥200/橙≥100），Pareto图显示高风险失效模式，支持CSV导入/导出，IndexedDB本地持久化，多工作集管理，与设备台账联动。
+      </div>
+      <div class="am-tech">FMEA · RPN · Pareto · IndexedDB · CSV</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">💰</div>
+    <div class="am-body">
+      <div class="am-name">LCC 生命周期成本 / Life Cycle Cost</div>
+      <div class="am-desc" data-zh="多方案NPV净现值和EAC等效年成本对比，支持最多4个方案（继续维修/更换新设备/升级改造），折现率和分析期可调，累计成本曲线，自动识别最优方案。"
+           data-en="Multi-scenario NPV and EAC comparison (up to 4 plans: keep/replace/upgrade). Adjustable discount rate and horizon. Cumulative cost curves. Auto-identifies optimal plan.">
+        多方案NPV净现值和EAC等效年成本对比，支持最多4个方案（继续维修/更换新设备/升级改造），折现率和分析期可调，累计成本曲线，自动识别最优方案。
+      </div>
+      <div class="am-tech">NPV · EAC · 折现现金流 · 多方案对比</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">⚙️</div>
+    <div class="am-body">
+      <div class="am-name">RAM 仿真分析 / RAM Simulation</div>
+      <div class="am-desc" data-zh="事件驱动蒙特卡洛仿真（最多5000次），k-out-of-n冗余结构，产能传递建模（串联系统容量=最小瓶颈），三级维修计划（设备级/装置级/全厂停车），指数/Weibull TTF，截断正态TTR，收敛曲线，Web Worker后台运行不阻塞UI。"
+           data-en="Event-driven Monte Carlo (up to 5000 runs), k-of-n redundancy, capacity propagation (series capacity = min bottleneck), 3-level maintenance schedule, Exponential/Weibull TTF, truncated normal TTR, convergence curves, Web Worker background execution.">
+        事件驱动蒙特卡洛仿真（最多5000次），k-out-of-n冗余结构，产能传递建模（串联系统容量=最小瓶颈），三级维修计划（设备级/装置级/全厂停车），指数/Weibull TTF，截断正态TTR，收敛曲线，Web Worker后台运行不阻塞UI。
+      </div>
+      <div class="am-tech">事件驱动MC · k-of-n · 产能传递 · Web Worker · Weibull/Exp TTF</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🛡️</div>
+    <div class="am-body">
+      <div class="am-name">RBI 基于风险检验 / Risk Based Inspection</div>
+      <div class="am-desc" data-zh="基于API 580/581简化方法的5×5风险矩阵，失效可能性（PoF）和失效后果（CoF）分别1-5评分，剩余寿命计算（壁厚裕量/腐蚀速率），自动推荐检验间隔（1/3/5/10年），高风险设备优先排序。"
+           data-en="API 580/581 simplified 5×5 risk matrix. PoF & CoF scoring (1-5). Remaining life calculation (corrosion allowance/rate). Auto inspection interval recommendation (1/3/5/10yr). High-risk equipment prioritization.">
+        基于API 580/581简化方法的5×5风险矩阵，失效可能性（PoF）和失效后果（CoF）分别1-5评分，剩余寿命计算（壁厚裕量/腐蚀速率），自动推荐检验间隔（1/3/5/10年），高风险设备优先排序。
+      </div>
+      <div class="am-tech">API 580/581 · 5×5矩阵 · PoF/CoF · 剩余寿命 · 检验计划</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🔧</div>
+    <div class="am-body">
+      <div class="am-name">备件库存优化 / Spare Parts Optimization</div>
+      <div class="am-desc" data-zh="基于Poisson需求模型的备件库存优化，针对目标服务水平（80%-99.9%）计算最优库存量，关键性系数（A/B/C）调整，当前库存状态评估（OK/需审查/短缺），库存成本对比。"
+           data-en="Poisson demand model for spare parts inventory optimization. Calculates optimal stock level for target service level (80-99.9%). Criticality multiplier (A/B/C). Stock status assessment (OK/Review/Shortage). Cost comparison.">
+        基于Poisson需求模型的备件库存优化，针对目标服务水平（80%-99.9%）计算最优库存量，关键性系数（A/B/C）调整，当前库存状态评估（OK/需审查/短缺），库存成本对比。
+      </div>
+      <div class="am-tech">Poisson CDF · 服务水平优化 · 关键性权重 · 库存成本</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🚨</div>
+    <div class="am-body">
+      <div class="am-name">SIL 安全完整性等级 / SIL Verification</div>
+      <div class="am-desc" data-zh="基于IEC 61508/61511标准，计算安全仪表功能（SIF）的PFD（低要求模式）和PFH（高要求/连续模式），支持串联/并联架构，验证SIL等级（SIL1-4），考虑诊断覆盖率（DC）、共因失效（CCF β因子）、安全失效比例（SFF）。"
+           data-en="IEC 61508/61511 PFD (low demand) and PFH (high demand/continuous) for SIF verification. Series/parallel architecture. SIL1-4 verification with DC, CCF (β-factor), SFF.">
+        基于IEC 61508/61511标准，计算安全仪表功能（SIF）的PFD（低要求模式）和PFH（高要求/连续模式），支持串联/并联架构，验证SIL等级（SIL1-4），考虑诊断覆盖率（DC）、共因失效（CCF β因子）、安全失效比例（SFF）。
+      </div>
+      <div class="am-tech">IEC 61508/61511 · PFD · PFH · SIL1-4 · DC · CCF · SFF</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">📈</div>
+    <div class="am-body">
+      <div class="am-name">AMSAA 可靠性增长 / Reliability Growth</div>
+      <div class="am-desc" data-zh="Crow-AMSAA（NHPP幂律过程）分析：MLE拟合β（增长参数）和λ，Duane图，累计失效曲线，当前MTBF估算，增长趋势判断（β&lt;1改善中/β=1无变化/β&gt;1退化），适用于研发测试和在役设备可靠性增长跟踪。"
+           data-en="Crow-AMSAA (NHPP Power Law): MLE for β & λ. Duane plot, cumulative failure curve, current MTBF estimate, growth trend (β<1 improving/=1 stable/>1 degrading). For R&D testing and in-service reliability growth tracking.">
+        Crow-AMSAA（NHPP幂律过程）分析：MLE拟合β（增长参数）和λ，Duane图，累计失效曲线，当前MTBF估算，增长趋势判断（β&lt;1改善中/β=1无变化/β&gt;1退化），适用于研发测试和在役设备可靠性增长跟踪。
+      </div>
+      <div class="am-tech">Crow-AMSAA · NHPP · MLE · Duane图 · 增长趋势</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🌳</div>
+    <div class="am-body">
+      <div class="am-name">FTA 故障树分析 / Fault Tree Analysis</div>
+      <div class="am-desc" data-zh="文本式门定义（AND/OR门），MOCUS算法求最小割集（MCS），Birnbaum重要度排序（识别最脆弱基本事件），顶事件概率精确计算（≤12割集容斥/&gt;12稀有事件上界），模型保存至IndexedDB。"
+           data-en="Text-based gate definitions (AND/OR). MOCUS algorithm for Minimal Cut Sets. Birnbaum importance ranking. Exact top-event probability (inclusion-exclusion for ≤12 MCS, rare-event bound for >12). Model persistence in IndexedDB.">
+        文本式门定义（AND/OR门），MOCUS算法求最小割集（MCS），Birnbaum重要度排序（识别最脆弱基本事件），顶事件概率精确计算（≤12割集容斥/&gt;12稀有事件上界），模型保存至IndexedDB。
+      </div>
+      <div class="am-tech">MOCUS · 最小割集 · Birnbaum重要度 · 容斥原理 · IndexedDB</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">📐</div>
+    <div class="am-body">
+      <div class="am-name">可用度分配 / Reliability Allocation</div>
+      <div class="am-desc" data-zh="三种分配方法：AGREE法（考虑子系统复杂度、重要度、单元数），等分配法，加权因子法（按失效率反比权重）。自动验证∏Rᵢ≥R_sys，输出每子系统Rᵢ/MTBFᵢ/λᵢ。"
+           data-en="Three allocation methods: AGREE (complexity, criticality, unit count), Equal allocation, Weighted-factor (inverse failure rate weight). Auto-verifies ∏Rᵢ≥R_sys. Outputs Rᵢ/MTBFᵢ/λᵢ per subsystem.">
+        三种分配方法：AGREE法（考虑子系统复杂度、重要度、单元数），等分配法，加权因子法（按失效率反比权重）。自动验证∏Rᵢ≥R_sys，输出每子系统Rᵢ/MTBFᵢ/λᵢ。
+      </div>
+      <div class="am-tech">AGREE · Equal · Weighted · 系统可靠度验证</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🔗</div>
+    <div class="am-body">
+      <div class="am-name">RBD 最小割集 / RBD Minimal Cut Sets</div>
+      <div class="am-desc" data-zh="接受RBD模型JSON，穷举法+超集剪枝求最小割集（支持最多18个节点），按阶数排序（1阶=单点失效=最危险），薄弱点分析（出现频率最高的节点），自动生成改进建议（单点失效警告、CCF提醒）。"
+           data-en="Accepts RBD JSON model. Exhaustive + superset pruning for MCS (≤18 nodes). Sorted by order (1st order = single point of failure). Weak point analysis. Auto improvement suggestions (SPF warnings, CCF alerts).">
+        接受RBD模型JSON，穷举法+超集剪枝求最小割集（支持最多18个节点），按阶数排序（1阶=单点失效=最危险），薄弱点分析（出现频率最高的节点），自动生成改进建议（单点失效警告、CCF提醒）。
+      </div>
+      <div class="am-tech">最小割集 · 超集剪枝 · 单点失效 · CCF识别</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">⚙️</div>
+    <div class="am-body">
+      <div class="am-name">设备管理台账 / Equipment Registry</div>
+      <div class="am-desc" data-zh="统一设备数据中台：CRUD完整台账管理（35个字段，涵盖基本信息/可靠性参数/工艺参数/检验计划/成本），KPI仪表盘（总设备/A类关键/检验到期/高风险），CSV双向导入导出，与FMEA/RBI/Weibull共享IndexedDB数据。"
+           data-en="Unified equipment data hub: full CRUD (35 fields: basic info/reliability params/process params/inspection plan/cost). KPI dashboard (total/critical-A/inspection due/high risk). CSV import/export. Shared IndexedDB with FMEA/RBI/Weibull.">
+        统一设备数据中台：CRUD完整台账管理（35个字段，涵盖基本信息/可靠性参数/工艺参数/检验计划/成本），KPI仪表盘（总设备/A类关键/检验到期/高风险），CSV双向导入导出，与FMEA/RBI/Weibull共享IndexedDB数据。
+      </div>
+      <div class="am-tech">IndexedDB · CRUD · CSV双向 · KPI仪表盘 · 多模块联动</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🖊️</div>
+    <div class="am-body">
+      <div class="am-name">RBD 拖拽画布 / RBD Visual Builder</div>
+      <div class="am-desc" data-zh="可视化可靠性框图构建：拖拽节点，连接串/并联关系，导出JSON供MCS分析模块使用，支持门结构可视化编辑。"
+           data-en="Visual RBD builder: drag-and-drop nodes, series/parallel connections, JSON export for MCS analysis, gate structure visual editing.">
+        可视化可靠性框图构建：拖拽节点，连接串/并联关系，导出JSON供MCS分析模块使用，支持门结构可视化编辑。
+      </div>
+      <div class="am-tech">拖拽画布 · 串/并联 · JSON导出 · MCS联动</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 技术架构 -->
+<div class="card">
+  <div class="ct" data-zh="技术架构" data-en="Technical Architecture">技术架构</div>
+  <div style="font-size:11px;color:var(--sec);line-height:1.9">
+    <div>🏗 <strong data-zh="架构：" data-en="Architecture:">架构：</strong>
+      <span data-zh="单文件HTML模块，无构建链，纯浏览器运行" data-en="Single-file HTML modules, no build chain, pure browser execution">
+        单文件HTML模块，无构建链，纯浏览器运行
+      </span>
+    </div>
+    <div>💾 <strong data-zh="数据：" data-en="Data:">数据：</strong>
+      <span data-zh="IndexedDB本地持久化（数据库 ReliToolbox，8张表），所有数据留在您的设备上" data-en="IndexedDB local persistence (DB: ReliToolbox, 8 tables). All data stays on your device.">
+        IndexedDB本地持久化（数据库 ReliToolbox，8张表），所有数据留在您的设备上
+      </span>
+    </div>
+    <div>🚀 <strong data-zh="部署：" data-en="Deployment:">部署：</strong>
+      <span data-zh="Cloudflare Pages，全球CDN加速，reliability.chemcalc.cn" data-en="Cloudflare Pages, global CDN, reliability.chemcalc.cn">
+        Cloudflare Pages，全球CDN加速，reliability.chemcalc.cn
+      </span>
+    </div>
+    <div>🔢 <strong data-zh="算法：" data-en="Algorithms:">算法：</strong>
+      <span data-zh="纯JS实现：MLE/Nelder-Mead/蒙特卡洛/MOCUS/Poisson/Fisher信息矩阵，无Python依赖" data-en="Pure JS: MLE/Nelder-Mead/Monte Carlo/MOCUS/Poisson/Fisher info matrix, no Python dependency">
+        纯JS实现：MLE/Nelder-Mead/蒙特卡洛/MOCUS/Poisson/Fisher信息矩阵，无Python依赖
+      </span>
+    </div>
+    <div>🔒 <strong data-zh="隐私：" data-en="Privacy:">隐私：</strong>
+      <span data-zh="无用户追踪，无数据上传，完全离线可用" data-en="No tracking, no data upload, fully offline capable">
+        无用户追踪，无数据上传，完全离线可用
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- 法律声明 -->
+<div class="card">
+  <div class="ct" data-zh="法律声明" data-en="Legal">法律声明</div>
+  <div style="font-size:11px;color:var(--sec);line-height:1.9">
+    <p><strong data-zh="版本：" data-en="Version:">版本：</strong> v0.1</p>
+    <p><strong data-zh="版权：" data-en="Copyright:">版权：</strong>
+      <span data-zh="版权所有 © 作者保留一切权利。未经授权，禁止将本工具用于商业目的或进行二次开发分发。" data-en="Copyright © All rights reserved. Unauthorized commercial use or redistribution is prohibited.">
+        版权所有 © 作者保留一切权利。未经授权，禁止将本工具用于商业目的或进行二次开发分发。
+      </span>
+    </p>
+    <p><strong data-zh="免责声明：" data-en="Disclaimer:">免责声明：</strong>
+      <span data-zh="本工具仅供工程参考，不构成正式工程判断依据。作者不承担因使用本工具的计算结果而引发的任何直接或间接损失及责任。重要工程决策请结合专业判断和现行标准。" data-en="This tool is for engineering reference only and does not constitute formal engineering judgment. The author assumes no liability for any direct or indirect losses arising from use of calculation results. Important engineering decisions must be combined with professional judgment and current standards.">
+        本工具仅供工程参考，不构成正式工程判断依据。作者不承担因使用本工具的计算结果而引发的任何直接或间接损失及责任。重要工程决策请结合专业判断和现行标准。
+      </span>
+    </p>
+    <p><strong data-zh="联系：" data-en="Contact:">联系：</strong>
+      <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a>
+      <span data-zh="（欢迎技术讨论与反馈）" data-en="（Technical discussion & feedback welcome）">
+        （欢迎技术讨论与反馈）
+      </span>
+    </p>
+  </div>
+</div>
+
+</div><!-- /ctn -->
+
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="导航" data-en="Navigate">导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系" data-en="Contact">联系</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    <span data-zh="版权所有，作者不承担使用结果所引发的责任" data-en="All rights reserved. No liability for calculation results.">
+      版权所有，作者不承担使用结果所引发的责任
+    </span>
+    &nbsp;·&nbsp; <a href="https://chemcalc.cn">chemcalc.cn</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+ var _l=localStorage.getItem('rtLang')||'zh';
+ function applyLang(l){
+ _l=l;localStorage.setItem('rtLang',l);
+ document.querySelectorAll('[data-zh]').forEach(function(el){
+ el.textContent=l==='zh'?el.getAttribute('data-zh'):el.getAttribute('data-en');
+ });
+ var zh=document.getElementById('_lbZh'),en=document.getElementById('_lbEn');
+ if(zh){zh.classList.toggle('on',l==='zh');en.classList.toggle('on',l==='en');}
+ }
+ window.setLang=applyLang;
+ document.addEventListener('DOMContentLoaded',function(){applyLang(_l);});
+})();
+</script>
+</body>
+</html>

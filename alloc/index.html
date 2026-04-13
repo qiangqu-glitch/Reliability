@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<!--
+  ReliToolbox v0.1 | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>可用度分配 — ReliToolbox v0.1</title>
+<style>
+body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0}
+header{background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:20px 16px}
+h1{margin:0;font-size:22px}.sub{font-size:12px;opacity:0.85;margin-top:4px}
+.container{max-width:900px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.title{font-size:13px;font-weight:700;margin-bottom:8px}
+button{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:12px;font-weight:600}
+button.pri{background:#0d9488;color:#fff;border:none}
+button.act{background:#0d9488;color:#fff;border:none}
+input,select{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;box-sizing:border-box}
+label{font-size:11px;color:var(--sec);display:block;margin-bottom:3px;font-weight:500}
+.row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 30px;gap:6px;align-items:end;margin-bottom:6px}
+.head{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 30px;gap:6px;font-size:10px;color:var(--sec);font-weight:600;margin-bottom:4px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;padding:6px;color:var(--sec);font-weight:600;font-size:10px;border-bottom:2px solid var(--border)}
+td{padding:6px;border-bottom:1px solid var(--border);font-family:monospace}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:12px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;border-top:3px solid #0d9488}
+.kpi-l{font-size:10px;color:var(--sec);font-weight:600}.kpi-v{font-size:16px;font-weight:700;font-family:monospace;margin-top:2px}
+.danger{color:#dc2626}.warn{color:#d97706}.ok{color:#059669}
+.method{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.method button.act{background:#0d9488;color:#fff;border:none}
+small{color:var(--sec);font-size:11px;line-height:1.5}
+</style><link rel="stylesheet" href="../shared/style.css">
+<script>
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+if(typeof window!=='undefined')window._rtv='0.1';})();
+</script>
+</head><body>
+<header><div class="container"><h1>📐 可用度/可靠性分配</h1>
+<div class="sub">Reliability Allocation | AGREE / Equal / Weighted-Factor</div></div>
+<div style="margin-top:8px"><a href="../index.html" style="color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.3)">← ReliToolbox 主页</a><div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div>
+</header>
+
+<div class="container">
+
+<div class="card"><div class="title">系统目标 System Target</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+<div><label>目标可用度 A_sys</label><input type="number" id="targetA" value="0.98" step="0.001" min="0.5" max="0.9999"></div>
+<div><label>任务时间 t (hrs)</label><input type="number" id="missionT" value="8760"></div>
+<div><label>分配方法 Method</label>
+<select id="method"><option value="agree">AGREE (考虑复杂度+重要度)</option>
+<option value="equal">Equal (等分配)</option>
+<option value="weighted">Weighted Factor (加权)</option></select></div>
+</div></div>
+
+<div class="card"><div class="title">子系统/部件 Subsystems</div>
+<small>说明：<b>AGREE</b> 法 — MTBF_i ∝ N_i·t_i / (n_i·w_i)，N=模块复杂度，n=单元数，w=重要度，t=工作时间。<b>Equal</b>法 — 各部件均分。<b>加权法</b> — 按权重因子w反向分配。</small>
+<div class="head" style="margin-top:8px"><div>名称</div><div>复杂度N</div><div>单元数n</div><div>重要度w</div><div>工时%</div><div></div></div>
+<div id="rows"></div>
+<button onclick="addRow()">+ 添加子系统</button>
+<button class="pri" onclick="allocate()">▶ 执行分配</button>
+<button onclick="loadDemo()">载入示例</button>
+</div>
+
+<div id="results" style="display:none">
+<div class="kpi" id="kpis"></div>
+<div class="card"><div class="title">分配结果</div>
+<table><thead><tr><th>子系统</th><th>分配 R_i</th><th>分配 MTBF_i (hrs)</th><th>等效λ_i (1/hr)</th><th>占总失效率%</th></tr></thead>
+<tbody id="restbl"></tbody></table>
+<small id="check" style="display:block;margin-top:8px"></small></div>
+</div>
+
+</div>
+
+<script src="../db/relidb.js"></script>
+<script>
+let rows = [];
+function addRow(name='',N=10,n=1,w=1,tp=100){
+ rows.push({id:'r'+Date.now()+Math.random().toString(36).slice(2,5),name:name||('SS-'+(rows.length+1)),N,n,w,tp});
+ render();
+}
+function delRow(i){rows.splice(i,1);render();}
+function upd(i,f,v){rows[i][f]=f==='name'?v:Number(v)||0;}
+function render(){
+ document.getElementById('rows').innerHTML = rows.map((r,i)=>`
+ <div class="row">
+ <input value="${r.name}" oninput="upd(${i},'name',this.value)">
+ <input type="number" value="${r.N}" oninput="upd(${i},'N',this.value)" min="1">
+ <input type="number" value="${r.n}" oninput="upd(${i},'n',this.value)" min="1">
+ <input type="number" value="${r.w}" oninput="upd(${i},'w',this.value)" step="0.1" min="0.01" max="1">
+ <input type="number" value="${r.tp}" oninput="upd(${i},'tp',this.value)" min="0" max="100">
+ <button onclick="delRow(${i})" style="border:none;color:#dc2626">×</button>
+ </div>`).join('');
+}
+
+function allocate(){
+ const A = Number(document.getElementById('targetA').value);
+ const t = Number(document.getElementById('missionT').value);
+ const method = document.getElementById('method').value;
+ if(!rows.length || A<=0 || A>=1 || t<=0){alert('请检查输入');return;}
+
+ const Rsys = A;
+ const lamSys = -Math.log(Rsys)/t; 
+
+ let allocated = [];
+ if(method==='equal'){
+ 
+ const lamI = lamSys / rows.length;
+ allocated = rows.map(r=>({...r, lam:lamI}));
+ } else if(method==='weighted'){
+ 
+ const totalInv = rows.reduce((s,r)=>s+1/Math.max(r.w,0.01),0);
+ allocated = rows.map(r=>{
+ const frac = (1/Math.max(r.w,0.01))/totalInv;
+ return {...r, lam: lamSys*frac};
+ });
+ } else {
+
+ const totalComplexity = rows.reduce((s,r)=>s+r.N,0)||1;
+
+ const wAvg = rows.reduce((s,r)=>s+r.w,0)/rows.length||1;
+ const Fsys = 1 - Rsys;
+ allocated = rows.map(r=>{
+ const tFrac = Math.max(r.tp,0.01)/100;
+ 
+ const share = (r.N/totalComplexity) * (1/Math.max(r.w*r.n,0.01)) * wAvg;
+ 
+ return {...r, _share:share, tFrac};
+ });
+ const sumShare = allocated.reduce((s,r)=>s+r._share,0)||1;
+ allocated = allocated.map(r=>{
+ const Fi = Fsys * r._share/sumShare;
+ const Ri = Math.max(1e-9, 1-Fi);
+ 
+ const ti = t * r.tFrac;
+ const lam = -Math.log(Ri)/Math.max(ti,1);
+ return {...r, lam};
+ });
+ }
+
+ let prodR = 1;
+ const out = allocated.map(r=>{
+ const ti = t * (r.tp||100)/100;
+ const Ri = Math.exp(-r.lam*ti);
+ prodR *= Ri;
+ return {...r, Ri, MTBF:1/r.lam, ti};
+ });
+ const totalLam = out.reduce((s,r)=>s+r.lam,0);
+
+ document.getElementById('kpis').innerHTML = `
+ <div class="kpi-card"><div class="kpi-l">系统目标 R</div><div class="kpi-v">${Rsys.toFixed(4)}</div></div>
+ <div class="kpi-card"><div class="kpi-l">分配后乘积 R</div><div class="kpi-v ${Math.abs(prodR-Rsys)<0.001?'ok':'warn'}">${prodR.toFixed(4)}</div></div>
+ <div class="kpi-card"><div class="kpi-l">系统 λ (1/hr)</div><div class="kpi-v">${lamSys.toExponential(3)}</div></div>
+ <div class="kpi-card"><div class="kpi-l">系统 MTBF</div><div class="kpi-v">${(1/lamSys).toFixed(0)}</div></div>
+ `;
+ document.getElementById('restbl').innerHTML = out.map(r=>{
+ const pct = (r.lam/totalLam*100).toFixed(1);
+ return `<tr><td><b>${r.name}</b></td><td>${r.Ri.toFixed(5)}</td><td>${r.MTBF.toFixed(0)}</td><td>${r.lam.toExponential(3)}</td><td>${pct}%</td></tr>`;
+ }).join('');
+ const diff = Math.abs(prodR-Rsys);
+ document.getElementById('check').innerHTML = diff<0.001
+ ? `✅ 校验通过：∏R_i = ${prodR.toFixed(5)} ≈ R_sys = ${Rsys.toFixed(5)}`
+ : `⚠️ 偏差 ${diff.toFixed(5)}（AGREE法因加权分配存在小偏差，工程可接受）`;
+ document.getElementById('results').style.display='block';
+}
+
+function loadDemo(){
+ rows = [];
+ addRow('压缩机',25,2,0.9,100);
+ addRow('换热器',8,1,0.7,100);
+ addRow('泵组',6,3,0.8,90);
+ addRow('控制系统',15,1,1.0,100);
+ document.getElementById('targetA').value=0.98;
+}
+
+addRow('压缩机',25,2,0.9,100);
+addRow('换热器',8,1,0.7,100);
+addRow('控制系统',15,1,1.0,100);
+</script>
+// ── Lang toggle ──
+(function(){
+  var _l = localStorage.getItem('rtLang') || 'zh';
+  function applyLang(l){
+    _l = l; localStorage.setItem('rtLang', l);
+    document.querySelectorAll('[data-zh]').forEach(function(el){
+      el.textContent = l==='zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+    });
+    var zh=document.getElementById('_lbZh'), en=document.getElementById('_lbEn');
+    if(zh){zh.classList.toggle('on', l==='zh'); en.classList.toggle('on', l==='en');}
+  }
+  window.setLang = applyLang;
+  document.addEventListener('DOMContentLoaded', function(){ applyLang(_l); });
+})();
+
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a>
+  </div>
+</footer>
+</body></html>

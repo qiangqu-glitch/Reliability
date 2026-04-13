@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<!--
+  ReliToolbox v0.1 | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReliToolbox v0.1 - 可靠性工程师工具箱</title>
+<style>
+body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0}
+header{background:linear-gradient(135deg,#1e3a5f 0%,#0f766e 100%);color:#fff;padding:22px 16px}
+h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-0.5px}
+.sub{margin:5px 0 12px;font-size:13px;opacity:0.85}
+.container{max-width:860px;margin:0 auto;padding:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:6px}
+.card{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:14px 12px;cursor:pointer;text-decoration:none;color:inherit;position:relative;transition:all 0.15s;display:block}
+.card:hover{box-shadow:0 4px 14px rgba(13,148,136,0.18);transform:translateY(-1px);border-color:#0d9488}
+.icon{font-size:26px;margin-bottom:6px}
+.name{font-size:15px;font-weight:700}
+.zh{font-size:11px;color:var(--sec);margin-top:2px;line-height:1.4}
+.desc{font-size:10px;color:var(--muted);margin-top:4px}
+.badge{position:absolute;top:8px;right:8px;font-size:9px;padding:2px 6px;border-radius:8px;font-weight:700}
+.b-live{background:#ccfbf1;color:#115e59}
+.b-new{background:#dbeafe;color:#1e40af}
+.b-soon{background:#fef3c7;color:#92400e}
+.section{margin-top:16px}
+.section-title{font-size:12px;font-weight:700;color:var(--sec);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px 4px}
+footer{text-align:center;padding:20px;font-size:11px;color:var(--muted);border-top:1px solid #e5e7eb;margin-top:20px}
+footer a{color:#0d9488;text-decoration:none}
+.lang-btn{padding:4px 12px;border-radius:16px;border:1px solid rgba(255,255,255,0.4);background:transparent;color:#fff;font-size:12px;font-weight:600;cursor:pointer;margin-right:6px}
+.lang-btn.active{background:rgba(255,255,255,0.25)}
+.stat-bar{background:#f0fdfa;border-left:3px solid #0d9488;padding:8px 12px;border-radius:6px;font-size:11px;margin:10px 0;color:#115e59}
+</style><link rel="stylesheet" href="shared/style.css">
+<script>
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+if(typeof window!=='undefined')window._rtv='0.1';})();
+</script>
+</head><body>
+
+<header><div class="container">
+<h1>🛠 ReliToolbox</h1>
+<div class="sub" id="subtitle">可靠性工程师工具箱 · Reliability Engineer Toolbox · v0.1</div>
+<button class="lang-btn active" id="zhBtn" onclick="setLang('zh')">中文</button>
+<button class="lang-btn" id="enBtn" onclick="setLang('en')">EN</button>
+</div></header>
+
+<div class="container">
+
+<div class="stat-bar" id="stats">正在加载本地数据统计...</div>
+
+<div class="section-title" data-zh="核心模块 · 数据分析" data-en="Core Modules · Data Analysis">核心模块 · 数据分析</div>
+<div class="grid">
+  <a class="card" href="./weibull/index.html">
+    <span class="badge b-live">已上线</span>
+    <div class="icon">📉</div>
+    <div class="name">Weibull</div>
+    <div class="zh" data-zh="威布尔分析 (基础)" data-en="Weibull Analysis (basic)">威布尔分析 (基础)</div>
+    <div class="desc" data-zh="失效数据 MLE 拟合" data-en="Failure data MLE fitting">失效数据 MLE 拟合</div>
+  </a>
+  <a class="card" href="./weibull/weibull_advanced.html">
+    <span class="badge b-new">v0.1 新</span>
+    <div class="icon">📊</div>
+    <div class="name">Weibull+</div>
+    <div class="zh" data-zh="高级模式 (混合截尾)" data-en="Advanced (mixed censoring)">高级模式 (混合截尾)</div>
+    <div class="desc" data-zh="区间截尾 + Fisher CI" data-en="Interval censoring + Fisher CI">区间截尾 + Fisher CI</div>
+  </a>
+  <a class="card" href="./fmea/index.html">
+    <span class="badge b-live">已上线</span>
+    <div class="icon">📋</div>
+    <div class="name">FMEA/RCM</div>
+    <div class="zh" data-zh="失效模式分析" data-en="Failure Mode Analysis">失效模式分析</div>
+    <div class="desc" data-zh="RPN + IndexedDB 持久化" data-en="RPN + IndexedDB persist">RPN + IndexedDB 持久化</div>
+  </a>
+</div>
+
+<div class="section-title" data-zh="系统级建模" data-en="System Modeling">系统级建模</div>
+<div class="grid">
+  <a class="card" href="./rbd/rbd_v2.html">
+    <span class="badge b-new">v0.1 精确</span>
+    <div class="icon">🔗</div>
+    <div class="name">RBD v2</div>
+    <div class="zh" data-zh="可靠性框图 (精确)" data-en="Reliability Block Diagram">可靠性框图 (精确)</div>
+    <div class="desc" data-zh="最小路径集+最小割集" data-en="Min path + cut sets">最小路径集+最小割集</div>
+  </a>
+  <a class="card" href="./fta/index.html">
+    <span class="badge b-live">v0.1</span>
+    <div class="icon">🌳</div>
+    <div class="name">FTA</div>
+    <div class="zh" data-zh="故障树分析" data-en="Fault Tree Analysis">故障树分析</div>
+    <div class="desc" data-zh="MOCUS + Birnbaum 重要度" data-en="MOCUS + Birnbaum">MOCUS + Birnbaum 重要度</div>
+  </a>
+  <a class="card" href="./alloc/index.html">
+    <span class="badge b-live">v0.1</span>
+    <div class="icon">📐</div>
+    <div class="name">Alloc</div>
+    <div class="zh" data-zh="可靠性分配" data-en="Reliability Allocation">可靠性分配</div>
+    <div class="desc" data-zh="AGREE/Equal/Weighted" data-en="AGREE/Equal/Weighted">AGREE/Equal/Weighted</div>
+  </a>
+  <a class="card" href="./ram/ram_worker.html">
+    <span class="badge b-new">v0.1</span>
+    <div class="icon">⚙️</div>
+    <div class="name">RAM MC</div>
+    <div class="zh" data-zh="RAM 仿真 (Worker)" data-en="RAM (Web Worker)">RAM 仿真 (Worker)</div>
+    <div class="desc" data-zh="事件驱动 Monte Carlo" data-en="Event-driven MC">事件驱动 Monte Carlo</div>
+  </a>
+</div>
+
+<div class="section-title" data-zh="检验 · 成本 · 库存" data-en="Inspection · Cost · Inventory">检验 · 成本 · 库存</div>
+<div class="grid">
+  <a class="card" href="./rbi/index.html">
+    <span class="badge b-live">已上线</span>
+    <div class="icon">🛡️</div>
+    <div class="name">RBI</div>
+    <div class="zh" data-zh="基于风险检验" data-en="Risk Based Inspection">基于风险检验</div>
+    <div class="desc">API 580/581</div>
+  </a>
+  <a class="card" href="./lcc/index.html">
+    <span class="badge b-live">已上线</span>
+    <div class="icon">💰</div>
+    <div class="name">LCC</div>
+    <div class="zh" data-zh="生命周期成本" data-en="Life Cycle Cost">生命周期成本</div>
+    <div class="desc" data-zh="NPV + EAC 对比" data-en="NPV + EAC">NPV + EAC 对比</div>
+  </a>
+  <a class="card" href="./spa/index.html">
+    <span class="badge b-live">已上线</span>
+    <div class="icon">🔧</div>
+    <div class="name">Spares</div>
+    <div class="zh" data-zh="备件优化" data-en="Spare Parts">备件优化</div>
+    <div class="desc" data-zh="Poisson 库存模型" data-en="Poisson inventory">Poisson 库存模型</div>
+  </a>
+  <a class="card" href="./sil/index.html">
+    <span class="badge b-live">已上线</span>
+    <div class="icon">🚨</div>
+    <div class="name">SIL</div>
+    <div class="zh" data-zh="SIL 验证" data-en="SIL Verification">SIL 验证</div>
+    <div class="desc" data-zh="IEC 61508/61511 · PFD/PFH" data-en="IEC 61508/61511 · PFD/PFH">IEC 61508/61511 · PFD/PFH</div>
+  </a>
+  <a class="card" href="./amsaa/index.html">
+    <span class="badge b-live">已上线</span>
+    <div class="icon">📈</div>
+    <div class="name">AMSAA</div>
+    <div class="zh" data-zh="可靠性增长" data-en="Reliability Growth">可靠性增长</div>
+    <div class="desc" data-zh="Crow-AMSAA · 增长趋势" data-en="Crow-AMSAA · Growth trend">Crow-AMSAA · 增长趋势</div>
+  </a>
+  <a class="card" href="./equipment/index.html">
+    <span class="badge b-live">v0.1 新</span>
+    <div class="icon">⚙️</div>
+    <div class="name">Equipment</div>
+    <div class="zh" data-zh="设备管理台账" data-en="Equipment Registry">设备管理台账</div>
+    <div class="desc" data-zh="CRUD · MTBF · 检验台账" data-en="CRUD · MTBF · Inspection log">CRUD · MTBF · 检验台账</div>
+  </a>
+  <a class="card" href="./pm/index.html">
+    <div class="icon">&#x1F4B0;</div>
+    <div class="name">PM Opt</div>
+    <div class="zh" data-zh="PM&#x95F4;&#x9694;&#x4F18;&#x5316;" data-en="PM Interval Optimization">PM&#x95F4;&#x9694;&#x4F18;&#x5316;</div>
+    <div class="desc" data-zh="&#x6700;&#x4F18;&#x9884;&#x9632;&#x6027;&#x66F4;&#x6362;&#x5468;&#x671F;" data-en="Age Replacement Model">&#x6700;&#x4F18;&#x9884;&#x9632;&#x6027;&#x66F4;&#x6362;&#x5468;&#x671F;</div>
+    <span class="badge live" data-zh="&#x5DF2;&#x4E0A;&#x7EBF;" data-en="Live">&#x5DF2;&#x4E0A;&#x7EBF;</span>
+  </a>
+</div>
+
+</div>
+
+<footer>
+ReliToolbox v0.1 · <span data-zh="可靠性工程师工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师工具箱</span> · 
+<a href="https://chemcalc.cn">ChemCalc 生态</a>
+</footer>
+
+<script>
+
+function setLang(l){
+ document.querySelectorAll('[data-zh]').forEach(el=>{
+ el.textContent = el.dataset[l];
+ });
+ document.getElementById('zhBtn').classList.toggle('active',l==='zh');
+ document.getElementById('enBtn').classList.toggle('active',l==='en');
+ document.getElementById('subtitle').textContent = l==='zh'
+ ? '可靠性工程师工具箱 · Reliability Engineer Toolbox · v0.1'
+ : 'Reliability Engineer Toolbox · v0.1';
+}
+
+async function loadStats(){
+ try{
+ const db = await new Promise((res,rej)=>{
+ const req=indexedDB.open('ReliToolbox',1);
+ req.onupgradeneeded=e=>{const d=e.target.result;
+ ['equipments','failures','fmea','weibull_results','fta_models','rbd_models','rbi_assessments'].forEach(s=>{
+ if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'});});};
+ req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);
+ });
+ async function count(s){
+ if(!db.objectStoreNames.contains(s))return 0;
+ return new Promise(r=>{const rq=db.transaction(s).objectStore(s).count();rq.onsuccess=()=>r(rq.result);rq.onerror=()=>r(0);});
+ }
+ const [fm,fta,rbd,wb] = await Promise.all([count('fmea'),count('fta_models'),count('rbd_models'),count('weibull_results')]);
+ document.getElementById('stats').innerHTML = 
+ `📦 <b>本地数据库</b>: FMEA ${fm} · FTA ${fta} · RBD ${rbd} · Weibull ${wb} <span style="color:var(--sec)">· 数据存储在你的浏览器 IndexedDB</span>`;
+ }catch(e){document.getElementById('stats').textContent='IndexedDB 未就绪: '+e.message;}
+}
+loadStats();
+</script>
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a>
+  </div>
+</footer>
+</body></html>

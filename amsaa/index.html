@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<!--
+  ReliToolbox v0.1 | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>可靠性增长 AMSAA — ReliToolbox v0.1</title>
+<link rel="stylesheet" href="../shared/style.css">
+<script>
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+if(typeof window!=='undefined')window._rtv='0.1';})();
+</script>
+</head>
+<body>
+<header class="hdr" id="hdr">
+  <div style="max-width:860px;margin:0 auto" id="hdrInner">
+    <div class="bc"><a href="../index.html">ReliToolbox</a> › AMSAA</div>
+    <h1>📈 可靠性增长 AMSAA</h1>
+    <p class="sub">Crow-AMSAA模型 · 可靠性增长跟踪 · MTBF趋势预测</p>
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+      <div class="lb">
+        <button class="lbtn on" onclick="setLang('zh')">中文</button>
+        <button class="lbtn" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="../index.html" class="btn btsm">← 首页</a>
+    </div>
+  <div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div>
+</header>
+<div class="ctn" id="app"></div>
+
+<script src="../shared/math.js"></script>
+<script>
+
+let LANG = 'zh';
+function setLang(l){LANG=l;document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===(l==='zh'?'中文':'EN')));
+ if(CUR_MOD)renderMod(CUR_MOD);else renderHome();}
+const zh=k=>LANG==='zh'?k[0]:k[1];
+
+let CUR_MOD=null;
+function goMod(id){CUR_MOD=id;renderMod(id);}
+function showHome(){CUR_MOD=null;renderHome();}
+
+const app=()=>document.getElementById('app');
+const DCOL={Weibull:'#0d9488',Exponential:'#6366f1',Lognormal:'#f59e0b',Normal:'#ec4899'};
+
+const MODS=[
+ {id:'wb',icon:'📉',name:'Weibull',zh:'Weibull 分析', desc_zh:'MLE拟合 · 4分布 · B-Life · 截尾数据',desc_en:'MLE fitting · 4 distributions · B-Life',t:'teal'},
+ {id:'fm',icon:'📋',name:'FMEA', zh:'FMEA 工作表', desc_zh:'RPN自动计算 · Pareto图 · CSV导出', desc_en:'Auto RPN · Pareto chart · CSV export',t:'amber'},
+ {id:'lc',icon:'💰',name:'LCC', zh:'生命周期成本', desc_zh:'NPV比较 · EAC · 累积成本曲线', desc_en:'NPV · EAC · Cumulative cost',t:'amber'},
+ {id:'rm',icon:'⚙️',name:'RAM', zh:'RAM 仿真', desc_zh:'事件驱动MC · 产能传递 · 三级维修', desc_en:'Event-driven MC · Capacity propagation',t:'purple'},
+ {id:'rb',icon:'🛡️',name:'RBI', zh:'基于风险检验', desc_zh:'API 580/581 · 5×5风险矩阵', desc_en:'API 580/581 · 5×5 risk matrix',t:'purple'},
+ {id:'sp',icon:'🔧',name:'Spare', zh:'备件库存优化', desc_zh:'泊松模型 · 服务水平 · 成本曲线', desc_en:'Poisson model · Service level curve',t:'indigo'},
+ {id:'sl',icon:'🚨',name:'SIL', zh:'SIL 计算', desc_zh:'IEC 61508/61511',desc_en:'IEC 61508/61511',t:'',soon:true},
+];
+
+function renderHome(){
+ const live=MODS.filter(m=>!m.soon),soon=MODS.filter(m=>m.soon);
+ app().innerHTML=`
+ <div class="sl" style="margin-top:6px">${zh(['已上线模块','Live Modules'])}</div>
+ <div class="mgrid">${live.map(m=>`
+ <div class="mc" style="border-top:2px solid var(--${m.t})" onclick="goMod('${m.id}')">
+ <span class="mbg bl">${zh(['已上线','Live'])}</span>
+ <div class="mi">${m.icon}</div>
+ <div class="mn">${m.name}</div>
+ <div class="mz">${m.zh}</div>
+ <div class="md">${LANG==='zh'?m.desc_zh:m.desc_en}</div>
+ </div>`).join('')}</div>
+ <div class="sl" style="margin-top:16px">${zh(['即将上线','Coming Soon'])}</div>
+ <div class="mgrid">${soon.map(m=>`
+ <div class="mc sn"><span class="mbg bs">${zh(['待上线','Soon'])}</span>
+ <div class="mi">${m.icon}</div><div class="mn">${m.name}</div><div class="mz">${m.zh}</div>
+ </div>`).join('')}</div>`;}
+
+function renderMod(id){
+ const mod=MODS.find(m=>m.id===id);
+ document.getElementById('hdrInner').innerHTML=`
+ <div class="bc" style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div>
+ <h1 style="font-size:18px">${mod.icon} ${mod.zh}</h1>
+ <div style="display:flex;gap:7px;margin-top:8px">
+ <div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button>
+ <button class="lbtn ${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>
+ <button class="btn btsm" onclick="showHome()">← ${zh(['首页','Home'])}</button>
+ </div>`;
+ ({wb:renderWB,fm:renderFM,lc:renderLC,rm:renderRAM,rb:renderRBI,sp:renderSPA})[id]();}
+
+function mkCanvas(id,H){return`<canvas id="${id}" height="${H}"></canvas>`;}
+function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.width=cv.offsetWidth||720;return{cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height};}
+
+function drawGrid(c,PAD,minY,maxY,yFmt){
+ const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ x.strokeStyle='rgba(255,255,255,0.05)';x.lineWidth=.5;
+ [0,.2,.4,.6,.8,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+ x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+ x.fillText(yFmt(minY+(maxY-minY)*v),PAD.l-3,y+3);});}
+
+function drawLines(c,PAD,data,series,xKey,xFmt,refY){
+ const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const xs=data.map(d=>d[xKey]),minX=Math.min(...xs),maxX=Math.max(...xs);
+ const ys=series.flatMap(s=>data.map(d=>d[s.k])).filter(v=>isFinite(v)&&v>=0);
+ if(!ys.length)return;
+ const minY=0,maxY=Math.max(...ys)*1.08;
+ const tX=v=>PAD.l+iW*(v-minX)/(maxX-minX||1);
+ const tY=v=>PAD.t+iH*(1-(v-minY)/(maxY-minY||1));
+ drawGrid(c,PAD,minY,maxY,v=>v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(1));
+ if(refY!=null){x.strokeStyle='#ef444466';x.lineWidth=1;x.setLineDash([4,3]);
+ x.beginPath();x.moveTo(PAD.l,tY(refY));x.lineTo(W-PAD.r,tY(refY));x.stroke();x.setLineDash([]);}
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+ [0,.25,.5,.75,1].forEach(v=>{const val=minX+(maxX-minX)*v;x.fillText(xFmt(val),tX(val),H-PAD.b+13);});
+ series.forEach(s=>{x.strokeStyle=s.col;x.lineWidth=s.bold?2.2:1.2;
+ if(!s.bold)x.setLineDash([5,3]);x.beginPath();let first=true;
+ data.forEach(d=>{const v=d[s.k];if(!isFinite(v)||v<0)return;
+ first?x.moveTo(tX(d[xKey]),tY(v)):x.lineTo(tX(d[xKey]),tY(v));first=false;});
+ x.stroke();x.setLineDash([]);});
+ 
+ x.textAlign='left';let lx=PAD.l+6,ly=PAD.t+13;
+ series.forEach(s=>{x.fillStyle=s.col;x.fillRect(lx,ly-6,12,2.5);
+ x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(s.lbl,lx+15,ly);
+ lx+=Math.max(90,x.measureText(s.lbl).width+20);if(lx>W-60){lx=PAD.l+6;ly+=12;}});}
+
+function drawHist(id,vals,bins=22){
+ const c=ctx(id);if(!c)return;const{ctx:x,W,H}=c;
+ x.clearRect(0,0,W,H);const PAD={l:10,r:10,t:16,b:24};
+ const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const mn=Math.min(...vals),mx=Math.max(...vals),bw=(mx-mn)/bins||.1;
+ const counts=new Array(bins).fill(0);
+ vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/bw));counts[b]++;});
+ const maxC=Math.max(...counts),bpx=iW/bins;
+ counts.forEach((c,i)=>{const bh=iH*c/maxC,bx=PAD.l+i*bpx;
+ const midV=mn+i*bw+bw/2;const col=midV>=95?'#10b981':midV>=85?'#f59e0b':'#ef4444';
+ x.fillStyle=col+'88';x.fillRect(bx,PAD.t+iH-bh,bpx-1,bh);
+ x.strokeStyle=col;x.lineWidth=.5;x.strokeRect(bx,PAD.t+iH-bh,bpx-1,bh);});
+ const mV=(mn+mx)/2,mx2=PAD.l+iW*(mV-mn)/(mx-mn||1);
+ x.strokeStyle='#0d9488';x.lineWidth=1.5;x.setLineDash([4,3]);
+ x.beginPath();x.moveTo(mx2,PAD.t);x.lineTo(mx2,PAD.t+iH);x.stroke();x.setLineDash([]);
+ x.fillStyle='#0d9488';x.font='8px monospace';x.textAlign='center';
+ x.fillText('μ='+mV.toFixed(1)+'%',mx2,PAD.t-1);
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+ [0,.25,.5,.75,1].forEach(v=>{x.fillText((mn+v*(mx-mn)).toFixed(1)+'%',PAD.l+v*iW,H-6);});}
+
+function dl(content,filename){const blob=new Blob([content],{type:'text/csv'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();}
+
+(function(){
+ CUR_MOD='weibull';
+ document.title='Weibull 分析 — ReliToolbox';
+})();
+
+</script>
+<script>
+
+let AM = {
+ rawData: '120\n350\n580\n920\n1350\n1890\n2500\n3250\n4100\n5100',
+ terminated: 'time', 
+ T: 6000, 
+ res: null,
+};
+
+const AM_EXAMPLES = {
+ dev: {
+ name: '设备开发测试 Equipment Development',
+ data: '120\n350\n580\n920\n1350\n1890\n2500\n3250\n4100\n5100',
+ T: 6000, term: 'time'
+ },
+ field: {
+ name: '现场运行数据 Field Operation',
+ data: '200\n600\n1100\n1800\n2700\n3800\n5200\n6900\n8800\n11000',
+ T: 12000, term: 'time'
+ },
+};
+
+function fitAMSAA(failures, T, terminated) {
+ const n = failures.length;
+ if (n < 2) return null;
+ failures = [...failures].sort((a,b)=>a-b);
+
+ const sumLnT = failures.reduce((s,t) => s + Math.log(t), 0);
+ const lnT = terminated === 'time' ? Math.log(T) : Math.log(failures[n-1]);
+ 
+ const beta = n / (n * lnT - sumLnT);
+ const lambda = (terminated === 'time') ? n / Math.pow(T, beta) : (n-1) / Math.pow(failures[n-1], beta);
+
+ const Cvm = failures.reduce((s,t,i) => {
+ const Fi = 1 - Math.exp(-lambda * Math.pow(t, beta)); 
+ const Ui = (lambda * Math.pow(t, beta)) / (lambda * Math.pow(T, beta));
+ return s + Math.pow(Ui - (2*(i+1)-1)/(2*n), 2);
+ }, 0) + 1/(12*n);
+
+ const rhoT = lambda * beta * Math.pow(T, beta - 1);
+ const mtbfT = 1 / rhoT;
+
+ const t1 = failures[0];
+ const rho1 = lambda * beta * Math.pow(t1, beta - 1);
+ const mtbf1 = 1 / rho1;
+
+ const trend = beta < 0.9 ? 'improving' : beta > 1.1 ? 'degrading' : 'random';
+ 
+ return { beta, lambda, n, T: terminated==='time'?T:failures[n-1], failures,
+ mtbfT, mtbf1, Cvm, trend };
+}
+
+function runAMSAA() {
+ const nums = AM.rawData.trim().split(/[\n,\s]+/).map(Number).filter(v=>!isNaN(v)&&v>0);
+ if (nums.length < 3) { alert(LANG==='zh'?'至少需要3个失效时间':'Need 3+ failure times'); return; }
+ AM.res = fitAMSAA(nums, AM.T, AM.terminated);
+ renderAMSAA();
+}
+
+function renderAMSAA() {
+ const z = LANG==='zh';
+ const r = AM.res;
+
+ document.getElementById('app').innerHTML = `
+ <!-- Input -->
+ ${!r ? `
+ <div class="card">
+ <div class="sl">${z?'失效时间数据（每行一个）':'Failure Times (one per line)'}</div>
+ <textarea id="amData" rows="8" oninput="AM.rawData=this.value" placeholder="120&#10;350&#10;580&#10;..."
+ style="font-family:monospace">${AM.rawData}</textarea>
+ <div class="g2" style="margin-top:9px">
+ <div><label class="lbl">${z?'终止方式':'Termination'}</label>
+ <select onchange="AM.terminated=this.value">
+ <option value="time" ${AM.terminated==='time'?'selected':''}>${z?'时间终止':'Time Terminated'}</option>
+ <option value="failure" ${AM.terminated==='failure'?'selected':''}>${z?'失效终止':'Failure Terminated'}</option>
+ </select></div>
+ <div><label class="lbl">${z?'测试时长(时间终止时填写)':'Test Duration (if time-terminated)'}</label>
+ <input type="number" value="${AM.T}" oninput="AM.T=+this.value||1000"></div>
+ </div>
+ <div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap">
+ ${Object.entries(AM_EXAMPLES).map(([k,ex])=>`
+ <button class="btn btsm" onclick="AM.rawData='${ex.data.replace(/\n/g,'\\n')}';AM.T=${ex.T};AM.terminated='${ex.term}';document.getElementById('amData').value=AM.rawData;runAMSAA()">${ex.name}</button>`).join('')}
+ </div>
+ <button class="btn btp btf" style="margin-top:10px" onclick="runAMSAA()">▶ ${z?'拟合 Crow-AMSAA 模型':'Fit Crow-AMSAA Model'}</button>
+ </div>` : `
+ <!-- Results -->
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+ <span style="font-size:14px;font-weight:700">${z?'Crow-AMSAA 分析结果':'Crow-AMSAA Results'}</span>
+ <button class="btn btsm" onclick="AM.res=null;renderAMSAA()">← ${z?'返回':'Back'}</button>
+ </div>
+
+ <!-- Trend Banner -->
+ <div style="background:${r.trend==='improving'?'rgba(16,185,129,.15)':r.trend==='degrading'?'rgba(239,68,68,.15)':'rgba(245,158,11,.15)'};
+ border:1px solid ${r.trend==='improving'?'#10b981':r.trend==='degrading'?'#ef4444':'#f59e0b'};
+ border-radius:10px;padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
+ <div style="font-size:32px">${r.trend==='improving'?'📈':r.trend==='degrading'?'📉':'➡️'}</div>
+ <div>
+ <div style="font-weight:700;font-size:14px;color:${r.trend==='improving'?'#34d399':r.trend==='degrading'?'#f87171':'#fbbf24'}">
+ ${z?(r.trend==='improving'?'可靠性增长中 ✓':r.trend==='degrading'?'可靠性下降 ✗':'随机失效 (无趋势)')
+ :(r.trend==='improving'?'Reliability Growing ✓':r.trend==='degrading'?'Reliability Degrading ✗':'Random Failures (No Trend)')}
+ </div>
+ <div style="font-size:11px;color:var(--sec);margin-top:3px">
+ β = ${r.beta.toFixed(3)} — ${z?(r.beta<0.9?'β<1 失效率递减，产品处于改进阶段':r.beta>1.1?'β>1 失效率递增，质量恶化':'β≈1 恒定失效率，泊松过程')
+ :(r.beta<0.9?'β<1 Decreasing failure rate (improving)':r.beta>1.1?'β>1 Increasing failure rate (degrading)':'β≈1 HPP (no growth)')}
+ </div>
+ </div>
+ </div>
+
+ <!-- KPIs -->
+ <div class="gkpi" style="margin-bottom:10px">
+ <div class="kpi" style="border-top:2px solid var(--teal)"><div class="kl">β (${z?'形状参数':'Shape'})</div><div class="kv">${r.beta.toFixed(4)}</div></div>
+ <div class="kpi"><div class="kl">λ (${z?'尺度参数':'Scale'})</div><div class="kv" style="font-size:12px">${r.lambda.toExponential(3)}</div></div>
+ <div class="kpi"><div class="kl">${z?'初始MTBF':'Initial MTBF'}</div><div class="kv">${r.mtbf1.toFixed(0)}</div><div class="ks">hrs</div></div>
+ <div class="kpi" style="border-top:2px solid var(--success)"><div class="kl">${z?'当前MTBF':'Current MTBF'}</div><div class="kv gd">${r.mtbfT.toFixed(0)}</div><div class="ks">hrs</div></div>
+ <div class="kpi"><div class="kl">${z?'改善倍数':'Growth Factor'}</div><div class="kv">${(r.mtbfT/r.mtbf1).toFixed(2)}×</div></div>
+ <div class="kpi"><div class="kl">${z?'失效次数':'Failures'}</div><div class="kv">${r.n}</div></div>
+ </div>
+
+ <!-- Charts -->
+ <div class="card">
+ <div class="sl">${z?'累积失效曲线 (Crow-AMSAA)':'Cumulative Failures (Crow-AMSAA)'}</div>
+ <canvas id="amCumChart" height="220"></canvas>
+ </div>
+
+ <div class="card">
+ <div class="sl">${z?'MTBF 增长曲线':'MTBF Growth Curve'}</div>
+ <canvas id="amMTBFChart" height="200"></canvas>
+ </div>
+
+ <!-- MTBF Query -->
+ <div class="card">
+ <div class="sl">${z?'MTBF 预测查询':'MTBF Projection'}</div>
+ <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+ <div><label class="lbl">${z?'目标时间 t (hrs)':'Target Time t'}</label>
+ <input type="number" id="amQT" value="${r.T*1.5|0}" style="width:120px;font-family:monospace"></div>
+ <button class="btn btp" onclick="doAMQuery()">→ ${z?'计算':'Calc'}</button>
+ <div id="amQR" style="font-size:12px;font-family:monospace;padding-top:6px"></div>
+ </div>
+ </div>
+
+ <!-- Interpretation -->
+ <div class="card" style="background:rgba(13,148,136,.08);border-color:rgba(13,148,136,.3)">
+ <div class="sl" style="color:var(--teal)">${z?'工程解读':'Engineering Interpretation'}</div>
+ <div style="font-size:12px;color:var(--sec);line-height:1.9">
+ <b style="color:var(--text)">${z?'模型':'Model'}</b>: E[N(t)] = ${r.lambda.toExponential(2)} · t^${r.beta.toFixed(3)}<br>
+ <b style="color:var(--text)">MTBF(t)</b> = t^${(1-r.beta).toFixed(3)} / (${r.lambda.toExponential(2)} × ${r.beta.toFixed(3)})<br>
+ <b style="color:var(--text)">${z?'当前失效率':'Current rate'}</b>: ρ(${r.T}) = ${(1/r.mtbfT).toExponential(3)} /hr<br>
+ <b style="color:var(--text)">${z?'实用建议':'Recommendation'}</b>: ${z?
+ (r.trend==='improving'?`可靠性仍在增长，建议在t=${(r.T*2)|0}hrs时重新评估MTBF目标`
+ :r.trend==='degrading'?'失效率上升，建议立即进行根因分析(RCA)和预防性维修'
+ :'接近随机失效稳定状态，可切换至Weibull或指数模型进行寿命预测')
+ :(r.trend==='improving'?`Growth ongoing. Re-evaluate MTBF target at t=${(r.T*2)|0}hrs`
+ :r.trend==='degrading'?'Failure rate rising. Immediate RCA and PM recommended.'
+ :'Near HPP. Switch to Weibull/exponential for life prediction.')}
+ </div>
+ </div>`}`;
+
+ if (r) setTimeout(drawAMCharts, 60);
+}
+
+function doAMQuery() {
+ const r = AM.res; if (!r) return;
+ const t = parseFloat(document.getElementById('amQT')?.value);
+ if (isNaN(t) || t <= 0) return;
+ const rho = r.lambda * r.beta * Math.pow(t, r.beta - 1);
+ const mtbf = 1 / rho;
+ const el = document.getElementById('amQR');
+ if (el) el.innerHTML = `t=${t.toFixed(0)}hrs → MTBF=<b style="color:var(--teal)">${mtbf.toFixed(0)} hrs</b> | ρ=${rho.toExponential(3)}/hr`;
+}
+
+function drawAMCharts() {
+ const r = AM.res; if (!r) return;
+
+ (()=>{
+ const cv = document.getElementById('amCumChart'); if (!cv) return;
+ cv.width = cv.offsetWidth || 700; const W = cv.width, H = 220;
+ const x = cv.getContext('2d'); x.clearRect(0,0,W,H);
+ const PAD = {l:50,r:16,t:14,b:32};
+ const iW = W-PAD.l-PAD.r, iH = H-PAD.t-PAD.b;
+ const maxT = r.T * 1.05;
+ const maxN = r.lambda * Math.pow(maxT, r.beta) * 1.1;
+ const tX = t => PAD.l + iW * t / maxT;
+ const tY = n => PAD.t + iH * (1 - n / maxN);
+
+ x.strokeStyle = 'rgba(255,255,255,0.05)'; x.lineWidth = .5;
+ [0,.25,.5,.75,1].forEach(v => {
+ const y = PAD.t + iH * (1-v);
+ x.beginPath(); x.moveTo(PAD.l,y); x.lineTo(W-PAD.r,y); x.stroke();
+ x.fillStyle='#64748b'; x.font='9px monospace'; x.textAlign='right';
+ x.fillText(Math.round(maxN*v), PAD.l-3, y+3);
+ });
+
+ x.strokeStyle = '#0d9488'; x.lineWidth = 2; x.beginPath();
+ for (let i=0; i<=100; i++) {
+ const t = maxT * i / 100;
+ const n = r.lambda * Math.pow(Math.max(t,0.1), r.beta);
+ i===0 ? x.moveTo(tX(t), tY(n)) : x.lineTo(tX(t), tY(n));
+ }
+ x.stroke();
+
+ x.strokeStyle = '#f59e0b'; x.lineWidth = 1.5; x.setLineDash([4,3]);
+ x.beginPath();
+ r.failures.forEach((t,i) => {
+ i===0 ? x.moveTo(tX(t), tY(i+1)) : x.lineTo(tX(t), tY(i+1));
+ x.lineTo(tX(i+1<r.failures.length?r.failures[i+1]:maxT), tY(i+1));
+ });
+ x.stroke(); x.setLineDash([]);
+
+ x.fillStyle = '#f59e0b';
+ r.failures.forEach((t,i) => {
+ x.beginPath(); x.arc(tX(t), tY(i+1), 3.5, 0, Math.PI*2); x.fill();
+ });
+
+ x.fillStyle = '#64748b'; x.font = '9px monospace'; x.textAlign = 'center';
+ [0,.25,.5,.75,1].forEach(v => x.fillText((maxT*v|0), tX(maxT*v), H-PAD.b+12));
+
+ x.fillStyle = '#0d9488'; x.fillRect(PAD.l,8,14,2);
+ x.fillStyle = '#94a3b8'; x.font = '9px sans-serif'; x.textAlign = 'left';
+ x.fillText(LANG==='zh'?'Crow-AMSAA拟合':'AMSAA Fit', PAD.l+18, 13);
+ x.strokeStyle = '#f59e0b'; x.setLineDash([4,3]); x.beginPath();
+ x.moveTo(PAD.l+130,9); x.lineTo(PAD.l+144,9); x.stroke(); x.setLineDash([]);
+ x.fillStyle = '#94a3b8'; x.fillText(LANG==='zh'?'实测数据':'Observed', PAD.l+148, 13);
+ })();
+
+ (()=>{
+ const cv = document.getElementById('amMTBFChart'); if (!cv) return;
+ cv.width = cv.offsetWidth || 700; const W = cv.width, H = 200;
+ const x = cv.getContext('2d'); x.clearRect(0,0,W,H);
+ const PAD = {l:56,r:16,t:14,b:32};
+ const iW = W-PAD.l-PAD.r, iH = H-PAD.t-PAD.b;
+ const maxT = r.T * 1.5;
+ const pts = Array.from({length:101},(_,i)=>{
+ const t = Math.max(r.failures[0]*0.5, maxT*i/100);
+ const mtbf = Math.pow(t, 1-r.beta) / (r.lambda * r.beta);
+ return {t, mtbf};
+ });
+ const maxM = Math.max(...pts.map(p=>p.mtbf)) * 1.1;
+ const tX = t => PAD.l + iW * t / maxT;
+ const tY = m => PAD.t + iH * (1 - m / maxM);
+
+ x.strokeStyle = 'rgba(255,255,255,0.05)'; x.lineWidth = .5;
+ [0,.25,.5,.75,1].forEach(v => {
+ const y = PAD.t + iH * (1-v);
+ x.beginPath(); x.moveTo(PAD.l,y); x.lineTo(W-PAD.r,y); x.stroke();
+ x.fillStyle='#64748b'; x.font='9px monospace'; x.textAlign='right';
+ x.fillText((maxM*v|0), PAD.l-3, y+3);
+ });
+
+ x.strokeStyle = 'rgba(245,158,11,.4)'; x.lineWidth = 1; x.setLineDash([4,3]);
+ x.beginPath(); x.moveTo(tX(r.T),PAD.t); x.lineTo(tX(r.T),PAD.t+iH); x.stroke(); x.setLineDash([]);
+ x.fillStyle = '#f59e0b'; x.font='8px sans-serif'; x.textAlign='center';
+ x.fillText(LANG==='zh'?'当前':'Now', tX(r.T), PAD.t+8);
+
+ x.strokeStyle = '#10b981'; x.lineWidth = 2.5; x.beginPath();
+ pts.forEach((p,i) => i===0 ? x.moveTo(tX(p.t),tY(p.mtbf)) : x.lineTo(tX(p.t),tY(p.mtbf)));
+ x.stroke();
+
+ x.fillStyle = '#6366f1';
+ for (let i=1; i<r.failures.length; i++) {
+ const ifi = r.failures[i] - r.failures[i-1];
+ const t = r.failures[i];
+ if (ifi <= maxM && t <= maxT) {
+ x.beginPath(); x.arc(tX(t), tY(ifi), 4, 0, Math.PI*2); x.fill();
+ }
+ }
+
+ x.fillStyle = '#64748b'; x.font = '9px monospace'; x.textAlign = 'center';
+ [0,.25,.5,.75,1].forEach(v => x.fillText((maxT*v|0)+'hr', tX(maxT*v), H-PAD.b+12));
+ x.fillStyle = '#64748b'; x.textAlign = 'left';
+ x.fillText(LANG==='zh'?'MTBF (hrs)':'MTBF (hrs)', PAD.l+4, PAD.t+11);
+ })();
+}
+</script>
+<script>(function(){renderAMSAA();})();</script>
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a>
+  </div>
+</footer>
+</body>
+</html>

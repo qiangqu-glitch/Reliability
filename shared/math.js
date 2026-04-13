@@ -1,0 +1,174 @@
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
+
+const RM = (() => {
+  function gFn(z){if(z<.5)return Math.PI/(Math.sin(Math.PI*z)*gFn(1-z));z-=1;
+    const c=[.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+    let x=c[0];for(let i=1;i<9;i++)x+=c[i]/(z+i);const t=z+7.5;
+    return Math.sqrt(2*Math.PI)*Math.pow(t,z+.5)*Math.exp(-t)*x;}
+  function nCDF(x){const s=x<0?-1:1,a=Math.abs(x)/Math.sqrt(2),t=1/(1+.3275911*a);
+    return .5*(1+s*(1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-a*a)));}
+  function nPDF(x){return Math.exp(-.5*x*x)/Math.sqrt(2*Math.PI);}
+
+  function wMLE(data,cens){
+    const n=data.length,nF=cens.filter(c=>!c).length;if(nF<2)return null;
+    const ld=data.map(d=>Math.log(d)),ml=ld.reduce((a,b)=>a+b,0)/n,vl=ld.reduce((a,b)=>a+(b-ml)**2,0)/(n-1);
+    let beta=Math.max(.3,Math.min(10,Math.PI/Math.sqrt(6*Math.max(vl,.01))));
+    for(let it=0;it<150;it++){let sT=0,sTL=0,sTL2=0,sL=0;
+      for(let i=0;i<n;i++){const tb=Math.pow(data[i],beta),lt=Math.log(data[i]);sT+=tb;sTL+=tb*lt;sTL2+=tb*lt*lt;if(!cens[i])sL+=lt;}
+      const f=nF/beta+sL-nF*sTL/sT,fp=-nF/(beta*beta)-nF*(sTL2*sT-sTL*sTL)/(sT*sT);
+      if(Math.abs(fp)<1e-30)break;const d=f/fp;beta-=d;beta=Math.max(.05,Math.min(50,beta));if(Math.abs(d)<1e-10)break;}
+    let sT=0;for(let i=0;i<n;i++)sT+=Math.pow(data[i],beta);
+    return{beta,eta:Math.pow(sT/nF,1/beta)};}
+
+  function fitAll(data,cens){
+    const n=data.length,fails=data.filter((_,i)=>!cens[i]),nF=fails.length,out=[];
+    const wb=wMLE(data,cens);
+    if(wb){let ll=0;for(let i=0;i<n;i++){if(!cens[i])ll+=Math.log(wb.beta/wb.eta)+(wb.beta-1)*Math.log(data[i]/wb.eta)-Math.pow(data[i]/wb.eta,wb.beta);else ll-=Math.pow(data[i]/wb.eta,wb.beta);}
+      out.push({name:"Weibull",params:{β:wb.beta,η:wb.eta},ll,aic:-2*ll+4,bic:-2*ll+2*Math.log(n),
+        R:t=>Math.exp(-Math.pow(t/wb.eta,wb.beta)),h:t=>(wb.beta/wb.eta)*Math.pow(t/wb.eta,wb.beta-1),
+        F:t=>1-Math.exp(-Math.pow(t/wb.eta,wb.beta)),mttf:wb.eta*gFn(1+1/wb.beta)});}
+    if(nF>0){let sT=0;for(let i=0;i<n;i++)sT+=data[i];const lam=nF/sT;let ll=0;
+      for(let i=0;i<n;i++)ll+=(!cens[i]?Math.log(lam):0)-lam*data[i];
+      out.push({name:"Exponential",params:{λ:lam,MTBF:1/lam},ll,aic:-2*ll+2,bic:-2*ll+Math.log(n),
+        R:t=>Math.exp(-lam*t),h:()=>lam,F:t=>1-Math.exp(-lam*t),mttf:1/lam});}
+    if(nF>=2){const lf=fails.map(d=>Math.log(d)),mu=lf.reduce((a,b)=>a+b,0)/nF;
+      const sig=Math.sqrt(lf.reduce((a,b)=>a+(b-mu)**2,0)/(nF-1));
+      if(sig>0){let ll=0;for(let i=0;i<n;i++){const z=(Math.log(data[i])-mu)/sig;
+          ll+=!cens[i]?-Math.log(data[i]*sig*Math.sqrt(2*Math.PI))-.5*z*z:Math.log(Math.max(1e-300,1-nCDF(z)));}
+        out.push({name:"Lognormal",params:{μ_log:mu,σ_log:sig},ll,aic:-2*ll+4,bic:-2*ll+2*Math.log(n),
+          R:t=>1-nCDF((Math.log(t)-mu)/sig),h:t=>{const z=(Math.log(t)-mu)/sig;return nPDF(z)/(Math.max(1e-300,1-nCDF(z))*t*sig);},
+          F:t=>nCDF((Math.log(t)-mu)/sig),mttf:Math.exp(mu+sig*sig/2)});}}
+    if(nF>=2){const mu=fails.reduce((a,b)=>a+b,0)/nF;
+      const sig=Math.sqrt(fails.reduce((a,b)=>a+(b-mu)**2,0)/(nF-1));
+      if(sig>0){let ll=0;for(let i=0;i<n;i++){const z=(data[i]-mu)/sig;
+          ll+=!cens[i]?-Math.log(sig*Math.sqrt(2*Math.PI))-.5*z*z:Math.log(Math.max(1e-300,1-nCDF(z)));}
+        out.push({name:"Normal",params:{μ:mu,σ:sig},ll,aic:-2*ll+4,bic:-2*ll+2*Math.log(n),
+          R:t=>1-nCDF((t-mu)/sig),h:t=>{const z=(t-mu)/sig;return nPDF(z)/(Math.max(1e-300,1-nCDF(z))*sig);},
+          F:t=>nCDF((t-mu)/sig),mttf:mu});}}
+    out.sort((a,b)=>a.aic-b.aic);return out;}
+
+  function bLife(d,p){const pp=p/100;let lo=1e-10,hi=d.mttf*30;
+    for(let i=0;i<200;i++){const m=(lo+hi)/2;if(d.F(m)<pp)lo=m;else hi=m;}return(lo+hi)/2;}
+  function MR(i,n){return(i-.3)/(n+.4);}
+  function fmt(v,d=4){if(v==null||isNaN(v))return"—";
+    if(Math.abs(v)>=1e6||(Math.abs(v)<.001&&v!==0))return v.toExponential(d-1);
+    return Number(v.toPrecision(d)).toLocaleString();}
+
+  function diagBeta(b){
+    const C=[
+      [.7,{cls:'rgba(2,132,199,.12)','bc':'rgba(2,132,199,.4)',tc:'#93c5fd',
+        zh:'早期故障 Early Failure (β<1)',en:'Early Failure (β<1)',
+        tz:'DFR递减失效率。加强来料检验、安装QC、burn-in测试。',te:'DFR — decreasing failure rate. Strengthen incoming inspection, burn-in testing.',
+        s:'Corrective + Supplier QA'}],
+      [1.3,{cls:'rgba(217,119,6,.12)',bc:'rgba(217,119,6,.4)',tc:'#fcd34d',
+        zh:'随机故障 Random (β≈1)',en:'Random Failure (β≈1)',
+        tz:'CFR 恒定失效率。推荐CBM；定期更换无效。',te:'CFR — constant failure rate. Use CBM. Scheduled replacement ineffective.',
+        s:'Condition-Based (CBM)'}],
+      [2.5,{cls:'rgba(234,88,12,.12)',bc:'rgba(234,88,12,.4)',tc:'#fdba74',
+        zh:'早期磨损 Early Wear (1<β<2.5)',en:'Early Wear (1<β<2.5)',
+        tz:'IFR 递增失效率。基于B10/B20制定预防性更换计划。',te:'IFR — increasing. Set PM schedule based on B10/B20.',
+        s:'Time-Based PM'}],
+      [4,{cls:'rgba(220,38,38,.12)',bc:'rgba(220,38,38,.45)',tc:'#fca5a5',
+        zh:'磨损故障 Wear-out (β>2.5)',en:'Wear-out (β>2.5)',
+        tz:'典型磨损。B10前预防更换；可准确规划备件和检修窗口。',te:'Classic wear-out. Replace before B10.',
+        s:'Scheduled Replacement'}],
+      [999,{cls:'rgba(220,38,38,.18)',bc:'rgba(220,38,38,.55)',tc:'#fca5a5',
+        zh:'急剧磨损 Rapid Wear (β>4)',en:'Rapid Wear (β>4)',
+        tz:'剧烈磨损。严格B5-B10更换；查设计缺陷。',te:'Severe wear. Strict B5-B10. Investigate design.',
+        s:'Strict Replacement + RCA'}],
+    ];
+    return C.find(([t])=>b<t)[1];}
+
+  function lcg(seed){let s=seed>>>0;return()=>{s=(Math.imul(1664525,s)+1013904223)>>>0;return s/4294967296;};}
+  function sExp(lam,rng){return-Math.log(1-rng())/lam;}
+  function sNormT(mu,sigma,rng){let v,tr=0;
+    do{const u1=rng(),u2=rng();if(u1<=0){tr++;continue;}
+      v=mu+sigma*Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);tr++;}while(v<=0&&tr<60);
+    return v>0?v:mu*.1;}
+
+  function simOnce(cfg,rng,doTrace){
+    const{units,taI,taD,sysCap,mHrs,yearSnaps}=cfg;
+    const evs=[];
+    units.forEach((u,gi)=>{const lam=1/u.mtbf;
+      for(let ei=0;ei<u.count;ei++){let t=sExp(lam,rng);
+        while(t<mHrs){evs.push({t,type:'F',gi});t+=sNormT(u.mttr,u.sig,rng);
+          if(t<mHrs)evs.push({t,type:'R',gi});t+=sExp(lam,rng);}}});
+    if(taI>0&&taD>0)for(let t=taI;t<mHrs;t+=taI){evs.push({t,type:'TS'});evs.push({t:Math.min(t+taD,mHrs),type:'TE'});}
+    
+    units.forEach((u,gi)=>{if(u.pmI>0&&u.pmD>0){
+      for(let ei=0;ei<u.count;ei++){
+        const offset=ei*(u.pmI/u.count);  
+        for(let t=u.pmI+offset;t<mHrs;t+=u.pmI){
+          evs.push({t,type:'PM_S',gi,ei});
+          evs.push({t:Math.min(t+u.pmD,mHrs),type:'PM_E',gi,ei});}}}});
+    if(yearSnaps)yearSnaps.forEach(yr=>evs.push({t:yr*8760,type:'YS',yr}));
+    evs.sort((a,b)=>a.t-b.t);
+    const on=units.map(u=>u.count);
+    let inTA=false,prev=0,tp=0;
+    const uu=units.map(()=>0);
+    const ann={};if(yearSnaps)yearSnaps.forEach(yr=>ann[yr]=0);
+    const trace=doTrace?[]:null;
+    const cap=()=>{if(inTA)return 0;
+      let f=Infinity;units.forEach((u,gi)=>{f=Math.min(f,on[gi]/u.count);});
+      return f===Infinity?0:f*sysCap;};
+    let cur=cap();
+    if(trace)trace.push({t:0,c:cur});
+    for(const ev of evs){
+      const dt=Math.max(0,ev.t-prev);
+      if(dt>0){
+        tp+=cur*dt;
+        if(yearSnaps&&yearSnaps.length){const yr=Math.max(1,Math.min(yearSnaps[yearSnaps.length-1],Math.floor(prev/8760)+1));if(ann[yr]!==undefined)ann[yr]+=cur*dt;}
+        units.forEach((_,gi)=>{if(on[gi]>0)uu[gi]+=dt;});}
+      prev=ev.t;
+      if(ev.type==='F')on[ev.gi]=Math.max(0,on[ev.gi]-1);
+      else if(ev.type==='R')on[ev.gi]=Math.min(units[ev.gi].count,on[ev.gi]+1);
+      else if(ev.type==='TS')inTA=true;
+      else if(ev.type==='TE')inTA=false;
+      else if(ev.type==='PM_S')on[ev.gi]=Math.max(0,on[ev.gi]-1);
+      else if(ev.type==='PM_E')on[ev.gi]=Math.min(units[ev.gi].count,on[ev.gi]+1);
+      cur=cap();
+      if(trace&&ev.type!=='YS')trace.push({t:ev.t,c:cur});}
+    const dtF=Math.max(0,mHrs-prev);
+    if(dtF>0){
+      tp+=cur*dtF;
+      if(yearSnaps&&yearSnaps.length){const yr=Math.max(1,Math.min(yearSnaps[yearSnaps.length-1],Math.floor(prev/8760)+1));if(ann[yr]!==undefined)ann[yr]+=cur*dtF;}
+      units.forEach((_,gi)=>{if(on[gi]>0)uu[gi]+=dtF;});}
+    return{tp,ann,uu:uu.map(v=>v/mHrs),trace};}
+
+  async function runMC(cfg,nRuns,seed,onProg){
+    const rng=lcg(seed||42),res=[],conv=[];let cumTP=0;
+    const CHK=50;
+    for(let i=0;i<nRuns;i+=CHK){await new Promise(r=>setTimeout(r,0));
+      const end=Math.min(i+CHK,nRuns);
+      for(let j=i;j<end;j++){const r=simOnce(cfg,rng,false);res.push(r);
+        cumTP+=r.tp;
+        if((j+1)%50===0||j===nRuns-1)conv.push({run:j+1,avg:cumTP/(j+1)/1e9});}
+      if(onProg)onProg(Math.round(end/nRuns*100));}
+    const n=res.length,avg=a=>a.reduce((s,v)=>s+v,0)/n;
+    const tps=res.map(r=>r.tp/1e9).sort((a,b)=>a-b);
+    const avgTP=avg(tps);
+    
+    const annStats=cfg.yearSnaps.map(yr=>{
+      const vals=res.map(r=>(r.ann[yr]||0)/1e9).sort((a,b)=>a-b);
+      return{yr,mean:avg(vals),p10:vals[Math.floor(n*.10)],p90:vals[Math.floor(n*.90)],p50:vals[Math.floor(n*.50)]};});
+    
+    const medIdx=res.reduce((mi,r,i)=>Math.abs(r.tp/1e9-avgTP)<Math.abs(res[mi].tp/1e9-avgTP)?i:mi,0);
+    const traceRng=lcg((seed||42)+medIdx*997+3);
+    const traceRun=simOnce({...cfg,mHrs:8760,yearSnaps:[1]},traceRng,true);
+    const uMeans=cfg.units.map((_,gi)=>avg(res.map(r=>r.uu[gi]))*100);
+    
+    const sens=[];
+    for(let ui=0;ui<cfg.units.length;ui++){
+      const cfgM={...cfg,units:cfg.units.map((u,i)=>i===ui?{...u,mtbf:u.mtbf*.8}:u)};
+      const rng2=lcg((seed||42)+ui*8881);let sTP=0;
+      for(let k=0;k<200;k++)sTP+=simOnce(cfgM,rng2,false).tp;
+      const modTP=sTP/200/1e9;
+      sens.push({label:cfg.units[ui].label,base:avgTP,mod:modTP,delta:modTP-avgTP,pct:(modTP-avgTP)/avgTP*100});}
+    return{n,avgTP,annualAvg:avgTP/(cfg.mHrs/8760),
+      p10:tps[Math.floor(n*.10)],p50:tps[Math.floor(n*.50)],p90:tps[Math.floor(n*.90)],
+      annStats,uMeans,conv,sens,trace:traceRun.trace};}
+
+  function pCDF(k,lam){let s=0;for(let i=0;i<=k;i++){let t=Math.exp(-lam);for(let j=1;j<=i;j++)t*=lam/j;s+=t;}return s;}
+
+  return{fitAll,bLife,MR,fmt,diagBeta,runMC,pCDF,nCDF,nPDF}; })();
+

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<!--
+  ReliToolbox v0.1 | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RBD 可靠性框图 v2 - ReliToolbox</title>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+<style>
+body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0}
+header{background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:16px}
+h1{margin:0;font-size:20px}.sub{font-size:11px;opacity:0.85;margin-top:3px}
+.container{max-width:1000px;margin:0 auto;padding:10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px}
+.title{font-size:13px;font-weight:700;margin-bottom:8px}
+button{padding:7px 13px;border-radius:18px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:12px;font-weight:600;margin:2px}
+button.pri{background:#0d9488;color:#fff;border:none}
+button.danger{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+button:disabled{opacity:0.5;cursor:not-allowed}
+input,select{padding:6px 9px;border-radius:7px;border:1px solid var(--border);font-size:12px;width:80px}
+label{font-size:11px;color:var(--sec);margin-right:4px}
+#cy{width:100%;height:420px;background:#fafafa;border:1px solid var(--border);border-radius:10px}
+.toolbar{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;align-items:center}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px;text-align:center;border-top:3px solid #0d9488}
+.kpi-l{font-size:9px;color:var(--sec);font-weight:600}
+.kpi-v{font-size:16px;font-weight:700;font-family:monospace;margin-top:2px}
+.ok{color:#059669}.warn{color:#d97706}.dc{color:#dc2626}
+small{color:var(--sec);font-size:11px;line-height:1.5}
+.tip{background:#f0fdfa;border-left:3px solid #0d9488;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:10px;line-height:1.6}
+#selInfo{background:var(--card)beb;border:1px solid #fed7aa;border-radius:8px;padding:8px;margin-top:8px;font-size:11px;display:none}
+#selInfo.active{display:block}
+.savedList{max-height:150px;overflow-y:auto;font-size:11px}
+.savedItem{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid var(--border)}
+.savedItem:hover{background:#f0fdfa}
+.badge{display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;margin-left:4px}
+.b-exact{background:#dcfce7;color:#059669}
+.b-approx{background:#fef3c7;color:#d97706}
+</style><link rel="stylesheet" href="../shared/style.css">
+<script>
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+if(typeof window!=='undefined')window._rtv='0.1';})();
+</script>
+</head><body>
+<header><div class="container"><h1>🔗 RBD 可靠性框图 v2</h1>
+<div class="sub">Cytoscape.js · 最小路径集 · 精确容斥算法 · IndexedDB 持久化</div><div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div></header>
+
+<div class="container">
+
+<div class="tip">
+<b>v2 新特性</b>: ① <b>精确算法</b> — 共享节点的桥式结构不再高估 ② <b>IndexedDB 保存</b> — 模型可持久化/加载/删除 ③ <b>导入导出 JSON</b>
+</div>
+
+<div class="card"><div class="title">画布</div>
+<div class="toolbar">
+<button class="pri" onclick="addBasic()">+ 基础块</button>
+<button onclick="addParallel()">+ 并联</button>
+<button onclick="addKofN()">+ k/n</button>
+<button id="linkBtn" onclick="toggleLink()">🔗 连线</button>
+<button class="danger" onclick="delSelected()">× 删除</button>
+<button onclick="demoSeries()">示例:串联</button>
+<button onclick="demoBridge()">示例:桥式</button>
+<button onclick="clearAll()">清空</button>
+</div>
+<div id="cy"></div>
+<div id="selInfo"></div>
+</div>
+
+<div class="card"><div class="title">计算</div>
+<label>t(hrs):</label><input type="number" id="tMiss" value="8760">
+<button class="pri" onclick="solve()">▶ 精确计算</button>
+<span id="err" style="color:#dc2626;font-size:11px;margin-left:8px"></span>
+</div>
+
+<div id="results" style="display:none">
+<div class="kpi" id="kpis"></div>
+<div class="card"><div class="title">最小路径集 (Minimal Path Sets)</div>
+<div id="mps" style="font-family:monospace;font-size:11px"></div>
+</div>
+</div>
+
+<div class="card"><div class="title">💾 模型持久化 (IndexedDB)</div>
+<label>模型名:</label><input type="text" id="modelName" value="RBD_Model_1" style="width:150px">
+<button class="pri" onclick="saveModel()">保存</button>
+<button onclick="loadList()">刷新列表</button>
+<button onclick="exportJSON()">导出 JSON</button>
+<button onclick="document.getElementById('importFile').click()">导入 JSON</button>
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+<div id="savedList" class="savedList" style="margin-top:8px"></div>
+<small id="dbStatus">IndexedDB: 未初始化</small>
+</div>
+
+</div>
+
+<script>
+
+const DB_NAME='ReliToolbox', DB_VER=1, STORE='rbd_models';
+function dbOpen(){
+ return new Promise((res,rej)=>{
+ const req = indexedDB.open(DB_NAME, DB_VER);
+ req.onupgradeneeded = e=>{
+ const db = e.target.result;
+ if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE,{keyPath:'id'});
+ 
+ ['equipments','failures','fmea','weibull_results','fta_models','rbi_assessments'].forEach(s=>{
+ if(!db.objectStoreNames.contains(s)) db.createObjectStore(s,{keyPath:'id'});
+ });
+ };
+ req.onsuccess = ()=>res(req.result);
+ req.onerror = ()=>rej(req.error);
+ });
+}
+async function dbPut(obj){
+ const db = await dbOpen();
+ return new Promise((res,rej)=>{
+ const tx = db.transaction(STORE,'readwrite').objectStore(STORE);
+ const r = tx.put(obj);
+ r.onsuccess = ()=>res(obj);r.onerror = ()=>rej(r.error);
+ });
+}
+async function dbAll(){
+ const db = await dbOpen();
+ return new Promise((res,rej)=>{
+ const r = db.transaction(STORE).objectStore(STORE).getAll();
+ r.onsuccess = ()=>res(r.result||[]);r.onerror = ()=>rej(r.error);
+ });
+}
+async function dbGet(id){
+ const db = await dbOpen();
+ return new Promise((res,rej)=>{
+ const r = db.transaction(STORE).objectStore(STORE).get(id);
+ r.onsuccess = ()=>res(r.result);r.onerror = ()=>rej(r.error);
+ });
+}
+async function dbDel(id){
+ const db = await dbOpen();
+ return new Promise((res,rej)=>{
+ const r = db.transaction(STORE,'readwrite').objectStore(STORE).delete(id);
+ r.onsuccess = ()=>res(true);r.onerror = ()=>rej(r.error);
+ });
+}
+
+let cy, nodeCounter=0, linkMode=false, linkSource=null;
+function newId(){return 'n'+(++nodeCounter);}
+
+function initCy(){
+ cy = cytoscape({
+ container: document.getElementById('cy'),
+ elements: [
+ {data:{id:'START',label:'START',type:'start'}},
+ {data:{id:'END',label:'END',type:'end'}},
+ ],
+ style: [
+ {selector:'node',style:{'label':'data(label)','text-valign':'center','text-halign':'center','font-size':'10px','font-weight':'bold','width':70,'height':40,'background-color':'#fff','border-width':2,'border-color':'#0d9488','shape':'round-rectangle','color':'#1f2937'}},
+ {selector:'node[type="start"]',style:{'background-color':'#dcfce7','border-color':'#16a34a'}},
+ {selector:'node[type="end"]',style:{'background-color':'#fef2f2','border-color':'#dc2626'}},
+ {selector:'node[type="parallel"]',style:{'background-color':'#fffbeb','border-color':'#f59e0b','shape':'hexagon','width':80,'height':50}},
+ {selector:'node[type="kofn"]',style:{'background-color':'#ede9fe','border-color':'#8b5cf6','shape':'hexagon','width':80,'height':50}},
+ {selector:'node:selected',style:{'border-width':4,'border-color':'#f97316'}},
+ {selector:'edge',style:{'width':2.5,'line-color':'#94a3b8','target-arrow-color':'#94a3b8','target-arrow-shape':'triangle','curve-style':'bezier'}},
+ {selector:'edge:selected',style:{'line-color':'#f97316','target-arrow-color':'#f97316','width':4}},
+ ],
+ layout:{name:'preset'},
+ });
+ cy.getElementById('START').position({x:80,y:210});
+ cy.getElementById('END').position({x:880,y:210});
+ cy.on('tap','node',(e)=>{
+ const n = e.target;
+ if(linkMode){
+ if(!linkSource){linkSource=n;}
+ else{if(linkSource.id()!==n.id())cy.add({data:{id:'e'+Date.now()+Math.random(),source:linkSource.id(),target:n.id()}});linkSource=null;toggleLink();}
+ return;
+ }
+ showNodeInfo(n);
+ });
+ cy.on('tap',e=>{if(e.target===cy)document.getElementById('selInfo').classList.remove('active');});
+}
+
+function addBasic(){cy.add({data:{id:newId(),label:'B'+nodeCounter,type:'basic',lam:0.00005},position:{x:200+Math.random()*500,y:150+Math.random()*120}});}
+function addParallel(){cy.add({data:{id:newId(),label:'P'+nodeCounter,type:'parallel',n:2,lam:0.0001},position:{x:300+Math.random()*400,y:180+Math.random()*100}});}
+function addKofN(){cy.add({data:{id:newId(),label:'K'+nodeCounter,type:'kofn',n:3,k:2,lam:0.0001},position:{x:400+Math.random()*350,y:200+Math.random()*100}});}
+function toggleLink(){linkMode=!linkMode;document.getElementById('linkBtn').classList.toggle('pri',linkMode);document.getElementById('linkBtn').textContent=linkMode?'🔗 连线中':'🔗 连线';if(!linkMode)linkSource=null;}
+function delSelected(){cy.$(':selected').forEach(el=>{if(el.id()!=='START'&&el.id()!=='END')cy.remove(el);});}
+function clearAll(){if(confirm('清空画布？'))cy.elements().filter(el=>el.id()!=='START'&&el.id()!=='END').remove();nodeCounter=0;}
+
+function showNodeInfo(n){
+ const d = n.data();
+ const box = document.getElementById('selInfo');
+ box.classList.add('active');
+ if(d.type==='start'||d.type==='end'){box.innerHTML='<b>'+d.label+'</b> (边界节点)';return;}
+ let h = '<b>'+d.label+'</b> ['+d.type+'] ';
+ h += '<label>λ:</label><input type="number" step="0.00001" value="'+d.lam+'" onchange="updNode(\''+d.id+'\',\'lam\',this.value)">';
+ if(d.type==='parallel'||d.type==='kofn'){h+=' <label>n:</label><input type="number" value="'+d.n+'" onchange="updNode(\''+d.id+'\',\'n\',this.value)">';}
+ if(d.type==='kofn'){h+=' <label>k:</label><input type="number" value="'+d.k+'" onchange="updNode(\''+d.id+'\',\'k\',this.value)">';}
+ h += ' <label>名:</label><input type="text" value="'+d.label+'" onchange="updNode(\''+d.id+'\',\'label\',this.value)">';
+ box.innerHTML = h;
+}
+function updNode(id,f,v){const n=cy.getElementById(id);n.data(f,f==='label'?v:Number(v));showNodeInfo(n);}
+
+function binom(n,k){if(k<0||k>n)return 0;if(k===0||k===n)return 1;let r=1;for(let i=0;i<k;i++)r=r*(n-i)/(i+1);return r;}
+function kOfN(k,n,p){let s=0;for(let i=k;i<=n;i++)s+=binom(n,i)*Math.pow(p,i)*Math.pow(1-p,n-i);return s;}
+function nodeR(d,t){
+ if(d.type==='start'||d.type==='end')return 1;
+ const r = Math.exp(-Math.max(d.lam||1e-6,1e-12)*t);
+ if(d.type==='basic')return r;
+ if(d.type==='parallel')return 1-Math.pow(1-r,d.n||2);
+ if(d.type==='kofn')return kOfN(d.k||1,d.n||2,r);
+ return r;
+}
+
+function findPaths(){
+ const adj={};
+ cy.nodes().forEach(n=>adj[n.id()]=[]);
+ cy.edges().forEach(e=>adj[e.source().id()].push(e.target().id()));
+ const paths=[];
+ function dfs(cur,path,vis){
+ if(cur==='END'){paths.push([...path]);return;}
+ for(const nx of adj[cur]||[]){
+ if(vis.has(nx))continue;
+ vis.add(nx);path.push(nx);
+ dfs(nx,path,vis);
+ path.pop();vis.delete(nx);
+ }
+ }
+ dfs('START',['START'],new Set(['START']));
+ return paths;
+}
+
+function minimalPathSets(paths){
+ const sets = paths.map(p=>p.filter(n=>n!=='START'&&n!=='END'));
+ const uniq=[],seen=new Set();
+ for(const s of sets){const k=[...s].sort().join('|');if(!seen.has(k)){seen.add(k);uniq.push(s);}}
+ return uniq.filter(P=>!uniq.some(Q=>Q!==P&&Q.length<P.length&&Q.every(x=>P.includes(x))));
+}
+
+function solveExact(mps, Rmap){
+ const N = mps.length;
+ if(N===0) return {R:0, method:'none'};
+ if(N > 18) return null; 
+ let total = 0;
+ for(let mask=1; mask<(1<<N); mask++){
+ const union = new Set();
+ let bits = 0;
+ for(let i=0;i<N;i++){
+ if(mask&(1<<i)){mps[i].forEach(n=>union.add(n));bits++;}
+ }
+ let p = 1;
+ union.forEach(n=>p*=(Rmap[n]||0));
+ total += (bits%2===1?1:-1)*p;
+ }
+ return {R:Math.max(0,Math.min(1,total)), method:'exact'};
+}
+
+function solve(){
+ document.getElementById('err').textContent='';
+ try{
+ const t = Number(document.getElementById('tMiss').value);
+ const paths = findPaths();
+ if(!paths.length) throw new Error('无 START→END 路径');
+ const mps = minimalPathSets(paths);
+ 
+ const Rmap = {};
+ cy.nodes().forEach(n=>{const d=n.data();if(d.type!=='start'&&d.type!=='end')Rmap[n.id()]=nodeR(d,t);});
+ const result = solveExact(mps, Rmap);
+ let sysR, method, warn='';
+ if(!result){
+ 
+ const pathProbs = mps.map(p=>p.reduce((a,n)=>a*(Rmap[n]||0),1));
+ sysR = 1 - pathProbs.reduce((a,p)=>a*(1-p),1);
+ method = 'approx';
+ warn = '⚠ 路径数 >18，回退到独立近似（可能高估）';
+ } else {
+ sysR = result.R;
+ method = result.method;
+ }
+ const badge = method==='exact'?'<span class="badge b-exact">精确</span>':'<span class="badge b-approx">近似</span>';
+ document.getElementById('kpis').innerHTML = `
+ <div class="kpi-card"><div class="kpi-l">系统 R(t) ${badge}</div><div class="kpi-v ${sysR>=0.95?'ok':sysR>=0.9?'warn':'dc'}">${(sysR*100).toFixed(4)}%</div></div>
+ <div class="kpi-card"><div class="kpi-l">系统 F(t)</div><div class="kpi-v">${((1-sysR)*100).toFixed(4)}%</div></div>
+ <div class="kpi-card"><div class="kpi-l">最小路径集</div><div class="kpi-v">${mps.length}</div></div>
+ <div class="kpi-card"><div class="kpi-l">总路径数</div><div class="kpi-v">${paths.length}</div></div>
+ `;
+ document.getElementById('mps').innerHTML = mps.map((p,i)=>{
+ const pr = p.reduce((a,n)=>a*(Rmap[n]||0),1);
+ const labels = p.map(id=>cy.getElementById(id).data('label')).join(' → ');
+ return `<div style="padding:4px 0;border-bottom:1px solid var(--border)"><b>MPS${i+1}</b> (阶数=${p.length}, P=${(pr*100).toFixed(3)}%): ${labels}</div>`;
+ }).join('') + (warn?`<div style="color:#d97706;margin-top:6px">${warn}</div>`:'');
+ document.getElementById('results').style.display='block';
+ }catch(e){document.getElementById('err').textContent='错误: '+e.message;}
+}
+
+function serialize(){
+ const nodes = cy.nodes().map(n=>({data:n.data(),pos:n.position()}));
+ const edges = cy.edges().map(e=>({data:e.data()}));
+ return {nodes,edges,nodeCounter};
+}
+function deserialize(m){
+ cy.elements().remove();
+ nodeCounter = m.nodeCounter||0;
+ m.nodes.forEach(n=>cy.add({group:'nodes',data:n.data,position:n.pos}));
+ m.edges.forEach(e=>cy.add({group:'edges',data:e.data}));
+}
+
+async function saveModel(){
+ const name = document.getElementById('modelName').value.trim();
+ if(!name) return alert('请输入模型名');
+ try{
+ const obj = {id:'rbd_'+Date.now(),name,model:serialize(),updatedAt:Date.now()};
+ await dbPut(obj);
+ document.getElementById('dbStatus').textContent='✓ 已保存: '+name;
+ loadList();
+ }catch(e){alert('保存失败: '+e.message);}
+}
+async function loadList(){
+ try{
+ const all = await dbAll();
+ const box = document.getElementById('savedList');
+ if(!all.length){box.innerHTML='<small>（暂无保存的模型）</small>';return;}
+ box.innerHTML = all.sort((a,b)=>b.updatedAt-a.updatedAt).map(m=>`
+ <div class="savedItem">
+ <span><b>${m.name}</b> <small>${new Date(m.updatedAt).toLocaleString()}</small></span>
+ <span>
+ <button onclick="loadModel('${m.id}')">加载</button>
+ <button class="danger" onclick="deleteModel('${m.id}')">×</button>
+ </span>
+ </div>`).join('');
+ document.getElementById('dbStatus').textContent='IndexedDB: '+all.length+' 个模型';
+ }catch(e){document.getElementById('dbStatus').textContent='DB错误: '+e.message;}
+}
+async function loadModel(id){
+ try{const m = await dbGet(id);if(m){deserialize(m.model);document.getElementById('modelName').value=m.name;}}
+ catch(e){alert('加载失败: '+e.message);}
+}
+async function deleteModel(id){
+ if(!confirm('确认删除?'))return;
+ try{await dbDel(id);loadList();}catch(e){alert(e.message);}
+}
+function exportJSON(){
+ const blob = new Blob([JSON.stringify(serialize(),null,2)],{type:'application/json'});
+ const a = document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rbd_model.json';a.click();
+}
+function importJSON(e){
+ const f = e.target.files[0];if(!f)return;
+ const r = new FileReader();
+ r.onload = ()=>{try{deserialize(JSON.parse(r.result));}catch(err){alert('导入失败: '+err.message);}};
+ r.readAsText(f);
+}
+
+function demoSeries(){
+ clearAll();
+ const a=newId();cy.add({data:{id:a,label:'A',type:'basic',lam:0.00005},position:{x:250,y:210}});
+ const b=newId();cy.add({data:{id:b,label:'B',type:'kofn',n:3,k:2,lam:0.0001},position:{x:450,y:210}});
+ const c=newId();cy.add({data:{id:c,label:'C',type:'parallel',n:2,lam:0.00008},position:{x:650,y:210}});
+ [['START',a],[a,b],[b,c],[c,'END']].forEach(([s,t])=>cy.add({data:{id:'e'+Math.random(),source:s,target:t}}));
+}
+function demoBridge(){
+
+ clearAll();
+ const x=newId();cy.add({data:{id:x,label:'X(共享)',type:'basic',lam:0.00012},position:{x:300,y:210}});
+ const a=newId();cy.add({data:{id:a,label:'A',type:'basic',lam:0.00012},position:{x:550,y:140}});
+ const b=newId();cy.add({data:{id:b,label:'B',type:'basic',lam:0.00012},position:{x:550,y:280}});
+ [['START',x],[x,a],[x,b],[a,'END'],[b,'END']].forEach(([s,t])=>cy.add({data:{id:'e'+Math.random(),source:s,target:t}}));
+}
+
+initCy();
+setTimeout(()=>{demoBridge();loadList();},200);
+</script>
+// ── Lang toggle ──
+(function(){
+  var _l = localStorage.getItem('rtLang') || 'zh';
+  function applyLang(l){
+    _l = l; localStorage.setItem('rtLang', l);
+    document.querySelectorAll('[data-zh]').forEach(function(el){
+      el.textContent = l==='zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+    });
+    var zh=document.getElementById('_lbZh'), en=document.getElementById('_lbEn');
+    if(zh){zh.classList.toggle('on', l==='zh'); en.classList.toggle('on', l==='en');}
+  }
+  window.setLang = applyLang;
+  document.addEventListener('DOMContentLoaded', function(){ applyLang(_l); });
+})();
+
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a>
+  </div>
+</footer>
+</body></html>

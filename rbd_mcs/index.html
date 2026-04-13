@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<!--
+  ReliToolbox v0.1 | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RBD 最小割集分析 — ReliToolbox v0.1</title>
+<style>
+body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0}
+header{background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:16px}
+h1{margin:0;font-size:20px}.sub{font-size:11px;opacity:0.85;margin-top:3px}
+.container{max-width:900px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.title{font-size:13px;font-weight:700;margin-bottom:8px}
+button{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:12px;font-weight:600}
+button.pri{background:#0d9488;color:#fff;border:none}
+textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);font-size:11px;font-family:monospace;box-sizing:border-box;line-height:1.4}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;border-top:3px solid #dc2626}
+.kpi-l{font-size:10px;color:var(--sec);font-weight:600}.kpi-v{font-size:17px;font-weight:700;font-family:monospace;margin-top:2px}
+small{color:var(--sec);font-size:11px;line-height:1.6}
+.mcs-item{padding:7px 10px;border-bottom:1px solid var(--border);font-family:monospace;font-size:11px}
+.mcs-item:hover{background:#f0fdfa}
+.order-1{background:#fef2f2;border-left:3px solid #dc2626}
+.order-2{background:var(--card)beb;border-left:3px solid #d97706}
+.order-3{background:#f0fdfa;border-left:3px solid #0d9488}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px}
+</style><link rel="stylesheet" href="../shared/style.css">
+<script>
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+if(typeof window!=='undefined')window._rtv='0.1';})();
+</script>
+</head><body>
+<header><div class="container"><h1>🔻 RBD 最小割集分析</h1>
+<div class="sub">Minimal Cut Sets · 识别系统"阿喀琉斯之踵" · 补充 RBD v2</div></div>
+<div style="margin-top:8px"><a href="../index.html" style="color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.3)">← ReliToolbox 主页</a><div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div>
+</header>
+
+<div class="container">
+
+<div class="card"><div class="title">输入 RBD 模型 JSON</div>
+<small>从 <b>RBD v2</b> 模块点"导出 JSON"得到文件，将其内容粘贴到此处（或点"载入桥式示例"直接体验）。</small>
+<textarea id="input" rows="8" style="margin-top:8px" placeholder='{"nodes":[...],"edges":[...]}'></textarea>
+<div style="margin-top:8px">
+<button class="pri" onclick="analyze()">▶ 分析最小割集</button>
+<button onclick="loadBridge()">载入桥式示例</button>
+<button onclick="loadFromDB()">从 IndexedDB 加载</button>
+</div>
+<div id="err" style="color:#dc2626;font-size:11px;margin-top:8px"></div>
+</div>
+
+<div id="results" style="display:none">
+<div class="kpi" id="kpis"></div>
+
+<div class="card"><div class="title">最小割集列表 (按阶数排序)</div>
+<small>阶数 = 同时失效即可导致系统失效的最少节点数。<b>阶数越小=风险越高</b>。1 阶 = 单点失效（最危险）。</small>
+<div id="mcsList" style="margin-top:8px"></div>
+</div>
+
+<div class="card"><div class="title">薄弱点分析</div>
+<div id="weak"></div>
+</div>
+
+<div class="card"><div class="title">建议改进措施</div>
+<div id="recommend" style="font-size:12px;line-height:1.8"></div>
+</div>
+</div>
+
+</div>
+
+<script>
+
+function isConnected(nodes,edges,excluded){
+ const adj={}; nodes.forEach(n=>{if(!excluded.has(n))adj[n]=[];});
+ edges.forEach(([s,t])=>{if(!excluded.has(s)&&!excluded.has(t))adj[s]?.push(t);});
+ let found=false;
+ const vis=new Set(['START']);
+ (function dfs(cur){
+ if(found)return;
+ if(cur==='END'){found=true;return;}
+ for(const nx of adj[cur]||[]){if(vis.has(nx))continue;vis.add(nx);dfs(nx);if(found)return;}
+ })('START');
+ return found;
+}
+
+function findMCS(nodes,edges){
+ const basic = nodes.filter(n=>n!=='START'&&n!=='END');
+ const N = basic.length;
+ if(N===0) throw new Error('无基础节点');
+ if(N>18) throw new Error('节点数 '+N+' > 18，组合爆炸，请拆分系统');
+ const cuts=[];
+ 
+ for(let size=1; size<=N; size++){
+ const combos = combinations(basic,size);
+ for(const combo of combos){
+ const set = new Set(combo);
+ 
+ if(cuts.some(C=>C.every(x=>set.has(x))))continue;
+ if(!isConnected(nodes,edges,set)) cuts.push(combo);
+ }
+ }
+ return cuts;
+}
+
+function combinations(arr,k){
+ const res=[];
+ function pick(start,cur){
+ if(cur.length===k){res.push([...cur]);return;}
+ for(let i=start;i<arr.length;i++){cur.push(arr[i]);pick(i+1,cur);cur.pop();}
+ }
+ pick(0,[]);
+ return res;
+}
+
+function binom(n,k){if(k<0||k>n)return 0;if(k===0||k===n)return 1;let r=1;for(let i=0;i<k;i++)r=r*(n-i)/(i+1);return r;}
+function kOfN(k,n,p){let s=0;for(let i=k;i<=n;i++)s+=binom(n,i)*Math.pow(p,i)*Math.pow(1-p,n-i);return s;}
+function nodeR(d,t){
+ if(!d.type||d.type==='start'||d.type==='end')return 1;
+ const r=Math.exp(-Math.max(d.lam||1e-6,1e-12)*t);
+ if(d.type==='basic')return r;
+ if(d.type==='parallel')return 1-Math.pow(1-r,d.n||2);
+ if(d.type==='kofn')return kOfN(d.k||1,d.n||2,r);
+ return r;
+}
+
+function analyze(){
+ document.getElementById('err').textContent='';
+ try{
+ const model = JSON.parse(document.getElementById('input').value);
+ if(!model.nodes||!model.edges) throw new Error('JSON 格式错误: 缺少 nodes 或 edges');
+ 
+ const nodeMap = {};
+ model.nodes.forEach(n=>{nodeMap[n.data.id]=n.data;});
+ const nodeIds = model.nodes.map(n=>n.data.id);
+ const edges = model.edges.map(e=>[e.data.source,e.data.target]);
+ if(!nodeIds.includes('START')||!nodeIds.includes('END'))throw new Error('必须有 START 和 END 节点');
+ 
+ const mcs = findMCS(nodeIds,edges);
+ if(!mcs.length) throw new Error('未找到最小割集（系统可能已断路）');
+
+ const t = 8760;
+ const Rmap={}; nodeIds.forEach(id=>Rmap[id]=nodeR(nodeMap[id],t));
+ const mcsWithP = mcs.map(c=>{
+ const labels = c.map(id=>nodeMap[id]?.label||id);
+ 
+ const failProb = c.reduce((a,id)=>a*(1-(Rmap[id]||0)),1);
+ return {nodes:c,labels,order:c.length,failProb};
+ }).sort((a,b)=>a.order-b.order||b.failProb-a.failProb);
+ 
+ const order1 = mcsWithP.filter(m=>m.order===1);
+ const order2 = mcsWithP.filter(m=>m.order===2);
+ const order3Plus = mcsWithP.filter(m=>m.order>=3);
+
+ document.getElementById('kpis').innerHTML = `
+ <div class="kpi-card" style="border-top-color:${order1.length?'#dc2626':'#059669'}"><div class="kpi-l">单点失效 (1阶)</div><div class="kpi-v" style="color:${order1.length?'#dc2626':'#059669'}">${order1.length}</div></div>
+ <div class="kpi-card" style="border-top-color:#d97706"><div class="kpi-l">双点失效 (2阶)</div><div class="kpi-v">${order2.length}</div></div>
+ <div class="kpi-card" style="border-top-color:#0d9488"><div class="kpi-l">高阶 (≥3)</div><div class="kpi-v">${order3Plus.length}</div></div>
+ <div class="kpi-card" style="border-top-color:var(--sec)"><div class="kpi-l">总割集数</div><div class="kpi-v">${mcs.length}</div></div>
+ `;
+
+ document.getElementById('mcsList').innerHTML = mcsWithP.map((m,i)=>{
+ const cls = m.order===1?'order-1':m.order===2?'order-2':'order-3';
+ const tag = m.order===1?'<span class="badge" style="background:#fef2f2;color:#dc2626">单点</span>':m.order===2?'<span class="badge" style="background:var(--card)beb;color:#d97706">双点</span>':'';
+ return `<div class="mcs-item ${cls}"><b>MCS${i+1}</b> (阶数=${m.order})${tag}<br>节点: {${m.labels.join(' ∩ ')}}<br>失效概率: ${m.failProb.toExponential(3)}</div>`;
+ }).join('');
+
+ const nodeCount = {};
+ mcsWithP.forEach(m=>m.nodes.forEach(n=>nodeCount[n]=(nodeCount[n]||0)+1));
+ const ranked = Object.entries(nodeCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+ document.getElementById('weak').innerHTML = '<small>出现在最多割集中的节点 = 系统薄弱点</small>'+
+ ranked.map(([id,cnt])=>{
+ const label=nodeMap[id]?.label||id;
+ const pct=(cnt/mcs.length*100).toFixed(0);
+ return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px"><b style="min-width:80px">${label}</b><div style="flex:1;height:14px;background:var(--hover);border-radius:3px;position:relative"><div style="background:#dc2626;height:100%;width:${pct}%;border-radius:3px"></div></div><span style="font-family:monospace;min-width:70px">${cnt}/${mcs.length} (${pct}%)</span></div>`;
+ }).join('');
+
+ const recs=[];
+ if(order1.length){
+ recs.push(`🔴 <b>紧急</b>: 发现 ${order1.length} 个单点失效 — 这些节点一旦失效系统立即失效，必须增加冗余 (并联/k-of-n)。`);
+ order1.forEach(m=>recs.push(`　　• 节点 <b>${m.labels[0]}</b> → 建议改为 2-out-of-2 并联或 2-out-of-3 表决`));
+ }
+ if(order2.length>5) recs.push(`🟠 双点失效组合较多 (${order2.length} 个)，建议审查共模失效 (CCF): 同一供应商/同一电源/同一控制系统的节点易同时失效。`);
+ if(ranked[0]&&ranked[0][1]>mcs.length*0.5) recs.push(`🟠 节点 <b>${nodeMap[ranked[0][0]]?.label}</b> 出现在 ${ranked[0][1]}/${mcs.length} 割集中，是最关键瓶颈 — 应优先提升其可靠性或冗余度。`);
+ if(!order1.length&&order2.length<3) recs.push(`🟢 系统结构良好：无单点失效，双点失效数量少。继续维持现有冗余策略。`);
+ document.getElementById('recommend').innerHTML = recs.join('<br><br>');
+ 
+ document.getElementById('results').style.display='block';
+ }catch(e){document.getElementById('err').textContent='错误: '+e.message;}
+}
+
+function loadBridge(){
+ 
+ const model={
+ nodes:[
+ {data:{id:'START',label:'START',type:'start'},pos:{x:80,y:210}},
+ {data:{id:'END',label:'END',type:'end'},pos:{x:820,y:210}},
+ {data:{id:'A',label:'A',type:'basic',lam:0.0001},pos:{x:260,y:140}},
+ {data:{id:'B',label:'B',type:'basic',lam:0.0001},pos:{x:260,y:280}},
+ {data:{id:'C',label:'C',type:'basic',lam:0.0001},pos:{x:600,y:140}},
+ {data:{id:'D',label:'D',type:'basic',lam:0.0001},pos:{x:600,y:280}},
+ {data:{id:'E',label:'E(桥)',type:'basic',lam:0.00005},pos:{x:430,y:210}},
+ ],
+ edges:[
+ {data:{id:'e1',source:'START',target:'A'}},{data:{id:'e2',source:'START',target:'B'}},
+ {data:{id:'e3',source:'A',target:'C'}},{data:{id:'e4',source:'A',target:'E'}},
+ {data:{id:'e5',source:'B',target:'D'}},{data:{id:'e6',source:'B',target:'E'}},
+ {data:{id:'e7',source:'E',target:'C'}},{data:{id:'e8',source:'E',target:'D'}},
+ {data:{id:'e9',source:'C',target:'END'}},{data:{id:'e10',source:'D',target:'END'}},
+ ]
+ };
+ document.getElementById('input').value = JSON.stringify(model,null,2);
+}
+
+async function loadFromDB(){
+ try{
+ const db = await new Promise((res,rej)=>{const r=indexedDB.open('ReliToolbox',1);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+ if(!db.objectStoreNames.contains('rbd_models')){alert('未找到 rbd_models 表，请先在 RBD v2 保存模型');return;}
+ const all = await new Promise((res,rej)=>{const r=db.transaction('rbd_models').objectStore('rbd_models').getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});
+ if(!all.length){alert('数据库中无模型');return;}
+ const name = prompt('选择模型 (共 '+all.length+' 个):\n'+all.map((m,i)=>i+': '+m.name).join('\n'),'0');
+ const idx = +name;
+ if(!isNaN(idx)&&all[idx]){
+ document.getElementById('input').value = JSON.stringify(all[idx].model,null,2);
+ }
+ }catch(e){alert('加载失败: '+e.message);}
+}
+
+loadBridge();
+</script>
+// ── Lang toggle ──
+(function(){
+  var _l = localStorage.getItem('rtLang') || 'zh';
+  function applyLang(l){
+    _l = l; localStorage.setItem('rtLang', l);
+    document.querySelectorAll('[data-zh]').forEach(function(el){
+      el.textContent = l==='zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+    });
+    var zh=document.getElementById('_lbZh'), en=document.getElementById('_lbEn');
+    if(zh){zh.classList.toggle('on', l==='zh'); en.classList.toggle('on', l==='en');}
+  }
+  window.setLang = applyLang;
+  document.addEventListener('DOMContentLoaded', function(){ applyLang(_l); });
+})();
+
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a>
+  </div>
+</footer>
+</body></html>
