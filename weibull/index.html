@@ -17,8 +17,6 @@
 (function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
-<script src="../shared/math.js"></script>
-<script src="../db/relidb.js"></script>
 </head>
 <body data-module="Weibull">
 <header class="hdr" id="hdr">
@@ -49,6 +47,8 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 </div>
 <div class="ctn" id="app"></div>
 
+<script src="../shared/math.js"></script>
+<script src="../db/relidb.js"></script>
 <script>
 
 let LANG = 'zh';
@@ -834,16 +834,8 @@ function exportWBCSV(){if(!WB.res)return;
 <script>
 
 (function(){
- function tryInit(){
-  if(typeof RM==='undefined'){
-   document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Loading math library...</p>';
-   setTimeout(tryInit,100);
-   return;
-  }
-  if(typeof renderWB==='function') renderWB();
-  else document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Module load error: renderWB not found</p>';
- }
- tryInit();
+ if(typeof renderWB==='function') renderWB();
+ else document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Module load error: renderWB not found</p>';
 
  const obs=new MutationObserver(()=>{
  if(typeof drawRAMCharts==='function'&&document.getElementById('rmAnn')&&RAM&&RAM.res)drawRAMCharts();
