@@ -17,6 +17,8 @@
 (function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
+<script src="../shared/math.js"></script>
+<script src="../db/relidb.js"></script>
 </head>
 <body data-module="Weibull">
 <header class="hdr" id="hdr">
@@ -47,8 +49,6 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 </div>
 <div class="ctn" id="app"></div>
 
-<script src="../shared/math.js"></script>
-<script src="../db/relidb.js"></script>
 <script>
 
 let LANG = 'zh';
@@ -286,6 +286,16 @@ function loadWBEx(k){WB.rawData=WBEx[k].d;WB.rawCens=WBEx[k].c;WB.name=WBEx[k].n
 let _dbInited = false;
 async function initDBLoad(){
   if(_dbInited) return;
+  if(typeof ReliDB==='undefined'){
+    const el=document.getElementById('dbLoadStatus');
+    if(el) el.textContent='数据库模块加载中...';
+    await new Promise(r=>setTimeout(r,200));
+    if(typeof ReliDB==='undefined'){
+      const el2=document.getElementById('dbLoadStatus');
+      if(el2) el2.textContent='数据库模块未加载，设备选择不可用';
+      return;
+    }
+  }
   _dbInited = true;
   await populateEquipSelect();
   // Check if redirected from equipment module
@@ -317,29 +327,36 @@ async function populateEquipSelect(){
 }
 
 async function loadFromDB(){
+  if(typeof ReliDB==='undefined'){
+    const infoEl=document.getElementById('dbLoadInfo');
+    if(infoEl) infoEl.textContent='数据库模块未加载';
+    return;
+  }
   const sel=document.getElementById('dbEquipSel');
   const infoEl=document.getElementById('dbLoadInfo');
-  if(!sel||!sel.value){toast&&toast('请先选择设备');return;}
+  if(!sel||!sel.value){if(typeof toast==='function')toast('请先选择设备');return;}
   const equipId=sel.value;
   try{
     const fails=await ReliDB.getFailuresByEquip(equipId);
     if(!fails.length){
-      infoEl.textContent='⚠️ 该设备暂无故障记录，请先在 Equipment 模块录入';
+      if(infoEl) infoEl.textContent='该设备暂无故障记录，请先在 Equipment 模块录入';
       return;
     }
-    // Sort by date
     fails.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-    const ttfs=fails.map(f=>f.ttf).filter(v=>v>0);
-    const cens=fails.map(f=>f.censored||0);
+    const validFails=fails.filter(f=>f.ttf>0);
+    if(!validFails.length){
+      if(infoEl) infoEl.textContent='该设备故障记录中没有有效的 TTF 数据';
+      return;
+    }
+    const ttfs=validFails.map(f=>f.ttf);
+    const cens=validFails.map(f=>f.censored||0);
     const eq=(await ReliDB.all('equipments')).find(e=>e.id===equipId);
-    // Fill weibull input fields
     WB.rawData=ttfs.join('\n');
     WB.rawCens=cens.join('\n');
     WB.name=(eq?eq.tag+' '+eq.name:'Equipment')+' [DB]';
     WB.unit='hrs';
     WB.chartTab=0;
     renderWB();
-    // After render, fill the textarea values
     setTimeout(()=>{
       const ta=document.getElementById('wData');
       const tc=document.getElementById('wCens');
@@ -348,7 +365,7 @@ async function loadFromDB(){
       if(tc) tc.value=cens.join('\n');
       if(tn) tn.value=WB.name;
     },50);
-    if(infoEl) infoEl.textContent=`✅ 已加载 ${fails.length} 条记录（${ttfs.length} 失效, ${cens.filter(v=>v).length} 截尾）。请确认后点击「执行Weibull分析」`;
+    if(infoEl) infoEl.textContent='已加载 '+validFails.length+' 条记录（'+ttfs.length+' 失效, '+cens.filter(v=>v).length+' 截尾）。请确认后点击「执行Weibull分析」';
   }catch(e){
     if(infoEl) infoEl.textContent='加载失败: '+e.message;
   }
@@ -817,8 +834,16 @@ function exportWBCSV(){if(!WB.res)return;
 <script>
 
 (function(){
- if(typeof renderWB==='function') renderWB();
- else document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Module load error: renderWB not found</p>';
+ function tryInit(){
+  if(typeof RM==='undefined'){
+   document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Loading math library...</p>';
+   setTimeout(tryInit,100);
+   return;
+  }
+  if(typeof renderWB==='function') renderWB();
+  else document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Module load error: renderWB not found</p>';
+ }
+ tryInit();
 
  const obs=new MutationObserver(()=>{
  if(typeof drawRAMCharts==='function'&&document.getElementById('rmAnn')&&RAM&&RAM.res)drawRAMCharts();
