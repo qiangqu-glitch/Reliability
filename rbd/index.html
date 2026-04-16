@@ -381,7 +381,7 @@ function demoBridge(){
  const x=newId();cy.add({data:{id:x,label:'X(共享)',type:'basic',lam:0.00012},position:{x:300,y:210}});
  const a=newId();cy.add({data:{id:a,label:'A',type:'basic',lam:0.00012},position:{x:550,y:140}});
  const b=newId();cy.add({data:{id:b,label:'B',type:'basic',lam:0.00012},position:{x:550,y:280}});
- [['START',x],[x,a],[x,b],[a,'END'],[b,'END']].forEach(([s,t])=>cy.add({data:{id:'e'+Math.random(),source:s,target:t}}));
+  [['START',x],[x,a],[x,b],[a,'END'],[b,'END'],[a,b]].forEach(([s,t])=>cy.add({data:{id:'e'+Math.random(),source:s,target:t}}));
 }
 
 initCy();
@@ -395,15 +395,16 @@ async function saveSelToLib(){
  let ok=0;
  for(const n of sel){
   const d = n.data();
-  const lam = +d.lam || 0;
-  const mtbf = lam>0 ? 1/lam : 0;
-  try{
-   await ReliDB.put('components', {
-    name: d.label || ('Node-'+d.id),
-    mtbf, mttr: d.mttr||24,
-    n: d.n||1, k: d.k||1, capacity: d.capacity||0,
-    type: d.type, source:'rbd'
-   });
+   const lam = +d.lam || 0;
+   const mtbf = lam>0 ? 1/lam : 0;
+   const mttr = d.mttr || 24;
+   try{
+    await ReliDB.put('components', {
+     name: d.label || ('Node-'+d.id),
+     mtbf, mttr,
+     n: d.n||1, k: d.k||1, capacity: d.capacity||0,
+     type: d.type, source:'rbd'
+    });
    ok++;
   }catch(e){ console.error(e); }
  }

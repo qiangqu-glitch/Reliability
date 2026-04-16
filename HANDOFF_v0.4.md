@@ -83,7 +83,7 @@ Equipment台账（设备信息）
 > 我是屈博士，继续开发 ReliToolbox。
 > 当前版本 v0.4，域名 reliability.chemcalc.cn。
 > 部署：Cloudflare Pages，单文件HTML，无构建链。
-> 共享DB: ReliToolbox IndexedDB VER=2，8张表，db/relidb.js统一管理。
+> 共享DB: ReliToolbox IndexedDB VER=3，9张表(含components组件库)，db/relidb.js统一管理。
 > 数据流已闭合：failures→Weibull→weibull_results→PM优化；RBI→equipment.risk
 > 14个模块，含全局PDF打印支持。
 > 请读 HANDOFF_v0.4.md 了解完整状态。
