@@ -23,13 +23,7 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
     <div class="bc"><a href="../index.html">ReliToolbox</a> › SIL</div>
     <h1>🚨 SIL 安全完整性等级</h1>
     <p class="sub">IEC 61508/61511 PFD/PFH计算 · 冗余架构 · 共因失效</p>
-    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
-      <div class="lb">
-        <button class="lbtn on" onclick="setLang('zh')">中文</button>
-        <button class="lbtn" onclick="setLang('en')">EN</button>
-      </div>
-      <a href="../index.html" class="btn btsm">← 首页</a>
-    </div>
+    <a href="../index.html" class="btn btsm">← 首页</a>
   <div class="lang-bar" style="margin-top:6px">
     <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
     <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
@@ -99,7 +93,7 @@ function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.widt
 
 function drawGrid(c,PAD,minY,maxY,yFmt){
  const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
- x.strokeStyle='rgba(255,255,255,0.05)';x.lineWidth=.5;
+ x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
  [0,.2,.4,.6,.8,1].forEach(v=>{const y=PAD.t+iH*(1-v);
  x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
  x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
@@ -304,5 +298,6 @@ function renderSIL(){
     <a href="https://chemcalc.cn">chemcalc.cn</a>
   </div>
 </footer>
+<script src="../shared/topnav.js"></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
-// ReliToolbox v0.2 (c) reliability.chemcalc.cn
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
 
 
 (function(global){
   const DB_NAME = 'ReliToolbox';
-  const DB_VER  = 2;
+  const DB_VER  = 3;  // v3 adds shared `components` library (RAM ↔ RBD)
   const STORES  = {
     equipments:      { key:'id', indexes:['tag','type'] },
     failures:        { key:'id', indexes:['equipId','date'] },
@@ -13,6 +13,7 @@
     fta_models:      { key:'id', indexes:['name','updatedAt'] },
     rbd_models:      { key:'id', indexes:['name','updatedAt'] },
     rbi_assessments: { key:'id', indexes:['equipId','riskLevel'] },
+    components:      { key:'id', indexes:['name','updatedAt'] },  // {name, mtbf, mttr, n, k, capacity, notes}
   };
 
   let _db = null;

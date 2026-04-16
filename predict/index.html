@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<!--
+  ReliToolbox v0.1 | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+-->
+<html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Predict (MIL-HDBK-217F Parts Count) - ReliToolbox</title>
+<link rel="stylesheet" href="../shared/style.css">
+</head><body data-module="Predict (MIL-217F Parts Count)">
+
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › Predict</div>
+  <h1>🔬 MIL-HDBK-217F Parts Count</h1>
+  <div class="sub" data-zh="零件数法 · 电子系统 MTBF 预测" data-en="Parts Count · Electronic MTBF Prediction">零件数法 · 电子系统 MTBF 预测</div>
+  <div class="lang-bar">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div></header>
+
+<div class="container">
+
+<div class="alert awarn" style="margin-top:12px">
+  <b data-zh="说明：" data-en="Note:">说明：</b>
+  <span data-zh="采用 MIL-HDBK-217FN2 零件数法（Parts Count），基础失效率 λ_g（FIT = 10⁻⁹/h）按类型查表；质量因子 π_Q 和环境因子 π_E 应用到系统级。本模块为工程估算，详细应力分析请用完整 Parts Stress 法。"
+        data-en="Uses MIL-HDBK-217FN2 Parts Count. Base failure rates λ_g (FIT) per type; quality π_Q and environment π_E applied at system level. Engineering estimate only.">采用 MIL-HDBK-217FN2 零件数法（Parts Count），基础失效率 λ_g（FIT = 10⁻⁹/h）按类型查表；质量因子 π_Q 和环境因子 π_E 应用到系统级。本模块为工程估算，详细应力分析请用完整 Parts Stress 法。</span>
+</div>
+
+<div class="card"><div class="title" data-zh="环境与质量因子" data-en="Environment & Quality">环境与质量因子</div>
+<div class="g2">
+  <div><label class="lbl" data-zh="工作环境" data-en="Environment">工作环境</label>
+    <select id="envSel"></select></div>
+  <div><label class="lbl" data-zh="质量等级（默认商用）" data-en="Quality (default Commercial)">质量等级（默认商用）</label>
+    <select id="qSel"></select></div>
+</div>
+<small style="color:var(--muted);font-size:10px" data-zh="GB=地面良好 | GF=地面固定 | GM=地面移动 | NS=舰船 | AIC=航空驾驶舱 | AUF=航空不受控 | SF=空间飞行"
+       data-en="GB=Ground Benign | GF=Ground Fixed | GM=Ground Mobile | NS=Naval Sheltered | AIC=Airborne Cockpit | AUF=Airborne Uninhab | SF=Space Flight">
+  GB=地面良好 | GF=地面固定 | GM=地面移动 | NS=舰船 | AIC=航空驾驶舱 | AUF=航空不受控 | SF=空间飞行
+</small>
+</div>
+
+<div class="card"><div class="title" data-zh="零件清单" data-en="Parts List">零件清单</div>
+<table id="partTbl"><thead><tr>
+  <th data-zh="类型" data-en="Type">类型</th>
+  <th data-zh="数量" data-en="Qty">数量</th>
+  <th>λ_g (FIT)</th>
+  <th>π_Q</th>
+  <th data-zh="贡献 (FIT)" data-en="Contribution (FIT)">贡献 (FIT)</th>
+  <th></th>
+</tr></thead><tbody id="partRows"></tbody></table>
+<div style="margin-top:8px"><button class="btn btp" onclick="addPart()">+ <span data-zh="添加零件类型" data-en="Add part type">添加零件类型</span></button>
+<button class="btn" onclick="loadDemo()" style="margin-left:6px" data-zh="示例：小型 PCB" data-en="Demo: small PCB">示例：小型 PCB</button>
+<button class="btn" onclick="window.print()" style="margin-left:6px" data-zh="🖨 打印/导出 PDF" data-en="🖨 Print / PDF">🖨 打印/导出 PDF</button></div>
+</div>
+
+<div class="card"><div class="title" data-zh="系统级结果" data-en="System Results">系统级结果</div>
+<div class="gkpi">
+  <div class="kpi"><div class="kl">λ_total (FIT)</div><div class="kv" id="kLam">—</div><div class="ks">= Σ N·λg·πQ</div></div>
+  <div class="kpi"><div class="kl">π_E</div><div class="kv" id="kPE">—</div><div class="ks" data-zh="环境因子" data-en="Environment">环境因子</div></div>
+  <div class="kpi"><div class="kl">λ_system (FIT)</div><div class="kv" id="kSys">—</div><div class="ks">λ·π_E</div></div>
+  <div class="kpi"><div class="kl">MTBF (h)</div><div class="kv" id="kMtbf">—</div></div>
+  <div class="kpi"><div class="kl">R(1yr)</div><div class="kv" id="kR1">—</div></div>
+  <div class="kpi"><div class="kl">R(10yr)</div><div class="kv" id="kR10">—</div></div>
+</div>
+</div>
+
+</div>
+
+<script>
+// MIL-HDBK-217FN2 Parts Count — abridged base failure rates λ_g (GB, 25°C) in FIT (10⁻⁹/h)
+// Source: condensed from HDBK-217FN2 Section 5 tables. Representative values for Parts Count method.
+const PARTS = [
+  // name, lam_g (FIT at GB), default piQ
+  {k:'IC_Digital_MOS',     zh:'数字 IC (MOS, <1000门)', en:'Digital IC (MOS, <1k gates)', lg:14,  pQ:1.0},
+  {k:'IC_Digital_Bipolar', zh:'数字 IC (双极, <1000门)', en:'Digital IC (Bipolar, <1k gates)', lg:20, pQ:1.0},
+  {k:'IC_Linear',          zh:'线性 IC (<100晶体管)',   en:'Linear IC (<100 trans.)', lg:38,  pQ:1.0},
+  {k:'IC_Memory_RAM',      zh:'RAM (DRAM/SRAM)',        en:'RAM (DRAM/SRAM)',          lg:42,  pQ:1.0},
+  {k:'Trans_Si_Signal',    zh:'晶体管 Si 信号',         en:'Transistor Si Signal',     lg:11,  pQ:2.4},
+  {k:'Trans_Si_Power',     zh:'晶体管 Si 功率',         en:'Transistor Si Power',      lg:58,  pQ:2.4},
+  {k:'Diode_Si_Signal',    zh:'二极管 Si 信号',         en:'Diode Si Signal',          lg:3.7, pQ:2.4},
+  {k:'Diode_Si_Power',     zh:'二极管 Si 功率',         en:'Diode Si Power',           lg:16,  pQ:2.4},
+  {k:'Opto_LED',           zh:'LED',                    en:'LED',                      lg:2.6, pQ:2.4},
+  {k:'Opto_Photo',         zh:'光电器件',               en:'Opto-device',              lg:13,  pQ:2.4},
+  {k:'Res_Fixed_Film',     zh:'电阻 膜式固定',          en:'Resistor Fixed Film',      lg:0.45,pQ:2.5},
+  {k:'Res_Wire_Wound',     zh:'电阻 绕线',              en:'Resistor Wire Wound',      lg:1.8, pQ:2.5},
+  {k:'Res_Variable',       zh:'电位器',                 en:'Resistor Variable',        lg:20,  pQ:2.5},
+  {k:'Cap_Ceramic',        zh:'电容 陶瓷',              en:'Capacitor Ceramic',        lg:1.7, pQ:3.0},
+  {k:'Cap_Film',           zh:'电容 薄膜',              en:'Capacitor Film',           lg:1.3, pQ:3.0},
+  {k:'Cap_Al_Electrolytic',zh:'电容 铝电解',            en:'Capacitor Al Electrolytic',lg:12,  pQ:3.0},
+  {k:'Cap_Tantalum',       zh:'电容 钽',                en:'Capacitor Tantalum',       lg:5,   pQ:3.0},
+  {k:'Inductor',           zh:'电感器',                 en:'Inductor',                 lg:0.85,pQ:3.0},
+  {k:'Transformer_Signal', zh:'变压器 信号',            en:'Transformer Signal',       lg:8.1, pQ:3.0},
+  {k:'Relay_General',      zh:'继电器',                 en:'Relay',                    lg:170, pQ:3.0},
+  {k:'Switch_Toggle',      zh:'开关 拨动',              en:'Switch Toggle',            lg:50,  pQ:3.0},
+  {k:'Connector_PCB',      zh:'连接器 PCB',             en:'Connector PCB',            lg:26,  pQ:2.0},
+  {k:'Connector_IC_Socket',zh:'IC 插座',                en:'IC Socket',                lg:6,   pQ:2.0},
+  {k:'PCB_PTH',            zh:'PCB 插装孔',             en:'PCB PTH',                  lg:0.4, pQ:2.0},
+  {k:'Solder_Joint',       zh:'焊点',                   en:'Solder Joint',             lg:0.15,pQ:1.0},
+  {k:'Crystal',            zh:'晶体',                   en:'Crystal',                  lg:32,  pQ:3.0},
+];
+// Environment factor π_E (multiplier on system total), condensed
+const ENVS = [
+  {k:'GB', zh:'地面良好 GB',  en:'Ground Benign',   pe:1.0},
+  {k:'GF', zh:'地面固定 GF',  en:'Ground Fixed',    pe:2.0},
+  {k:'GM', zh:'地面移动 GM',  en:'Ground Mobile',   pe:4.0},
+  {k:'NS', zh:'舰船 NS',      en:'Naval Sheltered', pe:4.0},
+  {k:'NU', zh:'舰船暴露 NU',  en:'Naval Unsheltered',pe:6.0},
+  {k:'AIC',zh:'航空驾驶舱 AIC',en:'Airborne Cockpit',pe:4.0},
+  {k:'AUF',zh:'航空不受控 AUF',en:'Airborne Uninhab.',pe:10.0},
+  {k:'SF', zh:'空间飞行 SF',  en:'Space Flight',    pe:0.9},
+  {k:'MF', zh:'导弹飞行 MF',  en:'Missile Flight',  pe:11.0},
+];
+// Quality factor π_Q multiplier (applied per-part; default 1.0)
+const QUALS = [
+  {k:'S',  zh:'空间级 (S)',   en:'Space (S)',        pq:0.5},
+  {k:'B',  zh:'军品级 B1',    en:'Military B1',      pq:1.0},
+  {k:'B-1',zh:'军品级 B-1',   en:'Military B-1',     pq:2.0},
+  {k:'Commercial', zh:'商用级', en:'Commercial',     pq:3.0},
+  {k:'Plastic',    zh:'塑封民品', en:'Plastic',      pq:10.0},
+];
+
+let rows = [];
+let currentQ = 'Commercial';
+let currentE = 'GB';
+
+function optionsEnv(){
+  const lang=(localStorage.getItem('rtLang')||'zh');
+  return ENVS.map(e=>`<option value="${e.k}" ${e.k===currentE?'selected':''}>${lang==='zh'?e.zh:e.en} (π_E=${e.pe})</option>`).join('');
+}
+function optionsQ(){
+  const lang=(localStorage.getItem('rtLang')||'zh');
+  return QUALS.map(q=>`<option value="${q.k}" ${q.k===currentQ?'selected':''}>${lang==='zh'?q.zh:q.en} (π_Q=${q.pq})</option>`).join('');
+}
+function optionsPart(sel){
+  const lang=(localStorage.getItem('rtLang')||'zh');
+  return PARTS.map(p=>`<option value="${p.k}" ${p.k===sel?'selected':''}>${lang==='zh'?p.zh:p.en}</option>`).join('');
+}
+
+function addPart(kind){
+  const k = kind || PARTS[0].k;
+  const def = PARTS.find(p=>p.k===k);
+  rows.push({k, qty:10, piQOverride:null, lgOverride:null});
+  render();
+}
+function delPart(i){ rows.splice(i,1); render(); }
+function updPart(i,f,v){
+  if(f==='k') rows[i].k=v;
+  else if(f==='qty') rows[i].qty = Math.max(0, Number(v)||0);
+  else if(f==='piQ') rows[i].piQOverride = v===''?null:Number(v);
+  else if(f==='lg')  rows[i].lgOverride  = v===''?null:Number(v);
+  render();
+}
+function getPiQ(r){
+  const defQ = QUALS.find(q=>q.k===currentQ)?.pq || 1;
+  return r.piQOverride!=null ? r.piQOverride : defQ;
+}
+function getLg(r){
+  const def = PARTS.find(p=>p.k===r.k)?.lg || 0;
+  return r.lgOverride!=null ? r.lgOverride : def;
+}
+
+function render(){
+  document.getElementById('envSel').innerHTML = optionsEnv();
+  document.getElementById('qSel').innerHTML   = optionsQ();
+  document.getElementById('partRows').innerHTML = rows.map((r,i)=>{
+    const lg = getLg(r), pq = getPiQ(r);
+    const contrib = r.qty * lg * pq;
+    return `<tr>
+      <td><select onchange="updPart(${i},'k',this.value)">${optionsPart(r.k)}</select></td>
+      <td style="width:60px"><input type="number" value="${r.qty}" min="0" step="1" oninput="updPart(${i},'qty',this.value)"></td>
+      <td style="width:80px"><input type="number" value="${r.lgOverride??''}" placeholder="${PARTS.find(p=>p.k===r.k).lg}" oninput="updPart(${i},'lg',this.value)"></td>
+      <td style="width:60px"><input type="number" value="${r.piQOverride??''}" placeholder="${QUALS.find(q=>q.k===currentQ).pq}" oninput="updPart(${i},'piQ',this.value)"></td>
+      <td style="font-family:monospace">${contrib.toFixed(2)}</td>
+      <td><button class="delbtn" onclick="delPart(${i})">×</button></td>
+    </tr>`;
+  }).join('');
+  computeTotals();
+}
+
+function computeTotals(){
+  const lamComp = rows.reduce((s,r)=>s + r.qty * getLg(r) * getPiQ(r), 0);
+  const pe = ENVS.find(e=>e.k===currentE)?.pe || 1;
+  const lamSys = lamComp * pe;          // FIT
+  const lamHr = lamSys * 1e-9;          // per hour
+  const mtbf = lamHr>0 ? 1/lamHr : Infinity;
+  const R = t => Math.exp(-lamHr*t);
+  document.getElementById('kLam').textContent  = lamComp.toFixed(1);
+  document.getElementById('kPE').textContent   = pe.toFixed(2);
+  document.getElementById('kSys').textContent  = lamSys.toFixed(1);
+  document.getElementById('kMtbf').textContent = isFinite(mtbf)?mtbf.toLocaleString(undefined,{maximumFractionDigits:0}):'∞';
+  document.getElementById('kR1').textContent   = (R(8760)*100).toFixed(2)+'%';
+  document.getElementById('kR10').textContent  = (R(87600)*100).toFixed(2)+'%';
+}
+
+function loadDemo(){
+  rows = [
+    {k:'IC_Digital_MOS', qty:12},
+    {k:'IC_Linear',      qty:4},
+    {k:'Trans_Si_Signal',qty:20},
+    {k:'Diode_Si_Signal',qty:30},
+    {k:'Res_Fixed_Film', qty:80},
+    {k:'Cap_Ceramic',    qty:45},
+    {k:'Cap_Al_Electrolytic', qty:8},
+    {k:'Connector_PCB',  qty:2},
+    {k:'PCB_PTH',        qty:150},
+    {k:'Crystal',        qty:1},
+  ];
+  render();
+}
+
+document.getElementById('envSel').addEventListener('change', e=>{currentE=e.target.value; render();});
+document.getElementById('qSel').addEventListener('change',   e=>{currentQ=e.target.value; render();});
+
+loadDemo();
+</script>
+
+<script>
+(function(){
+  var _l = localStorage.getItem('rtLang') || 'zh';
+  function applyLang(l){
+    _l = l; localStorage.setItem('rtLang', l);
+    document.querySelectorAll('[data-zh]').forEach(function(el){
+      if(el.children.length===0) el.textContent = l==='zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+    });
+    var zh=document.getElementById('_lbZh'), en=document.getElementById('_lbEn');
+    if(zh){zh.classList.toggle('on', l==='zh'); en.classList.toggle('on', l==='en');}
+    if(typeof render==='function') render();
+  }
+  window.setLang = applyLang;
+  document.addEventListener('DOMContentLoaded', function(){ applyLang(_l); });
+})();
+</script>
+<script src="../shared/topnav.js"></script>
+
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col"><h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a></div>
+    <div class="ft-col"><h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a></div>
+    <div class="ft-col"><h4 data-zh="联系与版权" data-en="Contact &amp; Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p></div>
+  </div>
+  <div class="ft-bottom">v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a></div>
+</footer>
+</body></html>

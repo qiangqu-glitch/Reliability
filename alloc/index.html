@@ -38,15 +38,17 @@ small{color:var(--sec);font-size:11px;line-height:1.5}
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head><body>
-<header><div class="container"><h1>📐 可用度/可靠性分配</h1>
-<div class="sub">Reliability Allocation | AGREE / Equal / Weighted-Factor</div></div>
-<div style="margin-top:8px"><a href="../index.html" style="color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.3)">← ReliToolbox 主页</a><div class="lang-bar" style="margin-top:6px">
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › Alloc</div>
+  <h1>📐 可用度/可靠性分配</h1>
+  <div class="sub">Reliability Allocation | AGREE / Equal / Weighted-Factor</div>
+  <div class="lang-bar">
     <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
     <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
     <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
   </div>
-</div>
-</header>
+</div></header>
 
 <div class="container">
 
@@ -184,6 +186,7 @@ addRow('压缩机',25,2,0.9,100);
 addRow('换热器',8,1,0.7,100);
 addRow('控制系统',15,1,1.0,100);
 </script>
+<script>
 // ── Lang toggle ──
 (function(){
   var _l = localStorage.getItem('rtLang') || 'zh';
@@ -198,6 +201,7 @@ addRow('控制系统',15,1,1.0,100);
   window.setLang = applyLang;
   document.addEventListener('DOMContentLoaded', function(){ applyLang(_l); });
 })();
+</script>
 
 <footer class="site-footer">
   <div class="ft-grid">
@@ -224,4 +228,5 @@ addRow('控制系统',15,1,1.0,100);
     <a href="https://chemcalc.cn">chemcalc.cn</a>
   </div>
 </footer>
+<script src="../shared/topnav.js"></script>
 </body></html>

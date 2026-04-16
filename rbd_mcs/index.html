@@ -34,15 +34,17 @@ small{color:var(--sec);font-size:11px;line-height:1.6}
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head><body>
-<header><div class="container"><h1>🔻 RBD 最小割集分析</h1>
-<div class="sub">Minimal Cut Sets · 识别系统"阿喀琉斯之踵" · 补充 RBD v2</div></div>
-<div style="margin-top:8px"><a href="../index.html" style="color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.3)">← ReliToolbox 主页</a><div class="lang-bar" style="margin-top:6px">
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › RBD/MCS</div>
+  <h1>🔻 RBD 最小割集分析</h1>
+  <div class="sub">Minimal Cut Sets · 识别系统"阿喀琉斯之踵" · 补充 RBD v2</div>
+  <div class="lang-bar">
     <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
     <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
     <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
   </div>
-</div>
-</header>
+</div></header>
 
 <div class="container">
 
@@ -221,7 +223,7 @@ function loadBridge(){
 
 async function loadFromDB(){
  try{
- const db = await new Promise((res,rej)=>{const r=indexedDB.open('ReliToolbox',1);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+ const db = await new Promise((res,rej)=>{const r=indexedDB.open('ReliToolbox',3);r.onupgradeneeded=e=>{const d=e.target.result;['equipments','failures','fmea','weibull_results','fta_models','rbd_models','rbi_assessments','components'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'});});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
  if(!db.objectStoreNames.contains('rbd_models')){alert('未找到 rbd_models 表，请先在 RBD v2 保存模型');return;}
  const all = await new Promise((res,rej)=>{const r=db.transaction('rbd_models').objectStore('rbd_models').getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});
  if(!all.length){alert('数据库中无模型');return;}
@@ -235,6 +237,7 @@ async function loadFromDB(){
 
 loadBridge();
 </script>
+<script>
 // ── Lang toggle ──
 (function(){
   var _l = localStorage.getItem('rtLang') || 'zh';
@@ -249,6 +252,7 @@ loadBridge();
   window.setLang = applyLang;
   document.addEventListener('DOMContentLoaded', function(){ applyLang(_l); });
 })();
+</script>
 
 <footer class="site-footer">
   <div class="ft-grid">
@@ -275,4 +279,5 @@ loadBridge();
     <a href="https://chemcalc.cn">chemcalc.cn</a>
   </div>
 </footer>
+<script src="../shared/topnav.js"></script>
 </body></html>

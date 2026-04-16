@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<!--
+  ReliToolbox v0.1 | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RAM 仿真分析 — ReliToolbox v0.1</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style></style>
+<script>
+// ReliToolbox v0.1 (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+if(typeof window!=='undefined')window._rtv='0.1';})();
+</script>
+</head>
+<body>
+<header class="hdr" id="hdr">
+  <div style="max-width:860px;margin:0 auto" id="hdrInner">
+    <div class="bc"><a href="../index.html">ReliToolbox</a> › RAM</div>
+    <h1>⚙️ RAM 仿真分析</h1>
+    <p class="sub">事件驱动Monte Carlo · 产能传递 · 计划检修</p>
+    <a href="../index.html" class="btn btsm">← 首页</a>
+  <div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div>
+</header>
+<div class="ctn" id="app"></div>
+
+<script src="../shared/math.js"></script>
+<script>
+
+let LANG = 'zh';
+function setLang(l){LANG=l;document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===(l==='zh'?'中文':'EN')));
+ if(CUR_MOD)renderMod(CUR_MOD);else renderHome();}
+const zh=k=>LANG==='zh'?k[0]:k[1];
+
+let CUR_MOD=null;
+function goMod(id){CUR_MOD=id;renderMod(id);}
+function showHome(){CUR_MOD=null;renderHome();}
+
+const app=()=>document.getElementById('app');
+const DCOL={Weibull:'#0d9488',Exponential:'#6366f1',Lognormal:'#f59e0b',Normal:'#ec4899'};
+
+const MODS=[
+ {id:'wb',icon:'📉',name:'Weibull',zh:'Weibull 分析', desc_zh:'MLE拟合 · 4分布 · B-Life · 截尾数据',desc_en:'MLE fitting · 4 distributions · B-Life',t:'teal'},
+ {id:'fm',icon:'📋',name:'FMEA', zh:'FMEA 工作表', desc_zh:'RPN自动计算 · Pareto图 · CSV导出', desc_en:'Auto RPN · Pareto chart · CSV export',t:'amber'},
+ {id:'lc',icon:'💰',name:'LCC', zh:'生命周期成本', desc_zh:'NPV比较 · EAC · 累积成本曲线', desc_en:'NPV · EAC · Cumulative cost',t:'amber'},
+ {id:'rm',icon:'⚙️',name:'RAM', zh:'RAM 仿真', desc_zh:'事件驱动MC · 产能传递 · 三级维修', desc_en:'Event-driven MC · Capacity propagation',t:'purple'},
+ {id:'rb',icon:'🛡️',name:'RBI', zh:'基于风险检验', desc_zh:'API 580/581 · 5×5风险矩阵', desc_en:'API 580/581 · 5×5 risk matrix',t:'purple'},
+ {id:'sp',icon:'🔧',name:'Spare', zh:'备件库存优化', desc_zh:'泊松模型 · 服务水平 · 成本曲线', desc_en:'Poisson model · Service level curve',t:'indigo'},
+ {id:'sl',icon:'🚨',name:'SIL', zh:'SIL 计算', desc_zh:'IEC 61508/61511',desc_en:'IEC 61508/61511',t:'',soon:true},
+];
+
+function renderHome(){
+ const live=MODS.filter(m=>!m.soon),soon=MODS.filter(m=>m.soon);
+ app().innerHTML=`
+ <div class="sl" style="margin-top:6px">${zh(['已上线模块','Live Modules'])}</div>
+ <div class="mgrid">${live.map(m=>`
+ <div class="mc" style="border-top:2px solid var(--${m.t})" onclick="goMod('${m.id}')">
+ <span class="mbg bl">${zh(['已上线','Live'])}</span>
+ <div class="mi">${m.icon}</div>
+ <div class="mn">${m.name}</div>
+ <div class="mz">${m.zh}</div>
+ <div class="md">${LANG==='zh'?m.desc_zh:m.desc_en}</div>
+ </div>`).join('')}</div>
+ <div class="sl" style="margin-top:16px">${zh(['即将上线','Coming Soon'])}</div>
+ <div class="mgrid">${soon.map(m=>`
+ <div class="mc sn"><span class="mbg bs">${zh(['待上线','Soon'])}</span>
+ <div class="mi">${m.icon}</div><div class="mn">${m.name}</div><div class="mz">${m.zh}</div>
+ </div>`).join('')}</div>`;}
+
+function renderMod(id){
+ const mod=MODS.find(m=>m.id===id);
+ document.getElementById('hdrInner').innerHTML=`
+ <div class="bc" style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div>
+ <h1 style="font-size:18px">${mod.icon} ${mod.zh}</h1>
+ <div style="display:flex;gap:7px;margin-top:8px">
+ <div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button>
+ <button class="lbtn ${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>
+ <button class="btn btsm" onclick="showHome()">← ${zh(['首页','Home'])}</button>
+ </div>`;
+ (function(id){
+  var fn={wb:null,fm:null,lc:null,rm:null,rb:null,sp:null};
+  // Only this module's render is available in standalone mode
+  if(typeof renderRAM==='function') fn={wb:renderRAM,fm:renderRAM,lc:renderRAM,rm:renderRAM,rb:renderRAM,sp:renderRAM};
+  if(fn[id]) fn[id](); else if(typeof renderRAM==='function') renderRAM();
+})(id);}
+
+function mkCanvas(id,H){return`<canvas id="${id}" height="${H}"></canvas>`;}
+function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.width=cv.offsetWidth||720;return{cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height};}
+
+function drawGrid(c,PAD,minY,maxY,yFmt){
+ const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+ [0,.2,.4,.6,.8,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+ x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+ x.fillText(yFmt(minY+(maxY-minY)*v),PAD.l-3,y+3);});}
+
+function drawLines(c,PAD,data,series,xKey,xFmt,refY){
+ const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const xs=data.map(d=>d[xKey]),minX=Math.min(...xs),maxX=Math.max(...xs);
+ const ys=series.flatMap(s=>data.map(d=>d[s.k])).filter(v=>isFinite(v)&&v>=0);
+ if(!ys.length)return;
+ const minY=0,maxY=Math.max(...ys)*1.08;
+ const tX=v=>PAD.l+iW*(v-minX)/(maxX-minX||1);
+ const tY=v=>PAD.t+iH*(1-(v-minY)/(maxY-minY||1));
+ drawGrid(c,PAD,minY,maxY,v=>v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(1));
+ if(refY!=null){x.strokeStyle='#ef444466';x.lineWidth=1;x.setLineDash([4,3]);
+ x.beginPath();x.moveTo(PAD.l,tY(refY));x.lineTo(W-PAD.r,tY(refY));x.stroke();x.setLineDash([]);}
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+ [0,.25,.5,.75,1].forEach(v=>{const val=minX+(maxX-minX)*v;x.fillText(xFmt(val),tX(val),H-PAD.b+13);});
+ series.forEach(s=>{x.strokeStyle=s.col;x.lineWidth=s.bold?2.2:1.2;
+ if(!s.bold)x.setLineDash([5,3]);x.beginPath();let first=true;
+ data.forEach(d=>{const v=d[s.k];if(!isFinite(v)||v<0)return;
+ first?x.moveTo(tX(d[xKey]),tY(v)):x.lineTo(tX(d[xKey]),tY(v));first=false;});
+ x.stroke();x.setLineDash([]);});
+ 
+ x.textAlign='left';let lx=PAD.l+6,ly=PAD.t+13;
+ series.forEach(s=>{x.fillStyle=s.col;x.fillRect(lx,ly-6,12,2.5);
+ x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(s.lbl,lx+15,ly);
+ lx+=Math.max(90,x.measureText(s.lbl).width+20);if(lx>W-60){lx=PAD.l+6;ly+=12;}});}
+
+function drawHist(id,vals,bins=22){
+ const c=ctx(id);if(!c)return;const{ctx:x,W,H}=c;
+ x.clearRect(0,0,W,H);const PAD={l:10,r:10,t:16,b:24};
+ const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const mn=Math.min(...vals),mx=Math.max(...vals),bw=(mx-mn)/bins||.1;
+ const counts=new Array(bins).fill(0);
+ vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/bw));counts[b]++;});
+ const maxC=Math.max(...counts),bpx=iW/bins;
+ counts.forEach((c,i)=>{const bh=iH*c/maxC,bx=PAD.l+i*bpx;
+ const midV=mn+i*bw+bw/2;const col=midV>=95?'#10b981':midV>=85?'#f59e0b':'#ef4444';
+ x.fillStyle=col+'88';x.fillRect(bx,PAD.t+iH-bh,bpx-1,bh);
+ x.strokeStyle=col;x.lineWidth=.5;x.strokeRect(bx,PAD.t+iH-bh,bpx-1,bh);});
+ const mV=(mn+mx)/2,mx2=PAD.l+iW*(mV-mn)/(mx-mn||1);
+ x.strokeStyle='#0d9488';x.lineWidth=1.5;x.setLineDash([4,3]);
+ x.beginPath();x.moveTo(mx2,PAD.t);x.lineTo(mx2,PAD.t+iH);x.stroke();x.setLineDash([]);
+ x.fillStyle='#0d9488';x.font='8px monospace';x.textAlign='center';
+ x.fillText('μ='+mV.toFixed(1)+'%',mx2,PAD.t-1);
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+ [0,.25,.5,.75,1].forEach(v=>{x.fillText((mn+v*(mx-mn)).toFixed(1)+'%',PAD.l+v*iW,H-6);});}
+
+function dl(content,filename){const blob=new Blob([content],{type:'text/csv'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();}
+
+(function(){
+ CUR_MOD='ram';
+ document.title='RAM 仿真分析 — ReliToolbox';
+})();
+</script>
+<script>
+
+let RAM={yrs:20,runs:1000,seed:42,sysCap:550000,taI:52560,taD:1440,
+ units:[
+ {label:'ASU', color:'#1D9E75',count:2,mtbf:8000,mttr:96, sig:48, pmI:4320,pmD:48},
+ {label:'Gasification', color:'#BA7517',count:5,mtbf:4000,mttr:168,sig:48, pmI:8760,pmD:168},
+ {label:'Purification', color:'#7F77DD',count:2,mtbf:8000,mttr:168,sig:48, pmI:8760,pmD:72}],
+ res:null,running:false,tab:'model'};
+
+function renderRAM(){
+ const z=LANG==='zh';
+ const tab=RAM.tab||'model';
+ app().innerHTML=`
+ <div class="tbr">
+ ${[['model',z?'设备模型':'Model'],['topo',z?'系统拓扑':'Topology'],['sim',z?'仿真设置':'Simulation'],['res',z?'结果':'Results']].map(([k,l])=>`
+ <button class="tb${tab===k?' on':''}" onclick="RAM.tab='${k}';renderRAM()">${l}</button>`).join('')}
+ </div>
+ ${tab==='model'?renderRAMModel():tab==='topo'?renderRAMTopo():tab==='sim'?renderRAMSim():renderRAMRes()}`; if(tab==='sim')setTimeout(checkRAMCapacity,30); if(tab==='res'&&RAM.res)setTimeout(drawRAMCharts,80);}
+
+function ramInp(ui,field,id){const u=RAM.units[ui];
+ return`<input type="number" value="${u[field]}" oninput="RAM.units[${ui}].${field}=+this.value||0;RAM.units[${ui}].totalCap=RAM.units[${ui}].count*RAM.units[${ui}].unitCap;if(document.getElementById('${id}'))document.getElementById('${id}').textContent=(RAM.units[${ui}].totalCap/1000).toFixed(0)+'k'">"`;}
+
+function renderRAMModel(){const z=LANG==='zh';
+ return RAM.units.map((u,i)=>{const cls=['ub','ub g','ub p'][i];return`
+ <div class="${cls}" style="margin-bottom:10px">
+ <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+ <span style="font-size:13px;font-weight:700;color:var(--text)">${u.label}</span>
+ <span style="font-size:9px;padding:2px 7px;border-radius:6px;background:${u.color}22;color:${u.color};border:1px solid ${u.color}44">Class: ${u.label}</span>
+ </div>
+ <div class="g4">
+ <div><label class="lbl">MTBF (hrs)</label><input type="number" value="${u.mtbf}" oninput="RAM.units[${i}].mtbf=+this.value||1"></div>
+ <div><label class="lbl">MTTR mean</label><input type="number" value="${u.mttr}" oninput="RAM.units[${i}].mttr=+this.value||1"></div>
+ <div><label class="lbl">MTTR σ</label><input type="number" value="${u.sig}" oninput="RAM.units[${i}].sig=+this.value||1"></div>
+ <div></div><!-- 产能由系统产能统一设定 -->
+ </div>
+ <div style="display:flex;align-items:center;gap:9px;margin-top:8px">
+ <label class="lbl" style="margin:0;min-width:80px">${z?'台数':'Unit Count'}</label>
+ <input type="number" value="${u.count}" min="1" max="20" style="width:64px" oninput="RAM.units[${i}].count=Math.max(1,+this.value||1)">
+ <span style="font-size:11px;color:var(--sec)">${z?'台':'units'}</span>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+ <div><label class="lbl" style="color:#f59e0b">${z?'计划检修间隔(hrs)':'PM Interval (hrs)'}</label>
+ <input type="number" value="${u.pmI||0}" oninput="RAM.units[${i}].pmI=+this.value||0" style="font-family:monospace"></div>
+ <div><label class="lbl" style="color:#f59e0b">${z?'检修时长(hrs)':'PM Duration (hrs)'}</label>
+ <input type="number" value="${u.pmD||0}" oninput="RAM.units[${i}].pmD=+this.value||0" style="font-family:monospace"></div>
+ </div>
+ <div style="font-size:9px;color:var(--muted);margin-top:4px">${z?'检修间隔=0 表示无计划检修':'PM Interval=0 means no planned maintenance'}</div>
+ </div>`}).join('')+`
+ <div class="card"><div class="sl">${LANG==='zh'?'全厂大修与目标产能':'Plant Turnaround & Target'}</div>
+ <div class="g3">
+ <div><label class="lbl">${LANG==='zh'?'大修间隔(hrs)':'TA Interval'}</label><input type="number" value="${RAM.taI}" oninput="RAM.taI=+this.value||0"></div>
+ <div><label class="lbl">${LANG==='zh'?'大修时长(hrs)':'TA Duration'}</label><input type="number" value="${RAM.taD}" oninput="RAM.taD=+this.value||0"></div>
+ <div><label class="lbl">${LANG==='zh'?'设计合成气产能(Nm³/h)':'Design Syngas Capacity'}</label><input type="number" value="${RAM.sysCap}" oninput="RAM.sysCap=+this.value||1;checkRAMCapacity()"></div>
+ </div>
+ </div>`;}
+
+function renderRAMTopo(){
+ const z=LANG==='zh';
+ return`<div class="card"><div class="sl">${z?'串联拓扑 — 产能传递':'Series Topology — Capacity Propagation'}</div>
+ <div style="display:flex;align-items:center;gap:6px;overflow-x:auto;padding:10px 0">
+ <div style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(52,211,153,.35);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">IN</div>
+ ${RAM.units.map(u=>`<span style="color:var(--muted);font-size:16px;flex-shrink:0">→</span>
+ <div style="border:1px solid var(--border);border-top:2px solid ${u.color};border-radius:8px;padding:7px 10px;text-align:center;min-width:80px;background:var(--bg);flex-shrink:0">
+ <div style="font-size:11px;font-weight:700">${u.label}</div>
+ <div style="font-size:9px;color:var(--sec)">${u.count} ${z?'台并联':'units'}</div>
+ <div style="font-size:13px;font-weight:700;font-family:monospace;color:${u.color}">${(RAM.sysCap/1000).toFixed(0)}k</div>
+ <div style="font-size:8px;color:var(--muted)">${z?'(按配比折算)':'(process ratio)'}</div>
+ <div style="font-size:8px;color:var(--muted)">Nm³/h max</div>
+ </div>`).join('')}
+ <span style="color:var(--muted);font-size:16px;flex-shrink:0">→</span>
+ <div style="width:32px;height:32px;border-radius:50%;background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(248,113,113,.35);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;text-align:center">OUT<br>${(RAM.sysCap/1000).toFixed(0)}k</div>
+ </div>
+ <hr><p style="font-size:11px;color:var(--sec);line-height:1.8">
+ <b style="color:var(--text)">System capacity = MIN(${RAM.units.map(u=>u.label).join(', ')})</b><br>
+ ${z?'每单元实时产能 = (在线台数/总台数) × 满负荷产能。串联中最弱单元决定系统输出。':'Each unit capacity = (online/total) × design capacity. Bottleneck limits system output.'}
+ </p></div>
+ <div class="card"><div class="sl">${z?'参数汇总':'Parameters Summary'}</div>
+ <div style="overflow-x:auto"><table>
+ <thead><tr><th>${z?'单元':'Unit'}</th><th>${z?'台数':'Count'}</th><th>${z?'单台':'Unit Cap'}</th><th>${z?'满负荷':'Full Cap'}</th><th>MTBF</th><th>MTTR</th><th>${z?'单台可用度':'Unit Avail'}</th></tr></thead>
+ <tbody>${RAM.units.map(u=>`<tr>
+ <td style="font-weight:600;color:${u.color}">${u.label}</td>
+ <td>${u.count}</td><td>${(u.unitCap/1000).toFixed(1)}k</td>
+ <td>${(RAM.sysCap/1000).toFixed(0)}k*</td><td>${u.mtbf}</td><td>${u.mttr}</td>
+ <td style="font-family:monospace">${(u.mtbf/(u.mtbf+u.mttr)*100).toFixed(1)}%</td>
+ </tr>`).join('')}</tbody>
+ </table></div>
+ </div>`;}
+
+function renderRAMSim(){const z=LANG==='zh';
+ return`<div class="card"><div class="sl">${z?'仿真参数':'Simulation Parameters'}</div>
+ <div class="g3">
+ <div><label class="lbl">${z?'任务期(年)':'Mission (yrs)'}</label><input type="number" id="rmYrs" value="${RAM.yrs}" oninput="RAM.yrs=Math.max(1,+this.value)||1"></div>
+ <div><label class="lbl">${z?'蒙特卡洛次数':'MC Runs'}</label><input type="number" id="rmRuns" value="${RAM.runs}" oninput="RAM.runs=Math.min(5000,Math.max(100,+this.value)||500)"></div>
+ <div><label class="lbl">${z?'随机种子':'Seed'}</label><input type="number" id="rmSeed" value="${RAM.seed}" oninput="RAM.seed=+this.value||42"></div>
+ </div>
+ </div>
+ <div class="card"><div class="sl">${z?'引擎说明':'Engine'}</div>
+ <p style="font-size:11px;color:var(--sec);line-height:1.8">
+ <b style="color:var(--text)">TTF</b>: ${z?'指数分布 Exp(λ=1/MTBF)，精确事件采样':'Exponential Exp(λ=1/MTBF), exact event sampling'}<br>
+ <b style="color:var(--text)">TTR</b>: ${z?'截断正态 Normal(μ=MTTR,σ)，负值截断':'Truncated Normal(μ=MTTR,σ), clipped at zero'}<br>
+ <b style="color:var(--text)">${z?'产能传递':'Capacity'}</b>: ${z?'系统产能=MIN(各单元实时产能)':'System cap=MIN(unit capacities)'}
+ </p>
+ </div>
+ <div id="rmCapCheck" style="margin-bottom:8px"></div>
+ <button class="btn btp btf" id="rmRunBtn" onclick="runRAM()" ${RAM.running?'disabled':''}>▶ ${z?'运行蒙特卡洛仿真':'Run Monte Carlo Simulation'}</button>
+ <div id="rmProg" style="display:none;margin-top:7px">
+ <div class="simlog" id="rmLog">Initializing…</div>
+ <div class="prog"><div class="pf" id="rmPF" style="width:0%"></div></div>
+ </div>`;}
+
+function checkRAMCapacity(){
+ const el=document.getElementById('rmCapCheck');if(!el)return;
+ const z=LANG==='zh';
+ const designAnn=(RAM.sysCap*8760/1e9).toFixed(3);
+ const pmSummary=RAM.units.map(u=>u.pmI>0?`${u.label}:${u.pmI}h`:'').filter(Boolean).join(' ');
+ el.innerHTML=`<div style="background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.35);border-radius:8px;padding:8px 12px;font-size:11px;color:#5eead4">
+ ✅ ${z?'配置就绪 —':'Ready —'} ${z?'设计产能':'Design'}: <b>${(RAM.sysCap/1000).toFixed(0)}k Nm³/h</b>
+ &nbsp;·&nbsp; ${z?'年满产':'Full yr'}: <b>${designAnn} B Nm³</b>
+ &nbsp;·&nbsp; ${RAM.units.map(u=>u.label+'×'+u.count).join('→')}
+ ${pmSummary?'<br>🔧 '+z?'计划检修':'PM: '+pmSummary:''}
+ </div>`;
+}
+
+async function runRAM(){
+ if(RAM.running)return;
+ RAM.running=true;RAM.tab='sim';renderRAM();
+ const btn=document.getElementById('rmRunBtn'),
+ prog=document.getElementById('rmProg'),
+ logEl=document.getElementById('rmLog'),pf=document.getElementById('rmPF');
+ if(btn)btn.disabled=true;if(prog)prog.style.display='block';
+ const yrs=RAM.yrs,mHrs=yrs*8760;
+ const yearSnaps=Array.from({length:yrs},(_,i)=>i+1);
+ const cfg={mHrs,sysCap:RAM.sysCap,taI:RAM.taI,taD:RAM.taD,yearSnaps,
+ units:RAM.units.map(u=>({...u}))};
+ try{
+ RAM.res=await RM.runMC(cfg,RAM.runs,RAM.seed,pct=>{
+ if(pf)pf.style.width=pct+'%';
+ if(logEl)logEl.textContent=`${LANG==='zh'?'运行中':'Running'} ${pct}%`;});
+ }catch(e){console.error('RAM sim error:',e);}
+ RAM.running=false;RAM.tab='res';renderRAM();}
+
+function renderRAMRes(){
+ const z=LANG==='zh';
+ if(!RAM.res)return`<p style="color:var(--muted);padding:20px 0">${z?'请先运行仿真。':'Run the simulation first.'}</p>`;
+ const r=RAM.res;
+ const missionYrs=RAM.yrs;
+ 
+ const annAvg=r.annualAvg;
+ const annP10=r.p10/missionYrs;
+ const annP90=r.p90/missionYrs;
+ const wc=annAvg/RAM.sysCap/8760*1e9>=0.9?'gd':annAvg/RAM.sysCap/8760*1e9>=0.75?'wn':'bd';
+
+ return`
+ <div style="display:flex;justify-content:flex-end;margin-bottom:7px">
+ <button class="btn btsm" onclick="exportRAMCSV()">${z?'导出CSV':'Export CSV'}</button>
+ </div>
+
+ <div style="background:rgba(13,148,136,.12);border:1px solid rgba(13,148,136,.4);border-radius:10px;padding:12px;margin-bottom:10px">
+ <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#5eead4;margin-bottom:8px">${z?'核心产量指标（决定经济收益）':'Core Production KPIs (Revenue Basis)'}</div>
+ <div class="gkpi">
+ <div class="kpi" style="border-top:2px solid var(--teal)">
+ <div class="kl">${z?'年均合成气产量':'Annual Avg Production'}</div>
+ <div class="kv ${wc}" style="font-size:14px">${annAvg.toFixed(3)}</div>
+ <div class="ks">B Nm³/年</div>
+ </div>
+ <div class="kpi"><div class="kl">${z?'20年总产量':'Total 20yr Production'}</div>
+ <div class="kv" style="font-size:14px">${r.avgTP.toFixed(2)}</div><div class="ks">B Nm³</div></div>
+ <div class="kpi"><div class="kl">P10 年产量</div>
+ <div class="kv bd">${annP10.toFixed(3)}</div><div class="ks">B Nm³/年</div></div>
+ <div class="kpi"><div class="kl">P50 年产量</div>
+ <div class="kv">${(r.p50/missionYrs).toFixed(3)}</div><div class="ks">B Nm³/年</div></div>
+ <div class="kpi"><div class="kl">P90 年产量</div>
+ <div class="kv gd">${annP90.toFixed(3)}</div><div class="ks">B Nm³/年</div></div>
+ <div class="kpi"><div class="kl">${z?'设计产能':'Design Cap'}</div>
+ <div class="kv">${(RAM.sysCap*8760/1e9).toFixed(3)}</div><div class="ks">${z?'B Nm³/年满产':'B Nm³/yr full'}</div></div>
+ <div class="kpi"><div class="kl">${z?'产能利用率':'Capacity Factor'}</div>
+ <div class="kv ${wc}">${(annAvg/(RAM.sysCap*8760/1e9)*100).toFixed(1)}%</div><div class="ks">${z?'年均':'avg'}</div></div>
+ <div class="kpi"><div class="kl">MC Runs</div>
+ <div class="kv">${r.n.toLocaleString()}</div></div>
+ </div>
+ </div>
+
+ <div class="card">
+ <div class="sl">${z?'20年年度产量柱状图（B Nm³）':'Annual Production 20 Years (B Nm³)'}</div>
+ <canvas id="rmAnn" height="220"></canvas>
+ </div>
+
+ <div class="card">
+ <div class="sl">${z?'典型年产能时序曲线（全年小时级）':'Typical Year Capacity Profile (Hourly)'}</div>
+ <canvas id="rmTrace" height="180"></canvas>
+ </div>
+
+ <div class="card">
+ <div class="sl">${z?'各单元可用度贡献':'Unit Availability'}</div>
+ ${RAM.units.map((u,i)=>`<div class="br-row">
+ <span class="br-lbl">${u.label}</span>
+ <div class="br-tr"><div class="br-f" style="width:${r.uMeans[i].toFixed(1)}%;background:${u.color}"></div></div>
+ <span class="br-v" style="color:${u.color}">${r.uMeans[i].toFixed(2)}%</span>
+ </div>`).join('')}
+ <hr>
+ <div class="sl" style="margin-bottom:6px">${z?'龙卷风图 — MTBF −20% 对年产量的影响':'Tornado Chart — MTBF −20% Impact on Annual Output'}</div>
+ <canvas id="rmTornado" height="${Math.max(80,RAM.units.length*44)}"></canvas>
+ </div>
+
+ <div class="card">
+ <div class="sl">${z?'收敛曲线（年均产量）':'Convergence (Annual Avg Production)'}</div>
+ <canvas id="rmConv" height="160"></canvas>
+ </div>`;}
+
+function drawRAMCharts(){
+ const r=RAM.res;if(!r)return;
+ const z=LANG==='zh';
+
+ (()=>{const cv=document.getElementById('rmAnn');if(!cv||!r.annStats)return;
+ cv.width=cv.offsetWidth||720;const W=cv.width,H=220;
+ const x=cv.getContext('2d');x.clearRect(0,0,W,H);
+ const PAD={l:52,r:16,t:18,b:32};
+ const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const n=r.annStats.length;
+ const maxV=Math.max(...r.annStats.map(d=>d.p90))*1.12||0.01;
+ const bw=iW/n;
+ const tY=v=>PAD.t+iH*(1-v/maxV);
+ 
+ x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+ [0,.25,.5,.75,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+ x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+ x.fillText((maxV*v).toFixed(2),PAD.l-3,y+3);});
+ 
+ const designAnn=RAM.sysCap*8760/1e9;
+ if(designAnn<=maxV){x.strokeStyle='rgba(16,185,129,.4)';x.lineWidth=1;x.setLineDash([4,3]);
+ x.beginPath();x.moveTo(PAD.l,tY(designAnn));x.lineTo(W-PAD.r,tY(designAnn));x.stroke();x.setLineDash([]);
+ x.fillStyle='#34d399';x.font='8px sans-serif';x.textAlign='left';x.fillText(z?'满产':'Full cap',W-PAD.r+2,tY(designAnn)+3);}
+ 
+ r.annStats.forEach((d,i)=>{
+ const bx=PAD.l+i*bw+bw*.15;const bww=bw*.7;
+ const col=d.mean/designAnn>=.9?'#10b981':d.mean/designAnn>=.75?'#f59e0b':'#ef4444';
+ 
+ x.fillStyle='rgba(255,255,255,.06)';
+ x.fillRect(bx,tY(d.p90),bww,tY(d.p10)-tY(d.p90));
+ 
+ x.fillStyle=col+'cc';x.fillRect(bx,tY(d.mean),bww,iH-(tY(d.mean)-PAD.t));
+ 
+ if(i%5===0||i===n-1){x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+ x.fillText('Y'+d.yr,bx+bww/2,H-PAD.b+12);}});
+ 
+ x.fillStyle='#10b981cc';x.fillRect(PAD.l,8,12,8);
+ x.fillStyle='rgba(255,255,255,.06)';x.fillRect(PAD.l+80,8,12,8);
+ x.fillStyle='#94a3b8';x.font='9px sans-serif';x.textAlign='left';
+ x.fillText(z?'年产量(B Nm³)':'Annual prod',PAD.l+16,15);
+ x.fillText('P10-P90',PAD.l+96,15);})();
+
+ (()=>{const cv=document.getElementById('rmTrace');if(!cv||!r.trace)return;
+ cv.width=cv.offsetWidth||720;const W=cv.width,H=180;
+ const x=cv.getContext('2d');x.clearRect(0,0,W,H);
+ const PAD={l:52,r:16,t:14,b:28};
+ const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const pts=r.trace;if(!pts.length)return;
+ const maxT=8760,maxC=RAM.sysCap;
+ const tX=t=>PAD.l+iW*(t/maxT);const tY=c=>PAD.t+iH*(1-c/maxC);
+ 
+ x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+ [0,.25,.5,.75,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+ x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+ x.fillText(v===0?'0':(maxC*v/1000).toFixed(0)+'k',PAD.l-3,y+3);});
+ 
+ x.fillStyle='rgba(13,148,136,.2)';x.beginPath();
+ x.moveTo(tX(0),PAD.t+iH);
+ pts.forEach(p=>x.lineTo(tX(p.t),tY(p.c)));
+ x.lineTo(tX(pts[pts.length-1].t),PAD.t+iH);x.closePath();x.fill();
+ 
+ x.strokeStyle='#0d9488';x.lineWidth=1.5;x.beginPath();
+ pts.forEach((p,i)=>{i===0?x.moveTo(tX(p.t),tY(p.c)):x.lineTo(tX(p.t),tY(p.c));});
+ x.stroke();
+ 
+ const mths=z?['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']:
+ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+ x.fillStyle='#64748b';x.font='8px sans-serif';x.textAlign='center';
+ mths.forEach((_,i)=>{if(i%2===0)x.fillText(mths[i],tX((i+.5)*730),H-PAD.b+12);});
+ 
+ x.fillStyle='#0d9488';x.font='9px sans-serif';x.textAlign='left';
+ x.fillText(z?'合成气产能 Nm³/h':'Syngas Nm³/h',PAD.l+4,PAD.t+11);})();
+
+ (()=>{const cv=document.getElementById('rmTornado');if(!cv||!r.sens)return;
+ cv.width=cv.offsetWidth||720;
+ cv.height=Math.max(80,r.sens.length*48); 
+ const W=cv.width,H=cv.height;
+ const x=cv.getContext('2d');x.clearRect(0,0,W,H);
+ const n=r.sens.length;const rowH=H/n;
+ const maxDelta=Math.max(...r.sens.map(s=>Math.abs(s.delta)));
+ const midX=W/2;const scale=(W/2-60)/Math.max(maxDelta,.001);
+ r.sens.forEach((s,i)=>{
+ const y=i*rowH;const barW=Math.abs(s.delta)*scale;
+ const col=s.delta<0?'#ef4444':'#10b981';
+ 
+ if(s.delta<0)x.fillStyle=col+'cc',x.fillRect(midX-barW,y+rowH*.2,barW,rowH*.6);
+ else x.fillStyle=col+'cc',x.fillRect(midX,y+rowH*.2,barW,rowH*.6);
+ 
+ x.fillStyle='#f1f5f9';x.font='11px sans-serif';x.textAlign='center';
+ x.fillText(s.label,midX,y+rowH*.6);
+ 
+ x.fillStyle=col;x.font='10px monospace';
+ if(s.delta<0){x.textAlign='right';x.fillText(s.pct.toFixed(1)+'%',midX-barW-4,y+rowH*.6);}
+ else{x.textAlign='left';x.fillText('+'+s.pct.toFixed(1)+'%',midX+barW+4,y+rowH*.6);}});
+ 
+ x.strokeStyle='rgba(255,255,255,.2)';x.lineWidth=1;
+ x.beginPath();x.moveTo(midX,0);x.lineTo(midX,H);x.stroke();
+ x.fillStyle='#64748b';x.font='9px sans-serif';x.textAlign='center';
+ x.fillText(z?'← 产量减少':'← Less production',midX-80,H-4);
+ x.fillText(z?'产量增加 →':'More production →',midX+80,H-4);})();
+
+ (()=>{const cv=document.getElementById('rmConv');if(!cv||!r.conv.length)return;
+ cv.width=cv.offsetWidth||720;const W=cv.width,H=160;
+ const x=cv.getContext('2d');x.clearRect(0,0,W,H);
+ const PAD={l:52,r:16,t:14,b:28};
+ const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+ const ys=r.conv.map(d=>d.avg);
+ const minY=Math.max(0,Math.min(...ys)*.95),maxY=Math.max(...ys)*1.05;
+ const maxX=r.conv[r.conv.length-1].run;
+ const tX=v=>PAD.l+iW*v/maxX;const tY=v=>PAD.t+iH*(1-(v-minY)/(maxY-minY));
+ x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+ [0,.25,.5,.75,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+ x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+ x.fillText((minY+(maxY-minY)*v).toFixed(3),PAD.l-3,y+3);});
+ x.strokeStyle='#0d9488';x.lineWidth=2;x.beginPath();
+ r.conv.forEach((d,i)=>{i===0?x.moveTo(tX(d.run),tY(d.avg)):x.lineTo(tX(d.run),tY(d.avg));});
+ x.stroke();
+ x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+ [100,500,1000,2000,5000].filter(v=>v<=maxX).forEach(v=>x.fillText(v,tX(v),H-PAD.b+12));
+ x.fillStyle='#0d9488';x.font='9px sans-serif';x.textAlign='left';
+ x.fillText(z?'年均产量 B Nm³':'Annual avg B Nm³',PAD.l+4,PAD.t+11);})();}
+
+function exportRAMCSV(){if(!RAM.res)return;const r=RAM.res;
+ const lines=['ReliToolbox RAM Results',`Runs,${r.n}`,`Mission,${RAM.yrs} years`,
+ `Design Syngas Capacity,${RAM.sysCap} Nm3/h`,'',
+ 'KPI,Value,Unit',
+ `Annual Avg Production,${r.annualAvg.toFixed(4)},B Nm3/yr`,
+ `Total 20yr Production,${r.avgTP.toFixed(3)},B Nm3`,
+ `P10 Annual,${(r.p10/RAM.yrs).toFixed(4)},B Nm3/yr`,
+ `P50 Annual,${(r.p50/RAM.yrs).toFixed(4)},B Nm3/yr`,
+ `P90 Annual,${(r.p90/RAM.yrs).toFixed(4)},B Nm3/yr`,
+ `Capacity Factor,${(r.annualAvg/(RAM.sysCap*8760/1e9)*100).toFixed(1)},%`,
+ '','Year,Mean(B Nm3),P10,P50,P90',
+ ...(r.annStats||[]).map(d=>`${d.yr},${d.mean.toFixed(4)},${d.p10.toFixed(4)},${d.p50.toFixed(4)},${d.p90.toFixed(4)}`)];
+ dl(lines.join('\n'),'RAM_Results.csv');}
+
+</script>
+<script>
+
+(function(){
+ 
+  if(typeof renderRAM === "function") renderRAM();
+ else document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Module load error</p>';
+ 
+ const obs=new MutationObserver(()=>{
+ if(typeof drawRAMCharts==='function'&&document.getElementById('rmAnn')&&RAM&&RAM.res)drawRAMCharts();
+ if(typeof drawWBChart==='function'&&document.getElementById('wChart')&&WB&&WB.res)setTimeout(drawWBChart,30);
+ });
+ obs.observe(document.getElementById('app'),{childList:true,subtree:true});
+})();
+</script>
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a>
+  </div>
+</footer>
+</body>
+</html>

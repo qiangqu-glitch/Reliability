@@ -35,15 +35,17 @@ small{color:var(--sec);font-size:11px}
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head><body>
-<header><div class="container"><h1>📋 FMEA/RCM 工作表</h1>
-<div class="sub">Failure Mode & Effects Analysis · IndexedDB 持久化 · CSV 导入/导出</div></div>
-<div style="margin-top:8px"><a href="../index.html" style="color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.3)">← ReliToolbox 主页</a><div class="lang-bar" style="margin-top:6px">
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › FMEA</div>
+  <h1>📋 FMEA/RCM 工作表</h1>
+  <div class="sub">Failure Mode & Effects Analysis · IndexedDB 持久化 · CSV 导入/导出</div>
+  <div class="lang-bar">
     <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
     <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
     <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
   </div>
-</div>
-</header>
+</div></header>
 
 <div class="container">
 
@@ -86,9 +88,6 @@ const dbPut=(s,o)=>ReliDB.put(s,o);
 const dbGet=(s,id)=>ReliDB.get(s,id);
 const dbAll=(s)=>ReliDB.all(s);
 const dbDel=(s,id)=>ReliDB.del(s,id);
-
-let rows=[];
-
 
 let rows=[];
 const newRow=()=>({id:'r'+Date.now()+Math.random().toString(36).slice(2,5),equip:'',func:'',mode:'',cause:'',effect:'',s:5,o:5,d:5,action:'',owner:''});
@@ -210,6 +209,7 @@ rows=[newRow(),newRow(),newRow()];
 render();
 loadSaved();
 </script>
+<script>
 // ── Lang toggle ──
 (function(){
   var _l = localStorage.getItem('rtLang') || 'zh';
@@ -224,6 +224,7 @@ loadSaved();
   window.setLang = applyLang;
   document.addEventListener('DOMContentLoaded', function(){ applyLang(_l); });
 })();
+</script>
 
 
 <div class="no-print" style="text-align:right;max-width:1000px;margin:0 auto 8px;padding:0 10px"><button onclick="window.print()" style="padding:7px 18px;border-radius:18px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:600">&#x1F5A8;&#xFE0F; &#x6253;&#x5370; / &#x5BFC;&#x51FA; PDF</button></div>
@@ -252,4 +253,5 @@ loadSaved();
     <a href="https://chemcalc.cn">chemcalc.cn</a>
   </div>
 </footer>
+<script src="../shared/topnav.js"></script>
 </body></html>

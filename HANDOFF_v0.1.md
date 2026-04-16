@@ -50,7 +50,7 @@
 | fta/ | 故障树FTA | ✅ | MOCUS算法 |
 | alloc/ | 可用度分配 | ✅ | AGREE/Equal |
 | rbd_mcs/ | RBD最小割集 | ✅ | MCS分析 |
-| rbd/rbd_v2.html | RBD画布 | ✅ | 拖拽构建 |
+| rbd/index.html | RBD画布 | ✅ | 拖拽构建 |
 | equipment/ | 设备管理 | ✅ v0.1新 | CRUD台账 |
 
 ---

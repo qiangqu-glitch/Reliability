@@ -1,6 +1,6 @@
-# Cloudflare Pages redirects — ReliToolbox v0.3
-# chemcalc.cn/reliability/* 或 reliability.chemcalc.cn/*
+# Cloudflare Pages _redirects — ReliToolbox v0.1
+# Directory requests (/dir/) auto-serve /dir/index.html by default.
+# We only keep path aliases here.
 
-# 核心模块
-/:path /:path/ 301
-/* /index.html 200
+# Path alias (hyphen <-> underscore)
+/rbd-mcs       /rbd_mcs/index.html       200

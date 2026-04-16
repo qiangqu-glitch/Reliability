@@ -23,13 +23,7 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
     <div class="bc"><a href="../index.html">ReliToolbox</a> › AMSAA</div>
     <h1>📈 可靠性增长 AMSAA</h1>
     <p class="sub">Crow-AMSAA模型 · 可靠性增长跟踪 · MTBF趋势预测</p>
-    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
-      <div class="lb">
-        <button class="lbtn on" onclick="setLang('zh')">中文</button>
-        <button class="lbtn" onclick="setLang('en')">EN</button>
-      </div>
-      <a href="../index.html" class="btn btsm">← 首页</a>
-    </div>
+    <a href="../index.html" class="btn btsm">← 首页</a>
   <div class="lang-bar" style="margin-top:6px">
     <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
     <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
@@ -99,7 +93,7 @@ function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.widt
 
 function drawGrid(c,PAD,minY,maxY,yFmt){
  const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
- x.strokeStyle='rgba(255,255,255,0.05)';x.lineWidth=.5;
+ x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
  [0,.2,.4,.6,.8,1].forEach(v=>{const y=PAD.t+iH*(1-v);
  x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
  x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
@@ -188,8 +182,12 @@ function fitAMSAA(failures, T, terminated) {
  const sumLnT = failures.reduce((s,t) => s + Math.log(t), 0);
  const lnT = terminated === 'time' ? Math.log(T) : Math.log(failures[n-1]);
  
- const beta = n / (n * lnT - sumLnT);
+ const denom = n * lnT - sumLnT;
+ if(Math.abs(denom) < 1e-12) return null; // guard: all failures at same time → β undefined
+ const beta = n / denom;
+ if(!isFinite(beta) || beta <= 0) return null;
  const lambda = (terminated === 'time') ? n / Math.pow(T, beta) : (n-1) / Math.pow(failures[n-1], beta);
+ if(!isFinite(lambda) || lambda <= 0) return null;
 
  const Cvm = failures.reduce((s,t,i) => {
  const Fi = 1 - Math.exp(-lambda * Math.pow(t, beta)); 
@@ -214,6 +212,7 @@ function runAMSAA() {
  const nums = AM.rawData.trim().split(/[\n,\s]+/).map(Number).filter(v=>!isNaN(v)&&v>0);
  if (nums.length < 3) { alert(LANG==='zh'?'至少需要3个失效时间':'Need 3+ failure times'); return; }
  AM.res = fitAMSAA(nums, AM.T, AM.terminated);
+ if(!AM.res){ alert(LANG==='zh'?'拟合失败：数据可能全部相同或数值异常':'Fit failed: data may be identical or numerically degenerate'); return; }
  renderAMSAA();
 }
 
@@ -342,7 +341,7 @@ function drawAMCharts() {
  const tX = t => PAD.l + iW * t / maxT;
  const tY = n => PAD.t + iH * (1 - n / maxN);
 
- x.strokeStyle = 'rgba(255,255,255,0.05)'; x.lineWidth = .5;
+ x.strokeStyle = 'rgba(15,23,42,0.08)'; x.lineWidth = .5;
  [0,.25,.5,.75,1].forEach(v => {
  const y = PAD.t + iH * (1-v);
  x.beginPath(); x.moveTo(PAD.l,y); x.lineTo(W-PAD.r,y); x.stroke();
@@ -398,7 +397,7 @@ function drawAMCharts() {
  const tX = t => PAD.l + iW * t / maxT;
  const tY = m => PAD.t + iH * (1 - m / maxM);
 
- x.strokeStyle = 'rgba(255,255,255,0.05)'; x.lineWidth = .5;
+ x.strokeStyle = 'rgba(15,23,42,0.08)'; x.lineWidth = .5;
  [0,.25,.5,.75,1].forEach(v => {
  const y = PAD.t + iH * (1-v);
  x.beginPath(); x.moveTo(PAD.l,y); x.lineTo(W-PAD.r,y); x.stroke();
@@ -457,5 +456,6 @@ function drawAMCharts() {
     <a href="https://chemcalc.cn">chemcalc.cn</a>
   </div>
 </footer>
+<script src="../shared/topnav.js"></script>
 </body>
 </html>

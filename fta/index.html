@@ -40,15 +40,17 @@ small{color:var(--sec);font-size:11px}
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head><body>
-<header><div class="container"><h1>🌳 FTA 故障树分析</h1>
-<div class="sub">Fault Tree Analysis | MOCUS最小割集 + Birnbaum重要度</div></div>
-<div style="margin-top:8px"><a href="../index.html" style="color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.3)">← ReliToolbox 主页</a><div class="lang-bar" style="margin-top:6px">
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › FTA</div>
+  <h1>🌳 FTA 故障树分析</h1>
+  <div class="sub">Fault Tree Analysis | MOCUS最小割集 + Birnbaum重要度</div>
+  <div class="lang-bar">
     <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
     <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
     <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
   </div>
-</div>
-</header>
+</div></header>
 
 <div class="container">
 <div class="card"><div class="title">基本事件 Basic Events (叶节点失效率)</div>
@@ -99,7 +101,7 @@ function render(){
 
 function parseGates(text){
  const gates = {};
- const lines = text.trim().split('\n').filter(l=>l.trim()&&!l.trim().startsWith('
+ const lines = text.trim().split('\n').filter(l=>l.trim()&&!l.trim().startsWith('#'));
  for(const line of lines){
  const m = line.match(/^\s*(\w+)\s*=\s*(AND|OR)\s*\(([^)]+)\)\s*$/i);
  if(!m) throw new Error('解析失败: '+line);
@@ -218,7 +220,6 @@ function loadDemo(){
  {id:'e4',name:'CTRL_FAIL',p:0.005},
  ];
  document.getElementById('gates').value =
- "
  "TOP = OR(PUMP_BLOCK, COMMON)\n"+
  "PUMP_BLOCK = AND(PUMP_A_FAIL, PUMP_B_FAIL)\n"+
  "COMMON = OR(POWER_LOSS, CTRL_FAIL)";
@@ -236,6 +237,7 @@ async function saveModel(){
 addEvent('PUMP_A_FAIL',0.02);
 addEvent('PUMP_B_FAIL',0.02);
 </script>
+<script>
 // ── Lang toggle ──
 (function(){
   var _l = localStorage.getItem('rtLang') || 'zh';
@@ -250,6 +252,7 @@ addEvent('PUMP_B_FAIL',0.02);
   window.setLang = applyLang;
   document.addEventListener('DOMContentLoaded', function(){ applyLang(_l); });
 })();
+</script>
 
 <footer class="site-footer">
   <div class="ft-grid">
@@ -276,4 +279,5 @@ addEvent('PUMP_B_FAIL',0.02);
     <a href="https://chemcalc.cn">chemcalc.cn</a>
   </div>
 </footer>
+<script src="../shared/topnav.js"></script>
 </body></html>

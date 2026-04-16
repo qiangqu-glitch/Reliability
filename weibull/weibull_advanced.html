@@ -25,14 +25,24 @@ textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e5e7eb;font
 small{color:#6b7280;font-size:11px;line-height:1.6}
 pre{background:#f0fdfa;padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;margin:6px 0}
 .ok{color:#059669}.warn{color:#d97706}
-</style><script>
+</style>
+<link rel="stylesheet" href="../shared/style.css">
+<script>
 // ReliToolbox v0.1 (c) reliability.chemcalc.cn
 (function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
-</head><body>
-<header><div class="container"><h1>📈 Weibull 高级模式</h1>
-<div class="sub">混合截尾数据 MLE · Nelder-Mead · Fisher 95% 置信区间</div></div></header>
+</head><body data-module="Weibull Advanced (MLE + Fisher CI)">
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › Weibull+</div>
+  <h1>📈 Weibull 高级模式</h1>
+  <div class="sub">混合截尾数据 MLE · Nelder-Mead · Fisher 95% 置信区间</div>
+  <div class="lang-bar">
+    <a href="../weibull/index.html" class="lbtn2" style="text-decoration:none">Weibull 基础</a>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div></header>
 
 <div class="container">
 
@@ -52,7 +62,13 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 5000 R
 300 L</textarea>
 <button class="pri" onclick="run()" style="margin-top:8px;width:100%">▶ 执行 MLE 拟合</button>
-<button onclick="loadDemo()" style="margin-top:6px">载入化工装置巡检示例</button>
+<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">
+<button onclick="loadDemo()">载入化工装置巡检示例</button>
+<label style="cursor:pointer;padding:7px 14px;border-radius:18px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:600">📄 导入 CSV
+ <input type="file" id="csvIn" accept=".csv,.txt" style="display:none">
+</label>
+<button onclick="window.print()">🖨 打印/PDF</button>
+</div>
 <div id="err" style="color:#dc2626;font-size:11px;margin-top:8px"></div>
 </div>
 
@@ -82,7 +98,12 @@ function logLik(data,b,e){
  if(d.type==='exact') p = wbf(d.t,b,e);
  else if(d.type==='right') p = wbR(d.t,b,e);
  else if(d.type==='left') p = wbF(d.t,b,e);
- else if(d.type==='interval') p = wbF(d.tR,b,e)-wbF(d.tL,b,e);
+ else if(d.type==='interval'){
+ // Cancellation-safe: wbF(tR)-wbF(tL) = exp(-a) - exp(-aR) = exp(-a)·(-expm1(a-aR))
+ // Math.expm1 preserves precision for narrow intervals where aR-a is tiny.
+ const a=Math.pow(d.tL/e,b), aR=Math.pow(d.tR/e,b);
+ p = Math.exp(-a) * (-Math.expm1(a-aR));
+ }
  if(!(p>0))return -Infinity;
  ll += Math.log(p);
  }
@@ -91,13 +112,21 @@ function logLik(data,b,e){
 
 function nelderMead(f,x0,maxIter=800){
  const n=x0.length;
+ const TOL_F=1e-10, TOL_X=1e-8;
  let sim=[x0.slice()];
  for(let i=0;i<n;i++){const x=x0.slice();x[i]=x[i]*1.05+1e-3;sim.push(x);}
  let fv=sim.map(x=>-f(x[0],x[1]));
  for(let it=0;it<maxIter;it++){
  const ord=fv.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);
  sim=ord.map(o=>sim[o[1]]);fv=ord.map(o=>o[0]);
- if(Math.abs(fv[n]-fv[0])<1e-10)break;
+ // Dual convergence: both function range AND simplex geometric size must be small.
+ const fRange=Math.abs(fv[n]-fv[0]);
+ let xMax=0;
+ for(let i=1;i<=n;i++){
+ let d=0;for(let j=0;j<n;j++){const dx=sim[i][j]-sim[0][j];d+=dx*dx;}
+ const dist=Math.sqrt(d);if(dist>xMax)xMax=dist;
+ }
+ if(fRange<TOL_F && xMax<TOL_X)break;
  const c=new Array(n).fill(0);
  for(let i=0;i<n;i++)for(let j=0;j<n;j++)c[j]+=sim[i][j]/n;
  const xr=c.map((cj,j)=>cj+(cj-sim[n][j]));
@@ -119,11 +148,16 @@ function nelderMead(f,x0,maxIter=800){
 }
 
 function fdHess(f,b,e){
- const hb=1e-4*b,he=1e-4*e,f00=f(b,e);
- const Hbb=(f(b+hb,e)-2*f00+f(b-hb,e))/(hb*hb);
- const Hee=(f(b,e+he)-2*f00+f(b,e-he))/(he*he);
- const Hbe=(f(b+hb,e+he)-f(b+hb,e-he)-f(b-hb,e+he)+f(b-hb,e-he))/(4*hb*he);
- return[[Hbb,Hbe],[Hbe,Hee]];
+ // Hessian on log-parameters (u,v)=(ln β, ln η). Fixed step h=1e-4 is dimensionless
+ // and scale-invariant — robust across extreme β/η. cov = (-H)^-1 yields Var(ln β),
+ // Var(ln η) directly, feeding the log-normal CI formula natively.
+ const h=1e-4;
+ const g=(du,dv)=>f(b*Math.exp(du), e*Math.exp(dv));
+ const f00=g(0,0);
+ const Huu=(g(h,0)-2*f00+g(-h,0))/(h*h);
+ const Hvv=(g(0,h)-2*f00+g(0,-h))/(h*h);
+ const Huv=(g(h,h)-g(h,-h)-g(-h,h)+g(-h,-h))/(4*h*h);
+ return[[Huu,Huv],[Huv,Hvv]];
 }
 function inv2(M){const d=M[0][0]*M[1][1]-M[0][1]*M[1][0];if(Math.abs(d)<1e-30)return null;return[[M[1][1]/d,-M[0][1]/d],[-M[1][0]/d,M[0][0]/d]];}
 function gamma(z){if(z<0.5)return Math.PI/(Math.sin(Math.PI*z)*gamma(1-z));z-=1;const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];let x=c[0];for(let i=1;i<9;i++)x+=c[i]/(z+i);const t=z+7.5;return Math.sqrt(2*Math.PI)*Math.pow(t,z+0.5)*Math.exp(-t)*x;}
@@ -131,7 +165,7 @@ function gamma(z){if(z<0.5)return Math.PI/(Math.sin(Math.PI*z)*gamma(1-z));z-=1;
 function parseInput(text){
  const out=[];
  for(const raw of text.trim().split('\n')){
- const line = raw.trim();if(!line||line.startsWith('
+ const line = raw.trim();if(!line||line.startsWith('#')) continue;
  
  let m;
  if((m=line.match(/^(\d+\.?\d*)\s*-\s*(\d+\.?\d*)$/))||(m=line.match(/^(\d+\.?\d*)\s+(\d+\.?\d*)\s*[Ii]?$/))){
@@ -166,11 +200,13 @@ function run(){
  const negH = [[-H[0][0],-H[0][1]],[-H[1][0],-H[1][1]]];
  const cov = inv2(negH);
  const z = 1.96;
- let ciB=[null,null],ciE=[null,null];
+ let ciB=[null,null],ciE=[null,null],sB=null,sE=null;
  if(cov&&cov[0][0]>0&&cov[1][1]>0){
- const sB=Math.sqrt(cov[0][0]),sE=Math.sqrt(cov[1][1]);
- ciB=[beta*Math.exp(-z*sB/beta),beta*Math.exp(z*sB/beta)];
- ciE=[eta*Math.exp(-z*sE/eta),eta*Math.exp(z*sE/eta)];
+ // cov is now Σ on (ln β, ln η). σ(ln β)=√cov[0][0], delta-method σ(β)=β·σ(ln β).
+ const sLB=Math.sqrt(cov[0][0]),sLE=Math.sqrt(cov[1][1]);
+ ciB=[beta*Math.exp(-z*sLB),beta*Math.exp(z*sLB)];
+ ciE=[eta*Math.exp(-z*sLE),eta*Math.exp(z*sLE)];
+ sB=beta*sLB; sE=eta*sLE;
  }
  const mttf = eta*gamma(1+1/beta);
  
@@ -194,8 +230,8 @@ function run(){
  `AIC: ${(-2*ll+4).toFixed(3)}\n`+
  `β = ${beta.toFixed(4)}\n`+
  `η = ${eta.toFixed(2)}\n`+
- `σ_β (Fisher) = ${cov?Math.sqrt(cov[0][0]).toFixed(4):'—'}\n`+
- `σ_η (Fisher) = ${cov?Math.sqrt(cov[1][1]).toFixed(2):'—'}`;
+ `σ_β (Fisher) = ${sB!=null?sB.toFixed(4):'—'}\n`+
+ `σ_η (Fisher) = ${sE!=null?sE.toFixed(2):'—'}`;
  document.getElementById('bl').innerHTML = [1,5,10,50,63.2,90].map(p=>{
  const v = bLife(p);
  return `<div style="display:inline-block;min-width:100px;padding:6px 10px;background:#f0fdfa;border-radius:6px;margin:3px;text-align:center"><b>B${p}</b><br>${v.toFixed(0)}</div>`;
@@ -220,11 +256,38 @@ function loadDemo(){
 }
 
 (function selfTest(){
- 
+
  const syn = [450,680,780,920,1100,1250].map(t=>({type:'exact',t}));
  syn.push({type:'right',t:1500},{type:'right',t:1500});
  syn.push({type:'interval',tL:800,tR:900});
  const opt = nelderMead((b,e)=>logLik(syn,b,e),[1.5,1000]);
  console.log('Self-test: β='+opt.x[0].toFixed(2)+' η='+opt.x[1].toFixed(0)+' (target ~2/1000)');
 })();
-</script></body></html>
+
+// CSV import — map to textarea lines of "t E|R|L" or "tL tR I" for intervals.
+document.addEventListener('change', function(ev){
+ if(ev.target && ev.target.id==='csvIn' && ev.target.files && ev.target.files[0]){
+  const f = ev.target.files[0];
+  const r = new FileReader();
+  r.onload = ()=>{
+   try{
+    const parsed = (window.ReliCSV && ReliCSV.parse) ? ReliCSV.parse(r.result) : null;
+    if(!parsed || !parsed.rows.length){ alert('CSV 解析到 0 条记录'); return; }
+    const lines = parsed.rows.map(x=>{
+     if(x.type==='interval') return `${x.tL} ${x.tR}`;
+     if(x.type==='right')    return `${x.t} R`;
+     if(x.type==='left')     return `${x.t} L`;
+     return `${x.t} E`;
+    });
+    const ta = document.getElementById('data');
+    if(ta) ta.value = lines.join('\n');
+    alert(`已导入 ${lines.length} 条。点"执行 MLE 拟合"。`);
+   }catch(e){ alert('CSV 解析失败: '+e.message); }
+  };
+  r.readAsText(f);
+ }
+});
+</script>
+<script src="../shared/csv.js"></script>
+<script src="../shared/topnav.js"></script>
+</body></html>

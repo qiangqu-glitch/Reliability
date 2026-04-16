@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.4 | reliability.chemcalc.cn
+  ReliToolbox v0.1 | reliability.chemcalc.cn
   Copyright © All rights reserved.
   Unauthorized reproduction or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
 -->
 <html lang="zh"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PM间隔优化 — ReliToolbox v0.4</title>
+<title>PM间隔优化 — ReliToolbox v0.1</title>
 <link rel="stylesheet" href="../shared/style.css">
 <style>
 body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0}
@@ -41,22 +41,22 @@ th{background:var(--bg);color:var(--muted);font-size:10px;font-weight:600}
 }
 </style>
 <script>
-(function(){var _w='ReliToolbox v0.4 (c) reliability.chemcalc.cn';
+(function(){var _w='ReliToolbox v0.1 (c) reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.4';})();
 </script>
 </head><body>
 
-<header style="background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:18px 16px">
-  <div style="max-width:860px;margin:0 auto">
-    <h1 style="margin:0;font-size:21px">&#x1F4B0; PM&#x95F4;&#x9694;&#x4F18;&#x5316; / PM Interval Optimization</h1>
-    <div style="font-size:11px;opacity:.85;margin-top:3px">Age Replacement Model &#xB7; &#x6210;&#x672C;&#x7387;&#x6700;&#x5C0F;&#x5316; &#xB7; Weibull &#x53C2;&#x6570;&#x9A71;&#x52A8;</div>
-    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-      <a href="../index.html" style="color:rgba(255,255,255,.8);font-size:12px;text-decoration:none;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.3)">&#x2190; ReliToolbox &#x4E3B;&#x9875;</a>
-      <button class="lbtn2 on no-print" id="_lbZh" onclick="setLang('zh')" style="font-size:11px">&#x4E2D;&#x6587;</button>
-      <button class="lbtn2 no-print" id="_lbEn" onclick="setLang('en')" style="font-size:11px">EN</button>
-    </div>
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › PM Opt</div>
+  <h1>📅 PM 间隔优化 / PM Interval Optimization</h1>
+  <div class="sub">Age Replacement Model · 成本率最小化 · Weibull 参数驱动</div>
+  <div class="lang-bar">
+    <button class="lbtn2 on no-print" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2 no-print" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
   </div>
-</header>
+</div></header>
 
 <div class="wrap">
 
@@ -430,8 +430,9 @@ function drawSensChart(sensPts,unit){
     </div>
   </div>
   <div class="ft-bottom">
-    v0.4 &nbsp;&#xB7;&nbsp; &#xA9; ReliToolbox &nbsp;&#xB7;&nbsp;
+    v0.1 &nbsp;&#xB7;&nbsp; &#xA9; ReliToolbox &nbsp;&#xB7;&nbsp;
     <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a>
   </div>
 </footer>
+<script src="../shared/topnav.js"></script>
 </body></html>
