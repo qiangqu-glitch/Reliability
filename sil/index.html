@@ -77,16 +77,21 @@ function renderHome(){
  </div>`).join('')}</div>`;}
 
 function renderMod(id){
- const mod=MODS.find(m=>m.id===id);
- document.getElementById('hdrInner').innerHTML=`
- <div class="bc" style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div>
- <h1 style="font-size:18px">${mod.icon} ${mod.zh}</h1>
- <div style="display:flex;gap:7px;margin-top:8px">
- <div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button>
- <button class="lbtn ${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>
- <button class="btn btsm" onclick="showHome()">← ${zh(['首页','Home'])}</button>
- </div>`;
- ({wb:renderWB,fm:renderFM,lc:renderLC,rm:renderRAM,rb:renderRBI,sp:renderSPA})[id]();}
+  const mod=MODS.find(m=>m.id===id);
+  if(id==='sl'){
+    document.getElementById('hdrInner').innerHTML=`
+    <div class="bc" style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div>
+    <h1 style="font-size:18px">${mod.icon} ${mod.zh}</h1>
+    <div style="display:flex;gap:7px;margin-top:8px">
+    <div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button>
+    <button class="lbtn ${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>
+    <button class="btn btsm" onclick="showHome()">← ${zh(['首页','Home'])}</button>
+    </div>`;
+    renderSIL();
+  } else {
+    window.location.href='../'+id+'/index.html';
+  }
+}
 
 function mkCanvas(id,H){return`<canvas id="${id}" height="${H}"></canvas>`;}
 function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.width=cv.offsetWidth||720;return{cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height};}

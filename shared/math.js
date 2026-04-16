@@ -171,4 +171,5 @@ const RM = (() => {
   function pCDF(k,lam){let s=0;for(let i=0;i<=k;i++){let t=Math.exp(-lam);for(let j=1;j<=i;j++)t*=lam/j;s+=t;}return s;}
 
   return{fitAll,bLife,MR,fmt,diagBeta,runMC,pCDF,nCDF,nPDF}; })();
+if(typeof window!=='undefined')window.RM=RM;
 

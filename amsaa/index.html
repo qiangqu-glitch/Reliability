@@ -49,6 +49,7 @@ const app=()=>document.getElementById('app');
 const DCOL={Weibull:'#0d9488',Exponential:'#6366f1',Lognormal:'#f59e0b',Normal:'#ec4899'};
 
 const MODS=[
+ {id:'am',icon:'📈',name:'AMSAA',zh:'可靠性增长', desc_zh:'Crow-AMSAA 可靠性增长模型', desc_en:'Crow-AMSAA reliability growth',t:'teal'},
  {id:'wb',icon:'📉',name:'Weibull',zh:'Weibull 分析', desc_zh:'MLE拟合 · 4分布 · B-Life · 截尾数据',desc_en:'MLE fitting · 4 distributions · B-Life',t:'teal'},
  {id:'fm',icon:'📋',name:'FMEA', zh:'FMEA 工作表', desc_zh:'RPN自动计算 · Pareto图 · CSV导出', desc_en:'Auto RPN · Pareto chart · CSV export',t:'amber'},
  {id:'lc',icon:'💰',name:'LCC', zh:'生命周期成本', desc_zh:'NPV比较 · EAC · 累积成本曲线', desc_en:'NPV · EAC · Cumulative cost',t:'amber'},
@@ -77,16 +78,21 @@ function renderHome(){
  </div>`).join('')}</div>`;}
 
 function renderMod(id){
- const mod=MODS.find(m=>m.id===id);
- document.getElementById('hdrInner').innerHTML=`
- <div class="bc" style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div>
- <h1 style="font-size:18px">${mod.icon} ${mod.zh}</h1>
- <div style="display:flex;gap:7px;margin-top:8px">
- <div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button>
- <button class="lbtn ${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>
- <button class="btn btsm" onclick="showHome()">← ${zh(['首页','Home'])}</button>
- </div>`;
- ({wb:renderWB,fm:renderFM,lc:renderLC,rm:renderRAM,rb:renderRBI,sp:renderSPA})[id]();}
+  const mod=MODS.find(m=>m.id===id);
+  if(id==='am'){
+    document.getElementById('hdrInner').innerHTML=`
+    <div class="bc" style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div>
+    <h1 style="font-size:18px">${mod.icon} ${mod.zh}</h1>
+    <div style="display:flex;gap:7px;margin-top:8px">
+    <div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button>
+    <button class="lbtn ${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>
+    <button class="btn btsm" onclick="showHome()">← ${zh(['首页','Home'])}</button>
+    </div>`;
+    renderAMSAA();
+  } else {
+    window.location.href='../'+id+'/index.html';
+  }
+}
 
 function mkCanvas(id,H){return`<canvas id="${id}" height="${H}"></canvas>`;}
 function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.width=cv.offsetWidth||720;return{cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height};}
