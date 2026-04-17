@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.1 | reliability.chemcalc.cn
+  ReliToolbox | reliability.chemcalc.cn
   Copyright © All rights reserved.
   Unauthorized reproduction or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
@@ -9,6 +9,7 @@
 <title>RBD 可靠性框图 v2 - ReliToolbox</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
 <script src="../db/relidb.js"></script>
+<script>if(typeof ReliDB==='undefined'){document.addEventListener('DOMContentLoaded',()=>{const d=document.createElement('div');d.style.cssText='background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px;margin:10px;border-radius:6px;font-size:13px';d.innerHTML='⚠ <b>DB 模块未加载 / DB module not loaded</b> — check <code>../db/relidb.js</code> (case-sensitive on GitHub Pages).';document.body&&document.body.insertBefore(d,document.body.firstChild);});}</script>
 <style>
 body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0}
 header{background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:16px}
@@ -41,8 +42,8 @@ small{color:var(--sec);font-size:11px;line-height:1.5}
 .b-approx{background:#fef3c7;color:#d97706}
 </style><link rel="stylesheet" href="../shared/style.css">
 <script>
-// ReliToolbox v0.1 (c) reliability.chemcalc.cn
-(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+// ReliToolbox (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head><body data-module="RBD v2">
@@ -90,6 +91,14 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 
 <div id="results" style="display:none">
 <div class="kpi" id="kpis"></div>
+
+<div class="card"><div class="title">系统时域可靠度 R(t) / System Reliability vs Time</div>
+<canvas id="rbdRtChart" height="220" style="width:100%"></canvas>
+<div style="font-size:10px;color:#64748b;margin-top:4px">
+实线 = 系统 R(t)（基于最小路径集 + 容斥精确解），红虚线 = 当前任务时间 t。
+</div>
+</div>
+
 <div class="card"><div class="title">最小路径集 (Minimal Path Sets)</div>
 <div id="mps" style="font-family:monospace;font-size:11px"></div>
 </div>
@@ -308,7 +317,68 @@ function solve(){
  return `<div style="padding:4px 0;border-bottom:1px solid var(--border)"><b>MPS${i+1}</b> (阶数=${p.length}, P=${(pr*100).toFixed(3)}%): ${labels}</div>`;
  }).join('') + (warn?`<div style="color:#d97706;margin-top:6px">${warn}</div>`:'');
  document.getElementById('results').style.display='block';
+ drawRBDRtChart(mps, t);
  }catch(e){document.getElementById('err').textContent='错误: '+e.message;}
+}
+
+// System R(t) curve via solveExact sweep over t∈[0, 2·t_mission]
+function drawRBDRtChart(mps, tMission){
+ const cv = document.getElementById('rbdRtChart'); if(!cv) return;
+ const W = cv.width = cv.offsetWidth || 700, H = cv.height = 220;
+ const ctx = cv.getContext('2d'); ctx.clearRect(0,0,W,H);
+ const PAD = {l:56, r:18, t:14, b:34};
+ const iW = W-PAD.l-PAD.r, iH = H-PAD.t-PAD.b;
+ const tMax = Math.max(tMission*2, 1);
+
+ // sample 80 points
+ const N = 80;
+ const pts = [];
+ for(let i=0;i<=N;i++){
+  const tt = tMax * i/N;
+  const Rmap = {};
+  cy.nodes().forEach(n=>{const d=n.data();if(d.type!=='start'&&d.type!=='end')Rmap[n.id()]=nodeR(d,tt);});
+  let sys;
+  const res = solveExact(mps, Rmap);
+  if(res) sys = res.R;
+  else {
+   const pp = mps.map(p=>p.reduce((a,n)=>a*(Rmap[n]||0),1));
+   sys = 1 - pp.reduce((a,p)=>a*(1-p),1);
+  }
+  pts.push({t:tt, R:sys});
+ }
+
+ const tX = t => PAD.l + iW * t / tMax;
+ const rY = r => PAD.t + iH * (1 - r);
+
+ // grid
+ ctx.strokeStyle = 'rgba(15,23,42,0.08)'; ctx.lineWidth = .5;
+ [0,.25,.5,.75,1].forEach(v=>{
+  const y = PAD.t + iH*(1-v);
+  ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+  ctx.fillStyle='#64748b'; ctx.font='9px monospace'; ctx.textAlign='right';
+  ctx.fillText((v*100).toFixed(0)+'%', PAD.l-4, y+3);
+ });
+ // x ticks
+ ctx.fillStyle='#64748b'; ctx.textAlign='center';
+ [0,.25,.5,.75,1].forEach(v=>ctx.fillText((tMax*v|0), tX(tMax*v), H-PAD.b+13));
+
+ // mission-time marker
+ if(tMission>0 && tMission<tMax){
+  ctx.strokeStyle = '#dc2626'; ctx.setLineDash([5,3]); ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(tX(tMission), PAD.t); ctx.lineTo(tX(tMission), PAD.t+iH); ctx.stroke();
+  ctx.setLineDash([]); ctx.fillStyle='#dc2626'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('t = '+tMission, tX(tMission), PAD.t-3);
+ }
+
+ // R(t) curve
+ ctx.strokeStyle = '#0d9488'; ctx.lineWidth = 2.2; ctx.beginPath();
+ pts.forEach((p,i)=>i===0?ctx.moveTo(tX(p.t),rY(p.R)):ctx.lineTo(tX(p.t),rY(p.R)));
+ ctx.stroke();
+
+ // axis labels
+ ctx.fillStyle='#64748b'; ctx.font='10px sans-serif'; ctx.textAlign='left';
+ ctx.fillText('R', 6, PAD.t+4);
+ ctx.textAlign='center'; ctx.fillText('t (hrs)', W/2, H-4);
 }
 
 function serialize(){
@@ -468,9 +538,9 @@ async function openLibPicker(){
     </div>
   </div>
   <div class="ft-bottom">
-    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    © ReliToolbox &nbsp;·&nbsp;
     <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
-    <a href="https://chemcalc.cn">chemcalc.cn</a>
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.5</span>
   </div>
 </footer>
 </body></html>

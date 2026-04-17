@@ -8,6 +8,16 @@ const RM = (() => {
   function nCDF(x){const s=x<0?-1:1,a=Math.abs(x)/Math.sqrt(2),t=1/(1+.3275911*a);
     return .5*(1+s*(1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-a*a)));}
   function nPDF(x){return Math.exp(-.5*x*x)/Math.sqrt(2*Math.PI);}
+  // Acklam's inverse normal CDF approximation (Φ⁻¹)
+  function nInv(p){if(p<=0)return-Infinity;if(p>=1)return Infinity;
+    const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+    const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+    const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+    const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+    const pl=.02425,ph=1-pl;let q,r;
+    if(p<pl){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+    if(p<=ph){q=p-.5;r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+    q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
 
   function wMLE(data,cens){
     const n=data.length,nF=cens.filter(c=>!c).length;if(nF<2)return null;
@@ -170,5 +180,42 @@ const RM = (() => {
 
   function pCDF(k,lam){let s=0;for(let i=0;i<=k;i++){let t=Math.exp(-lam);for(let j=1;j<=i;j++)t*=lam/j;s+=t;}return s;}
 
-  return{fitAll,bLife,MR,fmt,diagBeta,runMC,pCDF,nCDF,nPDF}; })();
+
+  // 3-parameter Weibull fit via profile likelihood on γ (location).
+  // For each γ in [0, min(t)·0.95] we fit 2-param MLE on t' = t - γ and pick γ maximizing logLik.
+  function fitWB3p(data,cens){
+    cens = cens || new Array(data.length).fill(false);
+    const n=data.length, fails=data.filter((_,i)=>!cens[i]);
+    if(fails.length<3) return null;
+    const tMin=Math.min(...fails);
+    const gHi=tMin*0.95;
+    const NG=40;
+    let best=null;
+    for(let k=0;k<=NG;k++){
+      const g = gHi*k/NG;
+      const shifted=data.map(t=>Math.max(t-g,1e-9));
+      const w=wMLE(shifted,cens);
+      if(!w) continue;
+      let ll=0;
+      for(let i=0;i<n;i++){
+        const ts=shifted[i];
+        if(!cens[i]) ll += Math.log(w.beta/w.eta)+(w.beta-1)*Math.log(ts/w.eta) - Math.pow(ts/w.eta,w.beta);
+        else         ll -= Math.pow(ts/w.eta,w.beta);
+      }
+      if(!best || ll>best.ll) best={gamma:g,beta:w.beta,eta:w.eta,ll};
+    }
+    if(!best) return null;
+    const aic=-2*best.ll+6; // 3 params
+    return {
+      name:'Weibull-3P',
+      beta:best.beta, eta:best.eta, gamma:best.gamma,
+      logLik:best.ll, aic,
+      R:t => t<=best.gamma?1:Math.exp(-Math.pow((t-best.gamma)/best.eta,best.beta)),
+      F:t => t<=best.gamma?0:1-Math.exp(-Math.pow((t-best.gamma)/best.eta,best.beta)),
+      h:t => t<=best.gamma?0:(best.beta/best.eta)*Math.pow((t-best.gamma)/best.eta,best.beta-1),
+      mttf: best.gamma + best.eta*gFn(1+1/best.beta)
+    };
+  }
+
+  return{fitAll,fitWB3p,bLife,MR,fmt,diagBeta,runMC,pCDF,nCDF,nPDF,nInv}; })();
 

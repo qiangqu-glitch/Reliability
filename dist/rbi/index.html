@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<!-- ReliToolbox | reliability.chemcalc.cn | Copyright (c) All rights reserved. Unauthorized reproduction, decompilation, reverse engineering or redistribution is prohibited. Contact: CHEMCALC@outlook.com -->
+<!--
+  ReliToolbox | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RBI 风险检验 — ReliToolbox</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style></style>
+<script>(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';if(typeof window!=='undefined')window._rtv='0.1';})();</script>
+</head>
+<body>
+<header class="hdr" id="hdr">
+  <div style="max-width:860px;margin:0 auto" id="hdrInner">
+    <div class="bc"><a href="../index.html">ReliToolbox</a> › RBI</div>
+    <h1>🛡️ RBI 基于风险检验</h1>
+    <p class="sub">API 580/581 · 5×5风险矩阵 · 剩余寿命</p>
+    <a href="../index.html" class="btn btsm">← 首页</a>
+  <div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div>
+</header>
+<div class="ctn" id="app"></div>
+
+<script src="../shared/math.js"></script>
+<script>let LANG='zh';function setLang(l){LANG=l;document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===(l==='zh'?'中文':'EN')));if(CUR_MOD)renderMod(CUR_MOD);else renderHome();}const zh=k=>LANG==='zh'?k[0]:k[1];let CUR_MOD=null;function goMod(id){CUR_MOD=id;renderMod(id);}function showHome(){CUR_MOD=null;renderHome();}const app=()=>document.getElementById('app');const DCOL={Weibull:'#0d9488',Exponential:'#6366f1',Lognormal:'#f59e0b',Normal:'#ec4899'};const MODS=[{id:'wb',icon:'📉',name:'Weibull',zh:'Weibull 分析',desc_zh:'MLE拟合 · 4分布 · B-Life · 截尾数据',desc_en:'MLE fitting · 4 distributions · B-Life',t:'teal'},{id:'fm',icon:'📋',name:'FMEA',zh:'FMEA 工作表',desc_zh:'RPN自动计算 · Pareto图 · CSV导出',desc_en:'Auto RPN · Pareto chart · CSV export',t:'amber'},{id:'lc',icon:'💰',name:'LCC',zh:'生命周期成本',desc_zh:'NPV比较 · EAC · 累积成本曲线',desc_en:'NPV · EAC · Cumulative cost',t:'amber'},{id:'rm',icon:'⚙️',name:'RAM',zh:'RAM 仿真',desc_zh:'事件驱动MC · 产能传递 · 三级维修',desc_en:'Event-driven MC · Capacity propagation',t:'purple'},{id:'rb',icon:'🛡️',name:'RBI',zh:'基于风险检验',desc_zh:'API 580/581 · 5×5风险矩阵',desc_en:'API 580/581 · 5×5 risk matrix',t:'purple'},{id:'sp',icon:'🔧',name:'Spare',zh:'备件库存优化',desc_zh:'泊松模型 · 服务水平 · 成本曲线',desc_en:'Poisson model · Service level curve',t:'indigo'},{id:'sl',icon:'🚨',name:'SIL',zh:'SIL 计算',desc_zh:'IEC 61508/61511',desc_en:'IEC 61508/61511',t:'',soon:true},];function renderHome(){const live=MODS.filter(m=>!m.soon),soon=MODS.filter(m=>m.soon);app().innerHTML=`
+<div class="sl" style="margin-top:6px">${zh(['已上线模块','Live Modules'])}</div>
+<div class="mgrid">${live.map(m=>`<div class="mc"style="border-top:2px solid var(--${m.t})"onclick="goMod('${m.id}')"><span class="mbg bl">${zh(['已上线','Live'])}</span>
+<div class="mi">${m.icon}</div><div class="mn">${m.name}</div>
+<div class="mz">${m.zh}</div><div class="md">${LANG==='zh'?m.desc_zh:m.desc_en}</div>
+</div>`).join('')}</div>
+<div class="sl" style="margin-top:16px">${zh(['即将上线','Coming Soon'])}</div>
+<div class="mgrid">${soon.map(m=>`<div class="mc sn"><span class="mbg bs">${zh(['待上线','Soon'])}</span>
+<div class="mi">${m.icon}</div><div class="mn">${m.name}</div><div class="mz">${m.zh}</div></div>`).join('')}</div>`;}
+function renderMod(id){
+const mod=MODS.find(m=>m.id===id);
+document.getElementById('hdrInner').innerHTML=`<div class="bc"style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div><h1 style="font-size:18px">${mod.icon}${mod.zh}</h1>
+<div style="display:flex;gap:7px;margin-top:8px">
+<div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button><button class="lbtn ${LANG==='en'?'on':''}"onclick="setLang('en')">EN</button></div><button class="btn btsm"onclick="showHome()">←${zh(['首页','Home'])}</button>
+</div>`;
+(function(id){
+ var fn={wb:null,fm:null,lc:null,rm:null,rb:null,sp:null};
+ // Only this module's render is available in standalone mode
+ if(typeof renderRBI==='function') fn={wb:renderRBI,fm:renderRBI,lc:renderRBI,rm:renderRBI,rb:renderRBI,sp:renderRBI};
+ if(fn[id]) fn[id](); else if(typeof renderRBI==='function') renderRBI();
+})(id);}
+function mkCanvas(id,H){return`<canvas id="${id}"height="${H}"></canvas>`;}
+function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.width=cv.offsetWidth||720;return{cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height};}
+function drawGrid(c,PAD,minY,maxY,yFmt){
+const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+[0,.2,.4,.6,.8,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+x.fillText(yFmt(minY+(maxY-minY)*v),PAD.l-3,y+3);});}
+function drawLines(c,PAD,data,series,xKey,xFmt,refY){
+const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+const xs=data.map(d=>d[xKey]),minX=Math.min(...xs),maxX=Math.max(...xs);
+const ys=series.flatMap(s=>data.map(d=>d[s.k])).filter(v=>isFinite(v)&&v>=0);
+if(!ys.length)return;
+const minY=0,maxY=Math.max(...ys)*1.08;
+const tX=v=>PAD.l+iW*(v-minX)/(maxX-minX||1);const tY=v=>PAD.t+iH*(1-(v-minY)/(maxY-minY||1));drawGrid(c,PAD,minY,maxY,v=>v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(1));if(refY!=null){x.strokeStyle='#ef444466';x.lineWidth=1;x.setLineDash([4,3]);x.beginPath();x.moveTo(PAD.l,tY(refY));x.lineTo(W-PAD.r,tY(refY));x.stroke();x.setLineDash([]);}x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';[0,.25,.5,.75,1].forEach(v=>{const val=minX+(maxX-minX)*v;x.fillText(xFmt(val),tX(val),H-PAD.b+13);});series.forEach(s=>{x.strokeStyle=s.col;x.lineWidth=s.bold?2.2:1.2;if(!s.bold)x.setLineDash([5,3]);x.beginPath();let first=true;data.forEach(d=>{const v=d[s.k];if(!isFinite(v)||v<0)return;first?x.moveTo(tX(d[xKey]),tY(v)):x.lineTo(tX(d[xKey]),tY(v));first=false;});x.stroke();x.setLineDash([]);});x.textAlign='left';let lx=PAD.l+6,ly=PAD.t+13;series.forEach(s=>{x.fillStyle=s.col;x.fillRect(lx,ly-6,12,2.5);x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(s.lbl,lx+15,ly);lx+=Math.max(90,x.measureText(s.lbl).width+20);if(lx>W-60){lx=PAD.l+6;ly+=12;}});}function drawHist(id,vals,bins=22){const c=ctx(id);if(!c)return;const{ctx:x,W,H}=c;x.clearRect(0,0,W,H);const PAD={l:10,r:10,t:16,b:24};const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;const mn=Math.min(...vals),mx=Math.max(...vals),bw=(mx-mn)/bins||.1;const counts=new Array(bins).fill(0);vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/bw));counts[b]++;});const maxC=Math.max(...counts),bpx=iW/bins;counts.forEach((c,i)=>{const bh=iH*c/maxC,bx=PAD.l+i*bpx;const midV=mn+i*bw+bw/2;const col=midV>=95?'#10b981':midV>=85?'#f59e0b':'#ef4444';x.fillStyle=col+'88';x.fillRect(bx,PAD.t+iH-bh,bpx-1,bh);x.strokeStyle=col;x.lineWidth=.5;x.strokeRect(bx,PAD.t+iH-bh,bpx-1,bh);});const mV=(mn+mx)/2,mx2=PAD.l+iW*(mV-mn)/(mx-mn||1);x.strokeStyle='#0d9488';x.lineWidth=1.5;x.setLineDash([4,3]);x.beginPath();x.moveTo(mx2,PAD.t);x.lineTo(mx2,PAD.t+iH);x.stroke();x.setLineDash([]);x.fillStyle='#0d9488';x.font='8px monospace';x.textAlign='center';x.fillText('μ='+mV.toFixed(1)+'%',mx2,PAD.t-1);x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';[0,.25,.5,.75,1].forEach(v=>{x.fillText((mn+v*(mx-mn)).toFixed(1)+'%',PAD.l+v*iW,H-6);});}function dl(content,filename){const blob=new Blob([content],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();}(function(){CUR_MOD='rbi';document.title='RBI 风险检验 — ReliToolbox';})();</script>
+<script src="../db/relidb.js"></script>
+<script>const PCOL=['#0d9488','#6366f1','#f59e0b','#ec4899'];let RBI={equips:[],nid:1};function mkRBIEq(){return{id:RBI.nid++,tag:'V-101',type:'vessel',mat:'Carbon Steel',dP:15,oP:10,dT:350,oT:280,cr:.15,wt:12,mt:6,med:'flammable',vol:10,li:2022};}function renderRBI(){const z=LANG==='zh';if(!RBI.equips.length)RBI.equips=[mkRBIEq()];app().innerHTML=`
+${RBI.equips.map((eq,i)=>`<div class="card"style="border-left:3px solid ${PCOL[i%4]}"><div class="g3"style="margin-bottom:8px"><div><label class="lbl">${z?'位号':'Tag'}</label><input value="${eq.tag}" oninput="RBI.equips[${i}].tag=this.value"></div><div><label class="lbl">${z?'类型':'Type'}</label>
+<select onchange="RBI.equips[${i}].type=this.value">
+<option value="vessel" ${eq.type==='vessel'?'selected':''}>${z?'压力容器':'Vessel'}</option><option value="pipe"${eq.type==='pipe'?'selected':''}>${z?'管道':'Piping'}</option>
+<option value="tank" ${eq.type==='tank'?'selected':''}>${z?'储罐':'Tank'}</option></select></div><div><label class="lbl">${z?'材质':'Material'}</label>
+<select onchange="RBI.equips[${i}].mat=this.value">
+${['Carbon Steel','SS 304','SS 316'].map(m=>`<option ${eq.mat===m?'selected':''}>${m}</option>`).join('')}
+</select></div>
+</div>
+<div class="g4">
+<div><label class="lbl">${z?'设计压力(bar)':'Design P'}</label><input type="number" value="${eq.dP}" oninput="RBI.equips[${i}].dP=+this.value"></div>
+<div><label class="lbl">${z?'操作压力(bar)':'Op P'}</label><input type="number" value="${eq.oP}" oninput="RBI.equips[${i}].oP=+this.value"></div>
+<div><label class="lbl">${z?'腐蚀速率(mm/yr)':'Corr Rate'}</label><input type="number" step=".01" value="${eq.cr}" oninput="RBI.equips[${i}].cr=+this.value"></div>
+<div><label class="lbl">${z?'当前壁厚(mm)':'Wall (mm)'}</label><input type="number" value="${eq.wt}" oninput="RBI.equips[${i}].wt=+this.value"></div>
+<div><label class="lbl">${z?'最小壁厚(mm)':'Min thk'}</label><input type="number" value="${eq.mt}" oninput="RBI.equips[${i}].mt=+this.value"></div>
+<div><label class="lbl">${z?'上次检验年份':'Last Insp'}</label><input type="number" value="${eq.li}" oninput="RBI.equips[${i}].li=+this.value"></div>
+<div><label class="lbl">${z?'介质危害':'Medium'}</label>
+<select onchange="RBI.equips[${i}].med=this.value">
+<option value="flammable" ${eq.med==='flammable'?'selected':''}>${z?'可燃':'Flammable'}</option>
+<option value="toxic" ${eq.med==='toxic'?'selected':''}>${z?'有毒':'Toxic'}</option>
+<option value="inert" ${eq.med==='inert'?'selected':''}>${z?'惰性':'Inert'}</option>
+</select></div>
+<div><label class="lbl">${z?'容积(m³)':'Volume'}</label><input type="number" value="${eq.vol}" oninput="RBI.equips[${i}].vol=+this.value"></div>
+<div><label class="lbl">${z?'腐蚀机理':'Corrosion Mechanism'}</label>
+<select onchange="RBI.equips[${i}].corrMech=this.value">
+<option value="uniform" ${(eq.corrMech||'uniform')==='uniform'?'selected':''}>${z?'均匀腐蚀':'Uniform Corrosion'}</option>
+<option value="pitting" ${(eq.corrMech||'')==='pitting'?'selected':''}>${z?'点蚀 Pitting':'Pitting Corrosion'}</option>
+<option value="scc" ${(eq.corrMech||'')==='scc'?'selected':''}>${z?'应力腐蚀开裂 SCC':'Stress Corrosion'}</option>
+<option value="htha" ${(eq.corrMech||'')==='htha'?'selected':''}>${z?'高温氢腐蚀 HTHA':'HTHA'}</option>
+<option value="cui" ${(eq.corrMech||'')==='cui'?'selected':''}>${z?'绝热下腐蚀 CUI':'CUI'}</option>
+</select></div>
+</div>
+${RBI.equips.length>1?`<button class="btn btsm"style="color:var(--danger);margin-top:7px"onclick="RBI.equips.splice(${i},1);renderRBI()">${z?'删除':'Remove'}</button>`:''}
+</div>`).join('')}
+<div style="display:flex;gap:7px;margin-bottom:10px">
+<button class="btn btsm" onclick="RBI.equips.push(mkRBIEq());renderRBI()">+ ${z?'添加设备':'Add Equipment'}</button>
+<button class="btn btp" style="flex:1" onclick="calcRBI()">▶ ${z?'计算风险':'Calculate Risk'}</button>
+</div>
+<div id="rbiRes"></div>
+<div class="card" style="margin-top:8px">
+<div class="sl">${z?'腐蚀机理 PoF 修正 (API 581)':'Corrosion Mechanism PoF Modifier (API 581)'}</div>
+<table><thead><tr><th>${z?'机理':'Mechanism'}</th><th>${z?'特征':'Characteristics'}</th><th>PoF ${z?'修正':'Modifier'}</th><th>${z?'检测方法':'Inspection'}</th></tr></thead>
+<tbody>
+${[['均匀腐蚀 Uniform','全面减薄，速率稳定','+0','UT厚度测量'],['点蚀 Pitting','局部深孔，不可预测','+1','PT/RT/UT扫描'],['应力腐蚀 SCC','裂纹扩展，突发失效','+2','PWHT+UT+MT'],['高温氢 HTHA','氢鼓泡，内部损伤','+2','UT+AET+专项评估'],['绝热下腐蚀 CUI','绝热层下外腐蚀','+1','外观检查+PT']].map(([m,c,mod,insp])=>`<tr><td style="font-weight:600;font-size:10px">${m}</td>
+<td style="font-size:10px;color:var(--sec)">${c}</td><td style="font-family:monospace;font-weight:700;color:${mod==='+0'?'var(--success)':mod==='+1'?'var(--warn)':'var(--danger)'}">${mod}</td>
+<td style="font-size:10px;color:var(--muted)">${insp}</td></tr>`).join('')}
+</tbody></table>
+</div>`;}
+function calcRBI(){
+const z=LANG==='zh';
+const res=RBI.equips.map(eq=>{
+const ca=eq.wt-eq.mt,rl=eq.cr>0?ca/eq.cr:999,ys=2025-eq.li;
+let pof=1;
+if(rl<2)pof=5;else if(rl<5)pof=4;else if(rl<10)pof=3;else if(rl<20)pof=2;
+if(ys>rl*.5)pof=Math.min(5,pof+1);
+const mechMod={uniform:0,pitting:1,scc:2,htha:2,cui:1}[eq.corrMech||'uniform']||0;
+pof=Math.min(5,pof+mechMod);
+const haz=eq.med==='toxic'?3:eq.med==='flammable'?2:1;
+let cof=Math.min(5,Math.ceil(haz*Math.sqrt(eq.vol)/2));
+if(eq.oP>eq.dP*.9)cof=Math.min(5,cof+1);if(eq.oT>eq.dT*.9)cof=Math.min(5,cof+1);
+const risk=pof*cof,lv=risk>=15?'High':risk>=8?'M-High':risk>=4?'Medium':'Low';
+const col=risk>=15?'#ef4444':risk>=8?'#f97316':risk>=4?'#f59e0b':'#10b981';
+const intv=risk>=15?1:risk>=8?3:risk>=4?5:10;
+return{...eq,ca:ca.toFixed(1),rl:rl.toFixed(1),pof,cof,risk,lv,col,intv,next:eq.li+intv};});
+let mtx=`<div class="card"><div class="sl">${z?'5×5 风险矩阵':'5×5 Risk Matrix'}</div><div style="overflow-x:auto">
+<table style="max-width:340px"><thead><tr><th>PoF\CoF</th>${[1,2,3,4,5].map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${[5,4,3,2,1].map(p=>`<tr><th>${p}</th>${[1,2,3,4,5].map(c=>{
+const rv=p*c;const bg=rv>=15?'rgba(239,68,68,.35)':rv>=8?'rgba(245,158,11,.3)':rv>=4?'rgba(250,204,21,.25)':'rgba(16,185,129,.22)';
+const tags=res.filter(e=>e.pof===p&&e.cof===c).map(e=>e.tag).join(',');
+return`<td style="background:${bg};border-radius:3px;padding:3px;text-align:center;min-width:36px"><div style="font-size:8px;color:rgba(255,255,255,.5)">${rv}</div>
+${tags?`<div style="font-size:8px;font-weight:700">${tags}</div>`:''}
+</td>`;}).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+let tbl=`<div class="card"><div class="sl">${z?'评估结果':'Assessment Results'}</div><div style="overflow-x:auto"><table><thead><tr><th>${z?'位号':'Tag'}</th><th>PoF</th><th>CoF</th><th>${z?'风险':'Risk'}</th><th>${z?'等级':'Level'}</th>
+<th>${z?'剩余寿命':'Remain Life'}</th><th>${z?'检验间隔':'Interval'}</th><th>${z?'下次检验':'Next Insp'}</th></tr></thead><tbody>${res.map(r=>`<tr>
+<td style="font-weight:600">${r.tag}</td><td>${r.pof}</td><td>${r.cof}</td>
+<td style="font-weight:700;color:${r.col}">${r.risk}</td>
+<td><span style="font-size:9px;padding:2px 6px;border-radius:5px;background:${r.col}22;color:${r.col};font-weight:700">${r.lv}</span></td>
+<td style="color:${r.rl<5?'#ef4444':r.rl<10?'#f59e0b':'var(--text)'};font-family:monospace">${r.rl} yrs</td>
+<td style="font-family:monospace">${r.intv} yrs</td>
+<td style="font-weight:700;font-family:monospace">${r.next}</td>
+</tr>`).join('')}</tbody>
+</table></div></div>`;
+document.getElementById('rbiRes').innerHTML=mtx+tbl;
+ // Save to DB (non-blocking)
+ saveRBItoDB(res).catch(()=>{});
+}
+async function saveRBItoDB(results){
+ if(typeof ReliDB === 'undefined') return;
+ const now = Date.now();
+ for(const r of results){
+   // Try to find matching equipment by tag
+   const eqs = await ReliDB.all('equipments');
+   const eq = eqs.find(e => e.tag && e.tag.trim() === r.tag.trim());
+   // Save RBI assessment record
+   await ReliDB.put('rbi_assessments',{
+     id: 'rbi_' + r.tag + '_' + now,
+     equipId: eq ? eq.id : null,
+     tag: r.tag,
+     pof: r.pof, cof: r.cof, risk: r.risk,
+     riskLevel: r.lv, remainLife: parseFloat(r.rl),
+     interval: r.intv, nextInsp: r.next,
+     assessedAt: now,
+   });
+   // Back-write risk level to equipment record
+   if(eq){
+     const riskCode = r.risk>=15?'H': r.risk>=8?'M': r.risk>=4?'L':'L';
+     await ReliDB.put('equipments', {...eq, risk: riskCode, nextinsp: r.next, updatedAt: now});
+   }
+ }
+}</script>
+<script>(function(){if(typeof renderRBI==='function')renderRBI();else document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Module load error: renderRBI not defined</p>';const obs=new MutationObserver(()=>{if(typeof drawWBChart==='function'&&document.getElementById('wChart')&&typeof WB!=='undefined'&&WB.res)setTimeout(drawWBChart,30);});const appEl=document.getElementById('app');if(appEl)obs.observe(appEl,{childList:true,subtree:true});})();</script>
+
+<div class="no-print" style="text-align:right;max-width:860px;margin:0 auto 8px;padding:0 10px"><button onclick="window.print()" style="padding:7px 18px;border-radius:18px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:600">&#x1F5A8;&#xFE0F; &#x6253;&#x5370; / &#x5BFC;&#x51FA; PDF</button></div>
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.4</span>
+  </div>
+</footer>
+<script src="../shared/topnav.js"></script>
+</body>
+</html>

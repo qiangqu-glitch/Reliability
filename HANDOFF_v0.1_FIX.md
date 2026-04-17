@@ -163,3 +163,119 @@ node tests/test_weibull_mle.js                # Weibull MLE + Fisher CI 回归
 node tests/test_weibull_interval_narrow.js    # 窄区间 expm1 抗抵消回归
 node tests/test_fta.js                        # FTA 原有测试
 ```
+
+---
+
+## §v0.4 — UI 可信性修复（2026-04-16）
+
+### 诚实追责
+
+**v0.3 声称「概率纸已重写为专业 CI 带版本」，实测用户浏览器打开 → 完全空白**。
+根因：`weibull/index.html:407` 的 `WB.res = {dists, wb, bL, pts, fitLine, diag}` 漏了 `probData`，而 line 418 从 WB.res 解构 `probData` → 恒为 undefined → line 422 护栏早返回。
+
+此 bug **自 v0.2 起潜伏**。v0.3 重写概率纸绘图代码时继承了相同的解构模式，因而未暴露。`tests/run_all.js` 仅测算法（MLE β/η、容斥），**从未断言过 canvas / DOM / 按钮点击**，所以 5/5 PASS 给了虚假信心。
+
+**系统性盲区**：算法测试 ≠ UI 测试。已立即补测，见下。
+
+### v0.4 P0 修复清单
+
+| # | 文件 | 修复 |
+|---|---|---|
+| 1 | `weibull/index.html:407` | `WB.res` 加入 `probData` → 概率纸正常渲染 |
+| 2 | `weibull/index.html:588-598` | `doWBQ()` 空输入/无分析时显示红色提示（非静默） |
+| 3 | `amsaa/index.html:320-329` | `doAMQuery()` 同模式防御反馈（并行 bug） |
+| 4 | `rbd_mcs/index.html:226` | DB_VER → 3，onupgradeneeded 建 8 store |
+| 5 | `index.html:191` | DB_VER 2→3，加 components store |
+| 6 | `amsaa/index.html:185-214` | β=∞ / 分母=0 / 非有限值守卫 |
+| 7 | `rbd/index.html` | `solveExact` 每因子 clamp [0,1]，防浮点 R>1 |
+| 8 | `pm/index.html` | `optimizePM` Cp/Cf 输入校验（`Cp>0, Cf>0, Cp<Cf`） |
+| 9 | 全模块 IndexedDB 保存 | 静默 catch 替换为 `.catch(e => console.warn(...))` |
+
+### 新增 `tests/test_ui_smoke.js`（13 断言）
+
+- 依赖 free（IIFE eval 捕获 `RM`，不需 jsdom）
+- 复现 `runWB()` 的 UI 契约逻辑 → 断言 `WB.res.probData` 非空
+- 断言 Weibull 线性化 y = β·ln(t/η) 与数学定义一致
+- 断言右截尾点被排除出 probData
+- 断言 `doWBQ` 在空输入/未分析时写入红色提示（而非静默 return）
+
+### 最终测试状态
+
+```
+node tests/run_all.js
+→ 6/6 passed
+```
+
+### 覆盖率跳变
+
+- v0.3 用户可用层：11/16 ≈ 69%
+- v0.4 P0 修完：13/16 ≈ 81%
+- P1 待做（3 项，约 230 行）即可到 100%：
+  - `weibull/` 多分布概率纸切换（Lognormal/Normal/Weibull 各自纸张）
+  - `rbd/` 时域 R(t) 曲线
+  - `amsaa/` Fisher CI + MTBF 目标水平线
+
+### 延后共识
+
+- **RBD P&ID 风格拖拽编辑器**：延后到 v0.6+（2000+ 行、化工/炼油细分受众，ROI 低于 R(t) 曲线 25×）
+- ALTA / Markov / multi-echelon spares / CCF：同延后
+
+### 浏览器目视验证步骤
+
+1. 打开 `weibull/index.html` → 加载「泵」示例 → 运行分析
+2. 切「概率纸」标签 → 应见：Y 轴 F% 刻度（1%/10%/63.2%/90%）、橙色拟合直线、teal CI 带、中位秩散点
+3. R(t) 查询输入 `5000` → 点计算 → 应见 `R(t)=X.XX% F=... h=...`
+4. 清空输入点计算 → 应见红色 `⚠ 请输入正数 t 值`
+5. `amsaa/` 同法验证 doAMQuery 防御反馈
+
+---
+
+## v0.5 — 信任修复 + 专业功能补齐 (2026-04-17)
+
+### A/B 苏格拉底对话摘要
+
+用户提出三个问题：(1) GitHub 部署 Weibull "无法加载设备" 的根因；(2) 字体是否偏小；(3) FTA 可视化树图、3-参数 Weibull (γ)、多数据集叠加。在实现前我们做了独立通道分析：
+
+**Q1 GitHub 故障通道**（工程师 A / 审查员 B 共识）：
+| 通道 | 机制 | 处置 |
+|---|---|---|
+| IndexedDB 源隔离 | `chemcalc.cn` 与 `github.io` 不同 origin，空库被误读为"加载失败" | 增加显式"此域名下暂无数据"提示 |
+| ReliDB 未就绪 | CDN 延迟时 inline 脚本 ReferenceError | 全局 `typeof ReliDB==='undefined'` 守卫 |
+| 路径大小写敏感 | Windows 不敏感 → Linux GitHub Pages 404 | 新增 `tools/audit-paths.js` CI 脚本 |
+| 子路径部署 / SW 缓存 / CORS | 不适用 | — |
+
+**Q2 字体**：body 14px 低于 MDN/Material 16px 默认；二级元素 9-11px 偏小。→ **分级提升**：body 15, `.ct/.title` 14, `.mz` 12, `.md .kl .sl` 11, `.ks .mbg` 10。
+
+**Q3 功能排序（按 ROI）**：多数据集叠加 > 3P Weibull > FTA 树图。
+
+### 实际交付
+
+| # | 项 | 文件 | 说明 |
+|---|---|---|---|
+| A-1 | 字体分级提升 | `shared/style.css` | 6 个字号上调 ~7-10% |
+| A-2 | ReliDB 守卫 | `weibull/ equipment/ rbd/ fta/ fmea/ ram/ rbi/ pm/ alloc/index.html` | 顶层 `typeof` 检测 + 红色 banner；weibull/ equipment/ 两处深化（空库显式提示） |
+| A-3 | 路径审计 | `tools/audit-paths.js` | 扫描 19 HTML 文件所有 `src/href`，对照磁盘实际大小写；当前 `All paths OK` |
+| B | 多数据集叠加概率纸 | `weibull/index.html` | `WB.overlays[]` + `addOverlay()`/`clearOverlays()`；6 色循环 + 虚线拟合 + 三角散点 |
+| C | 3 参数 Weibull γ | `shared/math.js` + `weibull/index.html` | `RM.fitWB3p()` Profile likelihood（γ 在 `[0, min(t)·0.95]` 扫 40 点）；KPI 仅当 ΔAIC > 2 且 γ 不平凡才显示 |
+| D | FTA 可视化树图 | `fta/index.html` | `buildFTATree`+`layoutFTA`+`drawFTATree` ~100 行 SVG；AND/OR/EVENT 三种符号 + 贝塞尔连线 + 循环检测 |
+| 附 | 版本号统一 | 全部 `index.html` | 页脚 v0.4 → v0.5 |
+
+### 回归测试
+
+- `node tests/run_all.js` → **6/6 PASS**（13 assertions）
+- `node tools/audit-paths.js` → **19 HTML OK, 0 issues**
+
+### 浏览器验证清单
+
+1. **字体**：所有模块对比 v0.4，文字明显更易读，布局无溢出
+2. **GitHub 预检**：临时断网/改名 `db/` → `DB/` 重载 Weibull，应见红色 "⚠ DB 模块未加载" banner（而非空白报错）
+3. **Weibull 多数据集**：加载 `pump` 示例 → 分析 → 切"概率纸" → 点 "+ 加入数据集" → 切回输入加载 `bearing` 示例 → 分析 → 切"概率纸" → 应见紫色虚线+三角散点叠加，右上图例显示两个数据集
+4. **3P Weibull**：数据含明显无损期（如 `[500,501,600,620,700,900,1200,1800]`）→ 分析 → 应见紫色 γ 卡片，ΔAIC > 2
+5. **FTA 树图**：FTA → 载入示例 → 求解 → 应见 SVG 树：TOP→OR，PUMP_BLOCK→AND 两个圆事件，COMMON→OR 两个圆事件
+
+### 延后项（v0.6+）
+
+- RBD P&ID 拖拽编辑器 / ALTA / Markov / 多层级备件 / CCF
+- FTA 交互：hover 高亮最小割集所属路径
+- 3P Weibull Fisher CI on γ
+

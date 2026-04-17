@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.1 | reliability.chemcalc.cn
+  ReliToolbox | reliability.chemcalc.cn
   Copyright © All rights reserved.
   Unauthorized reproduction or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
@@ -9,12 +9,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>RBI 风险检验 — ReliToolbox v0.1</title>
+<title>RBI 风险检验 — ReliToolbox</title>
 <link rel="stylesheet" href="../shared/style.css">
 <style></style>
 <script>
-// ReliToolbox v0.1 (c) reliability.chemcalc.cn
-(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+// ReliToolbox (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head>
@@ -158,6 +158,7 @@ function dl(content,filename){const blob=new Blob([content],{type:'text/csv'});
 })();
 </script>
 <script src="../db/relidb.js"></script>
+<script>if(typeof ReliDB==='undefined'){document.addEventListener('DOMContentLoaded',()=>{const d=document.createElement('div');d.style.cssText='background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px;margin:10px;border-radius:6px;font-size:13px';d.innerHTML='⚠ <b>DB 模块未加载 / DB module not loaded</b> — check <code>../db/relidb.js</code> (case-sensitive on GitHub Pages).';document.body&&document.body.insertBefore(d,document.body.firstChild);});}</script>
 <script>
 
 const PCOL=['#0d9488','#6366f1','#f59e0b','#ec4899'];
@@ -332,9 +333,9 @@ async function saveRBItoDB(results){
     </div>
   </div>
   <div class="ft-bottom">
-    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    © ReliToolbox &nbsp;·&nbsp;
     <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
-    <a href="https://chemcalc.cn">chemcalc.cn</a>
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.5</span>
   </div>
 </footer>
 <script src="../shared/topnav.js"></script>

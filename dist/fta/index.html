@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!-- ReliToolbox | reliability.chemcalc.cn | Copyright (c) All rights reserved. Unauthorized reproduction, decompilation, reverse engineering or redistribution is prohibited. Contact: CHEMCALC@outlook.com -->
+<!--
+  ReliToolbox | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FTA 故障树分析 — ReliToolbox</title>
+<style>
+body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0}
+header{background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:20px 16px}
+h1{margin:0;font-size:22px}
+.sub{font-size:12px;opacity:0.85;margin-top:4px}
+.container{max-width:900px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.title{font-size:13px;font-weight:700;margin-bottom:8px}
+button{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:12px;font-weight:600}
+button.pri{background:#0d9488;color:#fff;border:none}
+input,select,textarea{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;box-sizing:border-box;font-family:inherit}
+textarea{font-family:monospace;resize:vertical}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;padding:6px;color:var(--sec);font-weight:600;font-size:10px;border-bottom:2px solid var(--border)}
+td{padding:6px;border-bottom:1px solid var(--border);font-family:monospace}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr 30px;gap:6px;align-items:end;margin-bottom:6px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;border-top:3px solid #0d9488}
+.kpi-l{font-size:10px;color:var(--sec);font-weight:600}
+.kpi-v{font-size:17px;font-weight:700;font-family:monospace;margin-top:2px}
+.danger{color:#dc2626}.warn{color:#d97706}.ok{color:#059669}
+.bar{height:14px;background:#0d9488;border-radius:3px}
+.gate{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.gate-and{background:#fef2f2;color:#dc2626}
+.gate-or{background:var(--card)beb;color:#d97706}
+small{color:var(--sec);font-size:11px}
+</style><link rel="stylesheet" href="../shared/style.css">
+<script>(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';if(typeof window!=='undefined')window._rtv='0.1';})();</script>
+</head><body>
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › FTA</div>
+  <h1>🌳 FTA 故障树分析</h1>
+  <div class="sub">Fault Tree Analysis | MOCUS最小割集 + Birnbaum重要度</div>
+  <div class="lang-bar">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div></header>
+
+<div class="container">
+<div class="card"><div class="title">基本事件 Basic Events (叶节点失效率)</div>
+<div id="events"></div>
+<button onclick="addEvent()">+ 添加基本事件</button>
+</div>
+
+<div class="card"><div class="title">门定义 Gate Definitions</div>
+<small>格式：每行一个门。语法 <code>门名 = 类型(子节点1, 子节点2, ...)</code>，类型为 AND 或 OR。顶事件必须命名为 TOP。</small>
+<textarea id="gates" rows="8" style="margin-top:8px"></textarea>
+<div style="margin-top:8px;display:flex;gap:8px">
+<button class="pri" onclick="solve()">▶ 求解 FTA</button>
+<button onclick="loadDemo()">载入示例</button>
+<button onclick="saveModel()">💾 保存到DB</button>
+</div>
+<div id="err" style="color:#dc2626;font-size:11px;margin-top:8px"></div>
+</div>
+
+<div id="results" style="display:none">
+<div class="kpi" id="kpis"></div>
+<div class="card"><div class="title">最小割集 Minimal Cut Sets (MOCUS)</div>
+<div id="mcs"></div></div>
+<div class="card"><div class="title">Birnbaum 重要度排序</div>
+<table><thead><tr><th>事件</th><th>P</th><th>I_B</th><th>占比</th></tr></thead>
+<tbody id="imp"></tbody></table></div>
+</div>
+</div>
+
+<script src="../db/relidb.js"></script>
+<script>let events=[];function addEvent(name='',p=0.01){events.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,5),name:name||('E'+(events.length+1)),p});render();}function delEvent(i){events.splice(i,1);render();}function updEvent(i,f,v){events[i][f]=f==='p'?Number(v)||0:v;}function render(){document.getElementById('events').innerHTML=events.map((e,i)=>`
+<div class="row">
+<input value="${e.name}" oninput="updEvent(${i},'name',this.value)" placeholder="名称">
+<input type="number" value="${e.p}" step="0.001" oninput="updEvent(${i},'p',this.value)" placeholder="失效概率">
+<small>P=${e.p}</small>
+<button onclick="delEvent(${i})" style="border:none;color:#dc2626">×</button>
+</div>`).join('');}function parseGates(text){const gates={};const lines=text.trim().split('\n').filter(l=>l.trim()&&!l.trim().startsWith('#'));for(const line of lines){const m=line.match(/^\s*(\w+)\s*=\s*(AND|OR)\s*\(([^)]+)\)\s*$/i);if(!m)throw new Error('解析失败: '+line);const[,name,type,kids]=m;gates[name.toUpperCase()]={type:type.toUpperCase(),children:kids.split(',').map(s=>s.trim().toUpperCase())};}if(!gates.TOP)throw new Error('必须定义 TOP 门');return gates;}function mocus(gates,eventNames){const isBasic=n=>eventNames.has(n);let matrix=[['TOP']];let changed=true,safety=0;while(changed&&safety++<1000){changed=false;const nextMatrix=[];for(const row of matrix){const idx=row.findIndex(n=>!isBasic(n));if(idx===-1){nextMatrix.push(row);continue;}const nodeName=row[idx];const gate=gates[nodeName];if(!gate)throw new Error('未定义的门或事件: '+nodeName);changed=true;const before=row.slice(0,idx),after=row.slice(idx+1);if(gate.type==='AND'){nextMatrix.push([...before,...gate.children,...after]);}else{for(const c of gate.children)nextMatrix.push([...before,c,...after]);}}matrix=nextMatrix;}const sets=matrix.map(r=>[...new Set(r)].sort());const uniq=[];const seen=new Set();for(const s of sets){const k=s.join('|');if(!seen.has(k)){seen.add(k);uniq.push(s);}}const minimal=uniq.filter(s=>!uniq.some(o=>o!==s&&o.length<s.length&&o.every(x=>s.includes(x))));return minimal;}function topProb(mcs,pmap){const csProbs=mcs.map(cs=>cs.reduce((a,n)=>a*(pmap[n]||0),1));if(mcs.length<=12){let total=0;const N=mcs.length;for(let mask=1;mask<(1<<N);mask++){const bits=[];for(let i=0;i<N;i++)if(mask&(1<<i))bits.push(i);const union=new Set();bits.forEach(i=>mcs[i].forEach(e=>union.add(e)));const p=[...union].reduce((a,n)=>a*(pmap[n]||0),1);total+=(bits.length%2===1?1:-1)*p;}return Math.max(0,Math.min(1,total));}return Math.min(1,csProbs.reduce((a,b)=>a+b,0));}function birnbaum(mcs,pmap,eventName){const p1={...pmap,[eventName]:1};const p0={...pmap,[eventName]:0};return topProb(mcs,p1)-topProb(mcs,p0);}function solve(){document.getElementById('err').textContent='';try{const gateText=document.getElementById('gates').value;const gates=parseGates(gateText);const eventNames=new Set(events.map(e=>e.name.toUpperCase()));const pmap={};events.forEach(e=>pmap[e.name.toUpperCase()]=e.p);const mcs=mocus(gates,eventNames);if(!mcs.length)throw new Error('未生成割集，检查门定义');const ptop=topProb(mcs,pmap);const imps=events.map(e=>{const ib=birnbaum(mcs,pmap,e.name.toUpperCase());return{name:e.name,p:e.p,ib};}).sort((a,b)=>b.ib-a.ib);const totalIb=imps.reduce((s,x)=>s+Math.abs(x.ib),0)||1;document.getElementById('kpis').innerHTML=`
+<div class="kpi-card"><div class="kpi-l">P(TOP)</div><div class="kpi-v ${ptop>0.1?'danger':ptop>0.01?'warn':'ok'}">${ptop.toExponential(3)}</div></div>
+<div class="kpi-card"><div class="kpi-l">最小割集数</div><div class="kpi-v">${mcs.length}</div></div>
+<div class="kpi-card"><div class="kpi-l">基本事件数</div><div class="kpi-v">${events.length}</div></div>
+<div class="kpi-card"><div class="kpi-l">最短割集阶数</div><div class="kpi-v">${Math.min(...mcs.map(c=>c.length))}</div></div>
+`;document.getElementById('mcs').innerHTML=mcs.map((cs,i)=>{const p=cs.reduce((a,n)=>a*(pmap[n]||0),1);return`<div style="padding:6px;border-bottom:1px solid var(--border);font-family:monospace;font-size:11px"><b>MCS${i+1}</b> (阶数=${cs.length}, P=${p.toExponential(2)}): {${cs.join(' ∩ ')}}</div>`;}).join('');document.getElementById('imp').innerHTML=imps.map(x=>{const pct=totalIb>0?(Math.abs(x.ib)/totalIb*100):0;return`<tr><td><b>${x.name}</b></td><td>${x.p}</td><td>${x.ib.toExponential(3)}</td>
+<td><div style="display:flex;align-items:center;gap:4px"><div class="bar" style="width:${pct}%"></div><span>${pct.toFixed(1)}%</span></div></td></tr>`;}).join('');document.getElementById('results').style.display='block';window._ftaLast={events,gateText,mcs,ptop,imps};}catch(e){document.getElementById('err').textContent='错误: '+e.message;}}function loadDemo(){events=[{id:'e1',name:'PUMP_A_FAIL',p:0.02},{id:'e2',name:'PUMP_B_FAIL',p:0.02},{id:'e3',name:'POWER_LOSS',p:0.001},{id:'e4',name:'CTRL_FAIL',p:0.005},];document.getElementById('gates').value="TOP = OR(PUMP_BLOCK, COMMON)\n"+"PUMP_BLOCK = AND(PUMP_A_FAIL, PUMP_B_FAIL)\n"+"COMMON = OR(POWER_LOSS, CTRL_FAIL)";render();}async function saveModel(){if(!window._ftaLast){alert('请先运行求解');return;}try{await ReliDB.put('fta_models',{name:'FTA_'+new Date().toISOString().slice(0,10),...window._ftaLast});alert('已保存到本地数据库 ✓');}catch(e){alert('保存失败: '+e.message);}}addEvent('PUMP_A_FAIL',0.02);addEvent('PUMP_B_FAIL',0.02);</script>
+<script>(function(){var _l=localStorage.getItem('rtLang')||'zh';function applyLang(l){_l=l;localStorage.setItem('rtLang',l);document.querySelectorAll('[data-zh]').forEach(function(el){el.textContent=l==='zh'?el.getAttribute('data-zh'):el.getAttribute('data-en');});var zh=document.getElementById('_lbZh'),en=document.getElementById('_lbEn');if(zh){zh.classList.toggle('on',l==='zh');en.classList.toggle('on',l==='en');}}window.setLang=applyLang;document.addEventListener('DOMContentLoaded',function(){applyLang(_l);});})();</script>
+
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.4</span>
+  </div>
+</footer>
+<script src="../shared/topnav.js"></script>
+</body></html>

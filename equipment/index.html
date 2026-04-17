@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.1 | reliability.chemcalc.cn
+  ReliToolbox | reliability.chemcalc.cn
   Copyright © All rights reserved.
   Unauthorized reproduction or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
@@ -9,7 +9,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>设备管理 — ReliToolbox v0.1</title>
+<title>设备管理 — ReliToolbox</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
@@ -67,8 +67,8 @@ tr:hover td{background:var(--bg)}
 </style>
 <link rel="stylesheet" href="../shared/style.css">
 <script>
-// ReliToolbox v0.1 (c) reliability.chemcalc.cn
-(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+// ReliToolbox (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head>
@@ -76,7 +76,7 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 
 <header>
   <h1>⚙️ <span id="ttl">设备管理</span></h1>
-  <p id="sub">Equipment Registry | ReliToolbox v0.1</p>
+  <p id="sub">Equipment Registry | ReliToolbox</p>
   <div class="hdr-row">
     <button class="hbtn" onclick="goHome()">← <span data-zh="主页" data-en="Home">主页</span></button>
     <button class="hbtn active" id="btnZh" onclick="setLang('zh')">中文</button>
@@ -326,6 +326,18 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 
 <script src="../db/relidb.js"></script>
 <script>
+
+// Defensive: warn early if ReliDB module failed to load (case-sensitive path on Linux, CDN lag, etc.)
+if(typeof ReliDB==='undefined'){
+  console.error('[ReliToolbox] ReliDB module not loaded. Check ../db/relidb.js path (case-sensitive on GitHub Pages / Linux).');
+  document.addEventListener('DOMContentLoaded',()=>{
+    const b=document.body; if(!b) return;
+    const d=document.createElement('div');
+    d.style.cssText='background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px;margin:10px;border-radius:6px;font-size:13px';
+    d.innerHTML='⚠ <b>DB 模块未加载 / DB module not loaded</b><br>Failed to load <code>../db/relidb.js</code>. On GitHub Pages, file paths are case-sensitive — verify the <code>db/</code> directory matches exactly.';
+    b.insertBefore(d,b.firstChild);
+  });
+}
 
 // Use shared ReliDB
 const dbPut=(s,o)=>ReliDB.put(s,o);
@@ -770,9 +782,9 @@ async function seedIfEmpty(){
     </div>
   </div>
   <div class="ft-bottom">
-    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    © ReliToolbox &nbsp;·&nbsp;
     <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
-    <a href="https://chemcalc.cn">chemcalc.cn</a>
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.5</span>
   </div>
 </footer>
 <script src="../shared/topnav.js"></script>

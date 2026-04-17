@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!-- ReliToolbox | reliability.chemcalc.cn | Copyright (c) All rights reserved. Unauthorized reproduction, decompilation, reverse engineering or redistribution is prohibited. Contact: CHEMCALC@outlook.com -->
+<!--
+  ReliToolbox | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Weibull 高级模式 - ReliToolbox</title>
+<style>
+body{font-family:-apple-system,'PingFang SC',sans-serif;background:#f8fafb;color:#1f2937;margin:0}
+header{background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:16px}
+h1{margin:0;font-size:20px}.sub{font-size:11px;opacity:0.85;margin-top:3px}
+.container{max-width:900px;margin:0 auto;padding:12px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:12px}
+.title{font-size:13px;font-weight:700;margin-bottom:8px}
+button{padding:8px 14px;border-radius:20px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:600}
+button.pri{background:#0d9488;color:#fff;border:none}
+textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e5e7eb;font-size:12px;font-family:monospace;box-sizing:border-box;line-height:1.5}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.kpi-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px;text-align:center;border-top:3px solid #0d9488}
+.kpi-l{font-size:10px;color:#6b7280;font-weight:600}
+.kpi-v{font-size:17px;font-weight:700;font-family:monospace;margin-top:2px}
+.ci{font-size:10px;color:#6b7280;margin-top:3px}
+small{color:#6b7280;font-size:11px;line-height:1.6}
+pre{background:#f0fdfa;padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;margin:6px 0}
+.ok{color:#059669}.warn{color:#d97706}
+</style>
+<link rel="stylesheet" href="../shared/style.css">
+<script>(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';if(typeof window!=='undefined')window._rtv='0.1';})();</script>
+</head><body data-module="Weibull Advanced (MLE + Fisher CI)">
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › Weibull+</div>
+  <h1>📈 Weibull 高级模式</h1>
+  <div class="sub">混合截尾数据 MLE · Nelder-Mead · Fisher 95% 置信区间</div>
+  <div class="lang-bar">
+    <a href="../weibull/index.html" class="lbtn2" style="text-decoration:none">Weibull 基础</a>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div></header>
+
+<div class="container">
+
+<div class="card"><div class="title">数据输入</div>
+<small>每行一条记录，格式（自动识别）：<br>
+ • <b>精确失效</b>: <code>1250</code> 或 <code>1250 E</code><br>
+ • <b>右截尾</b>（未失效到观察结束）: <code>5000 R</code> 或 <code>5000 +</code><br>
+ • <b>区间截尾</b>（两次巡检间失效）: <code>800 1200 I</code> 或 <code>800-1200</code><br>
+ • <b>左截尾</b>（上电前已失效）: <code>300 L</code>
+</small>
+<textarea id="data" rows="10" style="margin-top:8px">1250 E
+1890 E
+2350 E
+800 1200 I
+2000 2200 I
+5000 R
+5000 R
+300 L</textarea>
+<button class="pri" onclick="run()" style="margin-top:8px;width:100%">▶ 执行 MLE 拟合</button>
+<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">
+<button onclick="loadDemo()">载入化工装置巡检示例</button>
+<label style="cursor:pointer;padding:7px 14px;border-radius:18px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:600">📄 导入 CSV
+ <input type="file" id="csvIn" accept=".csv,.txt" style="display:none">
+</label>
+<button onclick="window.print()">🖨 打印/PDF</button>
+</div>
+<div id="err" style="color:#dc2626;font-size:11px;margin-top:8px"></div>
+</div>
+
+<div id="res" style="display:none">
+<div class="kpi" id="kpis"></div>
+<div class="card"><div class="title">拟合详情</div>
+<pre id="det"></pre>
+</div>
+<div class="card"><div class="title">B-Life 分位点</div>
+<div id="bl" style="font-size:12px;font-family:monospace"></div>
+</div>
+</div>
+
+</div>
+
+<script>const wbF=(t,b,e)=>1-Math.exp(-Math.pow(t/e,b));const wbR=(t,b,e)=>Math.exp(-Math.pow(t/e,b));const wbf=(t,b,e)=>(b/e)*Math.pow(t/e,b-1)*Math.exp(-Math.pow(t/e,b));function logLik(data,b,e){if(b<=0||e<=0)return-Infinity;let ll=0;for(const d of data){let p;if(d.type==='exact')p=wbf(d.t,b,e);else if(d.type==='right')p=wbR(d.t,b,e);else if(d.type==='left')p=wbF(d.t,b,e);else if(d.type==='interval'){const a=Math.pow(d.tL/e,b),aR=Math.pow(d.tR/e,b);p=Math.exp(-a)*(-Math.expm1(a-aR));}if(!(p>0))return-Infinity;ll+=Math.log(p);}return ll;}function nelderMead(f,x0,maxIter=800){const n=x0.length;const TOL_F=1e-10,TOL_X=1e-8;let sim=[x0.slice()];for(let i=0;i<n;i++){const x=x0.slice();x[i]=x[i]*1.05+1e-3;sim.push(x);}let fv=sim.map(x=>-f(x[0],x[1]));for(let it=0;it<maxIter;it++){const ord=fv.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);sim=ord.map(o=>sim[o[1]]);fv=ord.map(o=>o[0]);const fRange=Math.abs(fv[n]-fv[0]);let xMax=0;for(let i=1;i<=n;i++){let d=0;for(let j=0;j<n;j++){const dx=sim[i][j]-sim[0][j];d+=dx*dx;}const dist=Math.sqrt(d);if(dist>xMax)xMax=dist;}if(fRange<TOL_F&&xMax<TOL_X)break;const c=new Array(n).fill(0);for(let i=0;i<n;i++)for(let j=0;j<n;j++)c[j]+=sim[i][j]/n;const xr=c.map((cj,j)=>cj+(cj-sim[n][j]));if(xr[0]<=0||xr[1]<=0){sim[n]=sim[0].map((v,j)=>(v+sim[n][j])/2);fv[n]=-f(sim[n][0],sim[n][1]);continue;}const fr=-f(xr[0],xr[1]);if(fr<fv[0]){const xe=c.map((cj,j)=>cj+2*(cj-sim[n][j]));const fe=(xe[0]>0&&xe[1]>0)?-f(xe[0],xe[1]):Infinity;if(fe<fr){sim[n]=xe;fv[n]=fe;}else{sim[n]=xr;fv[n]=fr;}}else if(fr<fv[n-1]){sim[n]=xr;fv[n]=fr;}else{const xc=c.map((cj,j)=>cj+0.5*(sim[n][j]-cj));const fc=-f(xc[0],xc[1]);if(fc<fv[n]){sim[n]=xc;fv[n]=fc;}else{for(let i=1;i<=n;i++){sim[i]=sim[0].map((v,j)=>(v+sim[i][j])/2);fv[i]=-f(sim[i][0],sim[i][1]);}}}}return{x:sim[0],f:-fv[0]};}function fdHess(f,b,e){const h=1e-4;const g=(du,dv)=>f(b*Math.exp(du),e*Math.exp(dv));const f00=g(0,0);const Huu=(g(h,0)-2*f00+g(-h,0))/(h*h);const Hvv=(g(0,h)-2*f00+g(0,-h))/(h*h);const Huv=(g(h,h)-g(h,-h)-g(-h,h)+g(-h,-h))/(4*h*h);return[[Huu,Huv],[Huv,Hvv]];}function inv2(M){const d=M[0][0]*M[1][1]-M[0][1]*M[1][0];if(Math.abs(d)<1e-30)return null;return[[M[1][1]/d,-M[0][1]/d],[-M[1][0]/d,M[0][0]/d]];}function gamma(z){if(z<0.5)return Math.PI/(Math.sin(Math.PI*z)*gamma(1-z));z-=1;const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];let x=c[0];for(let i=1;i<9;i++)x+=c[i]/(z+i);const t=z+7.5;return Math.sqrt(2*Math.PI)*Math.pow(t,z+0.5)*Math.exp(-t)*x;}function parseInput(text){const out=[];for(const raw of text.trim().split('\n')){const line=raw.trim();if(!line||line.startsWith('#'))continue;let m;if((m=line.match(/^(\d+\.?\d*)\s*-\s*(\d+\.?\d*)$/))||(m=line.match(/^(\d+\.?\d*)\s+(\d+\.?\d*)\s*[Ii]?$/))){const tL=+m[1],tR=+m[2];if(tL<tR){out.push({type:'interval',tL,tR,t:(tL+tR)/2});continue;}}m=line.match(/^(\d+\.?\d*)\s*([REL+])?$/i);if(!m)throw new Error('无法解析: '+line);const t=+m[1];const flag=(m[2]||'').toUpperCase();if(flag==='R'||flag==='+')out.push({type:'right',t});else if(flag==='L')out.push({type:'left',t});else out.push({type:'exact',t});}if(out.length<3)throw new Error('至少需要 3 个数据点');return out;}function run(){document.getElementById('err').textContent='';try{const data=parseInput(document.getElementById('data').value);const allT=data.map(d=>d.t||((d.tL+d.tR)/2));const mean=allT.reduce((a,b)=>a+b,0)/allT.length;const f=(b,e)=>logLik(data,b,e);const opt=nelderMead(f,[1.5,mean]);const[beta,eta]=opt.x;const ll=opt.f;const H=fdHess(f,beta,eta);const negH=[[-H[0][0],-H[0][1]],[-H[1][0],-H[1][1]]];const cov=inv2(negH);const z=1.96;let ciB=[null,null],ciE=[null,null],sB=null,sE=null;if(cov&&cov[0][0]>0&&cov[1][1]>0){const sLB=Math.sqrt(cov[0][0]),sLE=Math.sqrt(cov[1][1]);ciB=[beta*Math.exp(-z*sLB),beta*Math.exp(z*sLB)];ciE=[eta*Math.exp(-z*sLE),eta*Math.exp(z*sLE)];sB=beta*sLB;sE=eta*sLE;}const mttf=eta*gamma(1+1/beta);const bLife=p=>eta*Math.pow(-Math.log(1-p/100),1/beta);const cnt={exact:0,right:0,left:0,interval:0};data.forEach(d=>cnt[d.type]++);const diag=beta<0.7?'早期故障(DFR)':beta<1.3?'随机故障(CFR)':beta<2.5?'早期磨损(IFR)':beta<4?'磨损故障':'急剧磨损';const diagColor=beta<1.3?'warn':'ok';document.getElementById('kpis').innerHTML=`
+<div class="kpi-card"><div class="kpi-l">β 形状参数</div><div class="kpi-v ${diagColor}">${beta.toFixed(3)}</div><div class="ci">95% CI: [${ciB[0]?.toFixed(2)||'—'}, ${ciB[1]?.toFixed(2)||'—'}]</div></div>
+<div class="kpi-card"><div class="kpi-l">η 尺度参数</div><div class="kpi-v">${eta.toFixed(0)}</div><div class="ci">95% CI: [${ciE[0]?.toFixed(0)||'—'}, ${ciE[1]?.toFixed(0)||'—'}]</div></div>
+<div class="kpi-card"><div class="kpi-l">MTTF</div><div class="kpi-v">${mttf.toFixed(0)}</div></div>
+<div class="kpi-card"><div class="kpi-l">诊断</div><div class="kpi-v" style="font-size:12px">${diag}</div></div>
+`;document.getElementById('det').textContent=`数据总数: ${data.length}\n`+` 精确失效: ${cnt.exact}\n 右截尾: ${cnt.right}\n 左截尾: ${cnt.left}\n 区间截尾: ${cnt.interval}\n`+`对数似然 log L: ${ll.toFixed(3)}\n`+`AIC: ${(-2*ll+4).toFixed(3)}\n`+`β = ${beta.toFixed(4)}\n`+`η = ${eta.toFixed(2)}\n`+`σ_β (Fisher) = ${sB!=null?sB.toFixed(4):'—'}\n`+`σ_η (Fisher) = ${sE!=null?sE.toFixed(2):'—'}`;document.getElementById('bl').innerHTML=[1,5,10,50,63.2,90].map(p=>{const v=bLife(p);return`<div style="display:inline-block;min-width:100px;padding:6px 10px;background:#f0fdfa;border-radius:6px;margin:3px;text-align:center"><b>B${p}</b><br>${v.toFixed(0)}</div>`;}).join('');document.getElementById('res').style.display='block';}catch(e){document.getElementById('err').textContent='错误: '+e.message;}}function loadDemo(){document.getElementById('data').value=`
+1850 E
+2100 E
+2780 E
+1400 1600 I
+2000 2200 I
+3100 3400 I
+4500 R
+4500 R
+4500 R
+500 L`;}(function selfTest(){const syn=[450,680,780,920,1100,1250].map(t=>({type:'exact',t}));syn.push({type:'right',t:1500},{type:'right',t:1500});syn.push({type:'interval',tL:800,tR:900});const opt=nelderMead((b,e)=>logLik(syn,b,e),[1.5,1000]);console.log('Self-test: β='+opt.x[0].toFixed(2)+' η='+opt.x[1].toFixed(0)+' (target ~2/1000)');})();document.addEventListener('change',function(ev){if(ev.target&&ev.target.id==='csvIn'&&ev.target.files&&ev.target.files[0]){const f=ev.target.files[0];const r=new FileReader();r.onload=()=>{try{const parsed=(window.ReliCSV&&ReliCSV.parse)?ReliCSV.parse(r.result):null;if(!parsed||!parsed.rows.length){alert('CSV 解析到 0 条记录');return;}const lines=parsed.rows.map(x=>{if(x.type==='interval')return`${x.tL} ${x.tR}`;if(x.type==='right')return`${x.t} R`;if(x.type==='left')return`${x.t} L`;return`${x.t} E`;});const ta=document.getElementById('data');if(ta)ta.value=lines.join('\n');alert(`已导入 ${lines.length} 条。点"执行 MLE 拟合"。`);}catch(e){alert('CSV 解析失败: '+e.message);}};r.readAsText(f);}});</script>
+<script src="../shared/csv.js"></script>
+<script src="../shared/topnav.js"></script>
+</body></html>

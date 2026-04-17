@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!-- ReliToolbox | reliability.chemcalc.cn | Copyright (c) All rights reserved. Unauthorized reproduction, decompilation, reverse engineering or redistribution is prohibited. Contact: CHEMCALC@outlook.com -->
+<!--
+  ReliToolbox | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RAM MC Worker - ReliToolbox</title>
+<style>
+body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0}
+header{background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:20px 16px}
+h1{margin:0;font-size:22px}.sub{font-size:12px;opacity:0.85;margin-top:4px}
+.container{max-width:900px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.title{font-size:13px;font-weight:700;margin-bottom:8px}
+button{padding:9px 16px;border-radius:20px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:13px;font-weight:600}
+button.pri{background:#0d9488;color:#fff;border:none}
+button:disabled{opacity:0.5;cursor:wait}
+input,select{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);font-size:12px;box-sizing:border-box}
+label{font-size:11px;color:var(--sec);display:block;margin-bottom:3px;font-weight:500}
+.row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 30px;gap:6px;align-items:end;margin-bottom:6px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;border-top:3px solid #0d9488}
+.kpi-l{font-size:10px;color:var(--sec);font-weight:600}.kpi-v{font-size:17px;font-weight:700;font-family:monospace;margin-top:2px}
+.ok{color:#059669}.warn{color:#d97706}.danger{color:#dc2626}
+.prog{width:100%;height:18px;background:var(--hover);border-radius:9px;overflow:hidden;position:relative}
+.prog-bar{height:100%;background:linear-gradient(90deg,#0d9488,#14b8a6);width:0%;transition:width 0.2s}
+.prog-txt{position:absolute;top:0;left:0;right:0;text-align:center;font-size:11px;line-height:18px;color:var(--text);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;padding:6px;color:var(--sec);font-weight:600;font-size:10px;border-bottom:2px solid var(--border)}
+td{padding:6px;border-bottom:1px solid var(--border);font-family:monospace}
+small{color:var(--sec);font-size:11px;line-height:1.5}
+</style><link rel="stylesheet" href="../shared/style.css">
+<script>(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';if(typeof window!=='undefined')window._rtv='0.1';})();</script>
+<script src="../db/relidb.js"></script>
+</head><body data-module="RAM Monte Carlo">
+<header class="hdr"><div class="container">
+  <div class="bc"><a href="../index.html">ReliToolbox</a> › RAM</div>
+  <h1>⚙️ RAM 仿真 (Web Worker 版)</h1>
+  <div class="sub">事件驱动 Monte Carlo · 后台线程 · UI 不阻塞</div>
+  <div class="lang-bar">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../index.html" class="lbtn2" style="text-decoration:none" data-zh="← 首页" data-en="← Home">← 首页</a>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div></header>
+
+<div class="container">
+
+<div class="card"><div class="title">组件定义（串联 k/n 结构）</div>
+<div id="rows"></div>
+<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+<button onclick="addComp()">+ <span data-zh="添加组件" data-en="Add component">添加组件</span></button>
+<button onclick="saveAllToLib()" title="保存到共享组件库 (RAM ↔ RBD)" data-zh="💾 保存到组件库" data-en="💾 Save to library">💾 保存到组件库</button>
+<button onclick="openLibPicker()" data-zh="📂 从组件库加载" data-en="📂 Load from library">📂 从组件库加载</button>
+<button onclick="window.print()" data-zh="🖨 打印/PDF" data-en="🖨 Print/PDF">🖨 打印/PDF</button>
+</div>
+</div>
+
+<div class="card"><div class="title">仿真参数</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+<div><label>任务时长 (年)</label><input type="number" id="mission" value="5"></div>
+<div><label>MC 次数</label><input type="number" id="runs" value="1000"></div>
+<div><label>随机种子</label><input type="number" id="seed" value="42"></div>
+</div>
+<button class="pri" id="runBtn" onclick="runSim()" style="margin-top:10px;width:100%">▶ 启动 Worker 仿真</button>
+<div style="margin-top:10px"><div class="prog"><div class="prog-bar" id="pbar"></div><div class="prog-txt" id="ptxt">就绪</div></div></div>
+<small id="tstat" style="display:block;margin-top:6px"></small>
+</div>
+
+<div id="results" style="display:none">
+<div class="kpi" id="kpis"></div>
+<div class="card"><div class="title">结果分布</div>
+<table><thead><tr><th>指标</th><th>均值</th><th>P5</th><th>P50</th><th>P95</th><th>标准差</th></tr></thead>
+<tbody id="stats"></tbody></table></div>
+</div>
+
+</div>
+
+<script>const WORKER_SRC=`
+function mulberry32(seed){
+return function(){
+let t = seed += 0x6D2B79F5;
+t = Math.imul(t ^ t>>>15, t | 1);
+t ^= t + Math.imul(t ^ t>>>7, t | 61);
+return ((t ^ t>>>14) >>> 0) / 4294967296;
+};
+}
+function expRand(rng, lam){ return -Math.log(1 - rng()) / lam; }
+function truncNorm(rng, mean, sigma){
+for(let i=0;i<20;i++){
+const u1 = Math.max(1e-10, rng()), u2 = rng();
+const z = Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+if(z >= -2 && z <= 2){
+const v = mean + sigma*z;
+if(v > 0) return v;
+}
+}
+return Math.max(0.1, mean);
+}
+function simulateOne(comps, missionHrs, rng){
+const events = [];
+const units = [];
+comps.forEach((c, ci) => {
+const lam = 1 / Math.max(c.mtbf, 1);
+for(let u = 0; u < c.count; u++){
+let t = expRand(rng, lam);
+let state = 'up';
+units.push({ci, ui: u, state: 'up'});
+while(t < missionHrs){
+events.push({t, ci, ui: u, type: 'fail'});
+const repair = truncNorm(rng, c.mttr, c.mttr*0.2);
+t += repair;
+if(t < missionHrs) events.push({t, ci, ui: u, type: 'repair'});
+t += expRand(rng, lam);
+}
+}
+});
+events.sort((a,b)=>a.t - b.t);
+let lastT = 0;
+let totalProd = 0;
+let upTime = 0;
+const upCount = comps.map(c => c.count);
+const sysCap = () => {
+let minCap = Infinity;
+for(let i=0;i<comps.length;i++){
+const c = comps[i];
+if(upCount[i] < c.kReq) return 0;
+// For k-out-of-n: capacity is limited to kReq running units (spares don't contribute
+// beyond k). For non-redundant (kReq==count), up units equal running units.
+const runningUnits = Math.min(upCount[i], c.kReq || c.count);
+const blockCap = c.capacity * runningUnits;
+if(blockCap < minCap) minCap = blockCap;
+}
+return minCap === Infinity ? 0 : minCap;
+};
+let curCap = sysCap();
+for(const ev of events){
+const dt = ev.t - lastT;
+totalProd += curCap * dt;
+if(curCap > 0) upTime += dt;
+if(ev.type === 'fail') upCount[ev.ci]--;
+else upCount[ev.ci]++;
+curCap = sysCap();
+lastT = ev.t;
+}
+const dt = missionHrs - lastT;
+totalProd += curCap * dt;
+if(curCap > 0) upTime += dt;
+const availability = upTime / missionHrs;
+return { availability, totalProd, downtime: missionHrs - upTime };
+}
+onmessage = function(e){
+const { comps, missionHrs, nRuns, seed } = e.data;
+const rng = mulberry32(seed);
+const results = { avail: [], prod: [], down: [] };
+const CHUNK = 50;
+for(let r = 0; r < nRuns; r++){
+const one = simulateOne(comps, missionHrs, rng);
+results.avail.push(one.availability);
+results.prod.push(one.totalProd);
+results.down.push(one.downtime);
+if((r+1) % CHUNK === 0 || r === nRuns-1){
+postMessage({ type: 'progress', done: r+1, total: nRuns });
+}
+}
+postMessage({ type: 'done', results });
+};
+`;let comps=[];function addComp(name='',mtbf=8000,mttr=24,count=2,kReq=1,capacity=50000){comps.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,5),name:name||'Comp-'+(comps.length+1),mtbf,mttr,count,kReq,capacity});render();}function delComp(i){comps.splice(i,1);render();}function upd(i,f,v){comps[i][f]=f==='name'?v:Number(v)||0;}function render(){document.getElementById('rows').innerHTML='<div class="row" style="font-size:10px;color:var(--sec);font-weight:600"><div>名称</div><div>MTBF(h)</div><div>MTTR(h)</div><div>n</div><div>k</div><div></div></div>'+comps.map((c,i)=>`<div class="row">
+<input value="${c.name}" oninput="upd(${i},'name',this.value)">
+<input type="number" value="${c.mtbf}" oninput="upd(${i},'mtbf',this.value)">
+<input type="number" value="${c.mttr}" oninput="upd(${i},'mttr',this.value)">
+<input type="number" value="${c.count}" oninput="upd(${i},'count',this.value)" min="1">
+<input type="number" value="${c.kReq}" oninput="upd(${i},'kReq',this.value)" min="1">
+<button onclick="delComp(${i})" style="border:none;color:#dc2626">×</button>
+</div>
+<div style="font-size:10px;color:var(--sec);padding:2px 0 8px 4px">单元产能: <input type="number" value="${c.capacity}" oninput="upd(${i},'capacity',this.value)" style="width:120px;display:inline-block"> Nm³/h</div>`).join('');}let worker=null;function runSim(){const missionY=Number(document.getElementById('mission').value);const nRuns=Number(document.getElementById('runs').value);const seed=Number(document.getElementById('seed').value);const missionHrs=missionY*8760;if(!comps.length)return alert('请先添加组件');if(worker)worker.terminate();const blob=new Blob([WORKER_SRC],{type:'application/javascript'});const workerUrl=URL.createObjectURL(blob);worker=new Worker(workerUrl);const btn=document.getElementById('runBtn');const pbar=document.getElementById('pbar');const ptxt=document.getElementById('ptxt');const tstat=document.getElementById('tstat');btn.disabled=true;const t0=performance.now();tstat.textContent='Worker 启动中...';worker.onmessage=(e)=>{const msg=e.data;if(msg.type==='progress'){const pct=(msg.done/msg.total*100).toFixed(0);pbar.style.width=pct+'%';ptxt.textContent=`${msg.done} / ${msg.total} (${pct}%)`;}else if(msg.type==='done'){const dt=((performance.now()-t0)/1000).toFixed(2);tstat.innerHTML=`✅ 完成，用时 <b>${dt}s</b>，Worker 线程独立运行，UI 全程未阻塞`;btn.disabled=false;showResults(msg.results,missionHrs);worker.terminate();worker=null;URL.revokeObjectURL(workerUrl);}};worker.onerror=(err)=>{tstat.innerHTML='<span class="danger">Worker 错误: '+err.message+'</span>';btn.disabled=false;URL.revokeObjectURL(workerUrl);};worker.postMessage({comps,missionHrs,nRuns,seed});}function stats(arr){const s=[...arr].sort((a,b)=>a-b);const n=s.length;const mean=s.reduce((a,b)=>a+b,0)/n;const q=p=>s[Math.floor(p*n)];const sd=Math.sqrt(s.reduce((a,x)=>a+(x-mean)**2,0)/n);return{mean,p5:q(0.05),p50:q(0.5),p95:q(0.95),sd};}function showResults(res,missionHrs){const a=stats(res.avail),p=stats(res.prod),d=stats(res.down);document.getElementById('kpis').innerHTML=`
+<div class="kpi-card"><div class="kpi-l">平均可用度</div><div class="kpi-v ${a.mean>=0.95?'ok':a.mean>=0.9?'warn':'danger'}">${(a.mean*100).toFixed(2)}%</div></div>
+<div class="kpi-card"><div class="kpi-l">P5 可用度</div><div class="kpi-v">${(a.p5*100).toFixed(2)}%</div></div>
+<div class="kpi-card"><div class="kpi-l">P95 可用度</div><div class="kpi-v">${(a.p95*100).toFixed(2)}%</div></div>
+<div class="kpi-card"><div class="kpi-l">年均停机(hrs)</div><div class="kpi-v">${(d.mean/(missionHrs/8760)).toFixed(0)}</div></div>
+`;document.getElementById('stats').innerHTML=`
+<tr><td>可用度</td><td>${(a.mean*100).toFixed(3)}%</td><td>${(a.p5*100).toFixed(2)}%</td><td>${(a.p50*100).toFixed(2)}%</td><td>${(a.p95*100).toFixed(2)}%</td><td>${(a.sd*100).toFixed(3)}%</td></tr>
+<tr><td>总产量 (M Nm³)</td><td>${(p.mean/1e6).toFixed(1)}</td><td>${(p.p5/1e6).toFixed(1)}</td><td>${(p.p50/1e6).toFixed(1)}</td><td>${(p.p95/1e6).toFixed(1)}</td><td>${(p.sd/1e6).toFixed(1)}</td></tr>
+<tr><td>总停机 (hrs)</td><td>${d.mean.toFixed(0)}</td><td>${d.p5.toFixed(0)}</td><td>${d.p50.toFixed(0)}</td><td>${d.p95.toFixed(0)}</td><td>${d.sd.toFixed(0)}</td></tr>
+`;document.getElementById('results').style.display='block';}addComp('气化炉',5000,120,15,14,140000);addComp('变换',12000,72,4,1,184000);addComp('净化',15000,96,2,2,400000);async function saveAllToLib(){if(!window.ReliDB){alert('DB 未就绪');return;}if(!comps.length){alert('无组件可保存');return;}try{for(const c of comps){await ReliDB.put('components',{name:c.name,mtbf:c.mtbf,mttr:c.mttr,n:c.count,k:c.kReq,capacity:c.capacity,source:'ram'});}alert(`已保存 ${comps.length} 个组件到共享库`);}catch(e){alert('保存失败: '+e.message);}}async function openLibPicker(){if(!window.ReliDB){alert('DB 未就绪');return;}try{const lib=await ReliDB.all('components');if(!lib.length){alert('组件库为空。先在 RAM/RBD 保存组件。');return;}const lines=lib.map((c,i)=>`${i+1}. ${c.name}  MTBF=${c.mtbf}h MTTR=${c.mttr}h  n=${c.n} k=${c.k||1}  cap=${c.capacity||'—'}`).join('\n');const pick=prompt('选择组件（输入编号，多个用逗号分隔；留空取消）:\n\n'+lines);if(!pick)return;const idxs=pick.split(/[,\s]+/).map(s=>+s-1).filter(i=>i>=0&&i<lib.length);for(const i of idxs){const c=lib[i];addComp(c.name,c.mtbf,c.mttr,c.n||1,c.k||1,c.capacity||0);}}catch(e){alert('加载失败: '+e.message);}}</script>
+<script>(function(){var _l=localStorage.getItem('rtLang')||'zh';function applyLang(l){_l=l;localStorage.setItem('rtLang',l);document.querySelectorAll('[data-zh]').forEach(function(el){el.textContent=l==='zh'?el.getAttribute('data-zh'):el.getAttribute('data-en');});var zh=document.getElementById('_lbZh'),en=document.getElementById('_lbEn');if(zh){zh.classList.toggle('on',l==='zh');en.classList.toggle('on',l==='en');}}window.setLang=applyLang;document.addEventListener('DOMContentLoaded',function(){applyLang(_l);});})();</script>
+<script src="../shared/topnav.js"></script>
+
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.4</span>
+  </div>
+</footer>
+</body></html>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.1 | reliability.chemcalc.cn
+  ReliToolbox | reliability.chemcalc.cn
   Copyright © All rights reserved.
   Unauthorized reproduction or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
@@ -9,11 +9,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>可靠性增长 AMSAA — ReliToolbox v0.1</title>
+<title>可靠性增长 AMSAA — ReliToolbox</title>
 <link rel="stylesheet" href="../shared/style.css">
 <script>
-// ReliToolbox v0.1 (c) reliability.chemcalc.cn
-(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+// ReliToolbox (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head>
@@ -156,9 +156,10 @@ function dl(content,filename){const blob=new Blob([content],{type:'text/csv'});
 
 let AM = {
  rawData: '120\n350\n580\n920\n1350\n1890\n2500\n3250\n4100\n5100',
- terminated: 'time', 
- T: 6000, 
+ terminated: 'time',
+ T: 6000,
  res: null,
+ mtbfTarget: 0, // 0 = disabled
 };
 
 const AM_EXAMPLES = {
@@ -203,9 +204,25 @@ function fitAMSAA(failures, T, terminated) {
  const mtbf1 = 1 / rho1;
 
  const trend = beta < 0.9 ? 'improving' : beta > 1.1 ? 'degrading' : 'random';
- 
- return { beta, lambda, n, T: terminated==='time'?T:failures[n-1], failures,
- mtbfT, mtbf1, Cvm, trend };
+
+ // Fisher information (asymptotic): Var(β̂) ≈ β²/n  →  SE(β) = β/√n
+ const betaSE = beta / Math.sqrt(n);
+ const Z95 = 1.959964;
+ const betaLo = Math.max(1e-6, beta - Z95 * betaSE);
+ const betaHi = beta + Z95 * betaSE;
+
+ // Crow-AMSAA MTBF CI at time T via β propagation (delta-method, log-param)
+ // MTBF(T) = T / (n·β̂) when terminated at T; we propagate β CI into MTBF CI
+ const Ttot = terminated==='time' ? T : failures[n-1];
+ const mtbfAt = b => (terminated==='time'
+   ? Math.pow(Ttot, b) / (n * b) * Math.pow(Ttot, 1 - b)   // = T/(n·β)
+   : Math.pow(failures[n-1], b) / ((n-1) * b) * Math.pow(Ttot, 1 - b));
+ const mtbfLo = Math.min(mtbfAt(betaLo), mtbfAt(betaHi));
+ const mtbfHi = Math.max(mtbfAt(betaLo), mtbfAt(betaHi));
+
+ return { beta, lambda, n, T: Ttot, failures,
+ mtbfT, mtbf1, Cvm, trend,
+ betaSE, betaLo, betaHi, mtbfLo, mtbfHi };
 }
 
 function runAMSAA() {
@@ -267,12 +284,24 @@ function renderAMSAA() {
 
  <!-- KPIs -->
  <div class="gkpi" style="margin-bottom:10px">
- <div class="kpi" style="border-top:2px solid var(--teal)"><div class="kl">β (${z?'形状参数':'Shape'})</div><div class="kv">${r.beta.toFixed(4)}</div></div>
+ <div class="kpi" style="border-top:2px solid var(--teal)"><div class="kl">β (${z?'形状参数':'Shape'})</div><div class="kv">${r.beta.toFixed(4)}</div><div class="ks">95% CI [${r.betaLo.toFixed(3)}, ${r.betaHi.toFixed(3)}]</div></div>
  <div class="kpi"><div class="kl">λ (${z?'尺度参数':'Scale'})</div><div class="kv" style="font-size:12px">${r.lambda.toExponential(3)}</div></div>
  <div class="kpi"><div class="kl">${z?'初始MTBF':'Initial MTBF'}</div><div class="kv">${r.mtbf1.toFixed(0)}</div><div class="ks">hrs</div></div>
- <div class="kpi" style="border-top:2px solid var(--success)"><div class="kl">${z?'当前MTBF':'Current MTBF'}</div><div class="kv gd">${r.mtbfT.toFixed(0)}</div><div class="ks">hrs</div></div>
+ <div class="kpi" style="border-top:2px solid var(--success)"><div class="kl">${z?'当前MTBF':'Current MTBF'}</div><div class="kv gd">${r.mtbfT.toFixed(0)}</div><div class="ks">hrs · 95% CI [${r.mtbfLo.toFixed(0)}, ${r.mtbfHi.toFixed(0)}]</div></div>
  <div class="kpi"><div class="kl">${z?'改善倍数':'Growth Factor'}</div><div class="kv">${(r.mtbfT/r.mtbf1).toFixed(2)}×</div></div>
  <div class="kpi"><div class="kl">${z?'失效次数':'Failures'}</div><div class="kv">${r.n}</div></div>
+ </div>
+
+ <!-- MTBF Target (horizontal growth target line) -->
+ <div class="card" style="padding:10px 12px">
+ <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+ <label class="lbl" style="margin:0">${z?'MTBF 目标 (hrs)':'MTBF Target (hrs)'}</label>
+ <input type="number" value="${AM.mtbfTarget||''}" placeholder="${z?'留空=不显示':'empty=off'}" style="width:140px;font-family:monospace"
+   oninput="AM.mtbfTarget=+this.value||0;drawAMCharts()">
+ ${AM.mtbfTarget>0?`<span style="font-size:11px;color:${r.mtbfT>=AM.mtbfTarget?'var(--success)':'var(--warn)'}">
+   ${r.mtbfT>=AM.mtbfTarget?(z?'✓ 已达标':'✓ Target met'):(z?`✗ 未达标 · 缺口 ${(AM.mtbfTarget-r.mtbfT).toFixed(0)} hrs`:`✗ Gap ${(AM.mtbfTarget-r.mtbfT).toFixed(0)} hrs`)}
+   </span>`:''}
+ </div>
  </div>
 
  <!-- Charts -->
@@ -318,12 +347,13 @@ function renderAMSAA() {
 }
 
 function doAMQuery() {
- const r = AM.res; if (!r) return;
+ const el = document.getElementById('amQR');
+ if (!AM.res) { if (el) el.innerHTML = '<span style="color:#ef4444">⚠ 请先运行 AMSAA 分析 / Run analysis first</span>'; return; }
  const t = parseFloat(document.getElementById('amQT')?.value);
- if (isNaN(t) || t <= 0) return;
+ if (isNaN(t) || t <= 0) { if (el) el.innerHTML = '<span style="color:#ef4444">⚠ 请输入正数 t 值 / Enter positive t</span>'; return; }
+ const r = AM.res;
  const rho = r.lambda * r.beta * Math.pow(t, r.beta - 1);
  const mtbf = 1 / rho;
- const el = document.getElementById('amQR');
  if (el) el.innerHTML = `t=${t.toFixed(0)}hrs → MTBF=<b style="color:var(--teal)">${mtbf.toFixed(0)} hrs</b> | ρ=${rho.toExponential(3)}/hr`;
 }
 
@@ -391,9 +421,14 @@ function drawAMCharts() {
  const pts = Array.from({length:101},(_,i)=>{
  const t = Math.max(r.failures[0]*0.5, maxT*i/100);
  const mtbf = Math.pow(t, 1-r.beta) / (r.lambda * r.beta);
- return {t, mtbf};
+ // CI via β propagation: MTBF ∝ t^(1-β). Re-solve with β at CI edges
+ const lamLo = r.n / Math.pow(r.T, r.betaLo);
+ const lamHi = r.n / Math.pow(r.T, r.betaHi);
+ const mLo = Math.pow(t, 1-r.betaLo) / (lamLo * r.betaLo);
+ const mHi = Math.pow(t, 1-r.betaHi) / (lamHi * r.betaHi);
+ return {t, mtbf, ciLo: Math.min(mLo,mHi), ciHi: Math.max(mLo,mHi)};
  });
- const maxM = Math.max(...pts.map(p=>p.mtbf)) * 1.1;
+ const maxM = Math.max(Math.max(...pts.map(p=>p.ciHi)), AM.mtbfTarget||0) * 1.1;
  const tX = t => PAD.l + iW * t / maxT;
  const tY = m => PAD.t + iH * (1 - m / maxM);
 
@@ -409,6 +444,21 @@ function drawAMCharts() {
  x.beginPath(); x.moveTo(tX(r.T),PAD.t); x.lineTo(tX(r.T),PAD.t+iH); x.stroke(); x.setLineDash([]);
  x.fillStyle = '#f59e0b'; x.font='8px sans-serif'; x.textAlign='center';
  x.fillText(LANG==='zh'?'当前':'Now', tX(r.T), PAD.t+8);
+
+ // CI band (fill between ciLo and ciHi)
+ x.fillStyle = 'rgba(16,185,129,.15)';
+ x.beginPath();
+ pts.forEach((p,i)=>i===0?x.moveTo(tX(p.t),tY(p.ciHi)):x.lineTo(tX(p.t),tY(p.ciHi)));
+ for(let i=pts.length-1;i>=0;i--)x.lineTo(tX(pts[i].t),tY(pts[i].ciLo));
+ x.closePath(); x.fill();
+
+ // MTBF target horizontal line
+ if (AM.mtbfTarget > 0 && AM.mtbfTarget < maxM) {
+  x.strokeStyle = '#dc2626'; x.lineWidth = 1.5; x.setLineDash([6,3]);
+  x.beginPath(); x.moveTo(PAD.l, tY(AM.mtbfTarget)); x.lineTo(W-PAD.r, tY(AM.mtbfTarget)); x.stroke();
+  x.setLineDash([]); x.fillStyle='#dc2626'; x.font='9px sans-serif'; x.textAlign='right';
+  x.fillText((LANG==='zh'?'目标 ':'Target ')+AM.mtbfTarget+'hr', W-PAD.r-3, tY(AM.mtbfTarget)-4);
+ }
 
  x.strokeStyle = '#10b981'; x.lineWidth = 2.5; x.beginPath();
  pts.forEach((p,i) => i===0 ? x.moveTo(tX(p.t),tY(p.mtbf)) : x.lineTo(tX(p.t),tY(p.mtbf)));
@@ -451,9 +501,9 @@ function drawAMCharts() {
     </div>
   </div>
   <div class="ft-bottom">
-    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    © ReliToolbox &nbsp;·&nbsp;
     <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
-    <a href="https://chemcalc.cn">chemcalc.cn</a>
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.5</span>
   </div>
 </footer>
 <script src="../shared/topnav.js"></script>

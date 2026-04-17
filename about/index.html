@@ -1,29 +1,24 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.1 | reliability.chemcalc.cn
+  ReliToolbox | reliability.chemcalc.cn
   Copyright © All rights reserved.
-  Unauthorized reproduction or commercial use is prohibited.
+  Unauthorized reproduction, redistribution or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
 -->
 <html lang="zh">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title data-zh="关于 ReliToolbox v0.1" data-en="About ReliToolbox v0.1">关于 ReliToolbox v0.1</title>
+<title data-zh="关于 ReliToolbox" data-en="About ReliToolbox">关于 ReliToolbox</title>
 <link rel="stylesheet" href="../shared/style.css"/>
-<script>
-// ReliToolbox v0.1 (c) reliability.chemcalc.cn
-(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
-if(typeof window!=='undefined')window._rtv='0.1';})();
-</script>
 </head>
 <body>
 <header>
   <div class="ctn" style="padding-bottom:0">
     <div class="bc"><a href="../index.html">ReliToolbox</a> › <span data-zh="关于" data-en="About">关于</span></div>
     <h1>🛠 ReliToolbox</h1>
-    <div class="sub" data-zh="可靠性工程师在线工具箱 — 关于本软件" data-en="Reliability Engineer Toolbox — About">
-      可靠性工程师在线工具箱 — 关于本软件
+    <div class="sub" data-zh="面向工程实践的可靠性分析平台" data-en="A Reliability Analysis Platform for Engineering Practice">
+      面向工程实践的可靠性分析平台
     </div>
     <div class="lang-bar" style="margin-top:6px">
       <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
@@ -34,228 +29,275 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 
 <div class="ctn">
 
-<!-- 简介 -->
+<!-- Mission -->
 <div class="card" style="margin-top:12px">
-  <div class="ct" data-zh="项目简介" data-en="Overview">项目简介</div>
-  <p style="font-size:12px;color:var(--sec);line-height:1.8" 
-     data-zh="ReliToolbox 是面向过程/化工行业可靠性工程师的免费在线工具箱，旨在覆盖商业软件（ReliaSoft、Meridium、Maros、AvSim+）约80%的常用功能，帮助中小企业摆脱高昂的授权费用。所有计算在浏览器本地完成，无需服务器，数据完全私密。"
-     data-en="ReliToolbox is a free online toolbox for process/chemical industry reliability engineers, designed to cover ~80% of common commercial software (ReliaSoft, Meridium, Maros, AvSim+) functionality at zero cost. All calculations run locally in the browser — no server, fully private.">
-    ReliToolbox 是面向过程/化工行业可靠性工程师的免费在线工具箱，旨在覆盖商业软件（ReliaSoft、Meridium、Maros、AvSim+）约80%的常用功能，帮助中小企业摆脱高昂的授权费用。所有计算在浏览器本地完成，无需服务器，数据完全私密。
+  <div class="ct" data-zh="平台定位" data-en="Mission">平台定位</div>
+  <p style="font-size:12.5px;color:var(--sec);line-height:1.85"
+     data-zh="ReliToolbox 为过程工业与制造业的可靠性工程师提供一套完整的、可在浏览器中独立运行的分析工具集。平台以工程实用性为首要目标，在核心算法、可视化深度与交互可审查性上对齐国际主流商业软件（ReliaSoft Weibull++/BlockSim、Meridium APM、Maros、AvSim+、Isograph）的常用工作流，覆盖寿命数据分析、可靠性框图、故障树、FMEA/RCM、RAM 仿真、SIL 验证、RBI、备件库存、可靠性增长、分配、生命周期成本等典型场景。"
+     data-en="ReliToolbox is a browser-resident analysis suite for reliability engineers in process, energy and manufacturing industries. The platform prioritises engineering utility — its algorithms, visualisations and auditability are aligned with mainstream commercial workflows (ReliaSoft Weibull++/BlockSim, Meridium APM, Maros, AvSim+, Isograph), covering life-data analysis, reliability block diagrams, fault trees, FMEA/RCM, RAM simulation, SIL verification, RBI, spare parts, reliability growth, allocation and life-cycle cost.">
+    ReliToolbox 为过程工业与制造业的可靠性工程师提供一套完整的、可在浏览器中独立运行的分析工具集。平台以工程实用性为首要目标，在核心算法、可视化深度与交互可审查性上对齐国际主流商业软件（ReliaSoft Weibull++/BlockSim、Meridium APM、Maros、AvSim+、Isograph）的常用工作流，覆盖寿命数据分析、可靠性框图、故障树、FMEA/RCM、RAM 仿真、SIL 验证、RBI、备件库存、可靠性增长、分配、生命周期成本等典型场景。
   </p>
 </div>
 
-<!-- 模块详情 -->
+<!-- Design Principles -->
 <div class="card">
-  <div class="ct" data-zh="功能模块详情（13个模块）" data-en="Module Details (13 Modules)">功能模块详情（13个模块）</div>
+  <div class="ct" data-zh="设计理念" data-en="Design Principles">设计理念</div>
+  <div style="font-size:12px;color:var(--sec);line-height:1.85">
+    <p>
+      <strong data-zh="① 算法透明 · " data-en="① Algorithmic Transparency · ">① 算法透明 · </strong>
+      <span data-zh="所有概率分布拟合、截尾似然、置信区间、容斥概率、蒙特卡洛事件处理均由 JavaScript 原生实现，可被工程师直接审查与复核，不存在闭源黑盒。"
+            data-en="All distribution fitting, censored likelihood, confidence-interval, inclusion-exclusion and Monte-Carlo routines are implemented in native JavaScript — directly auditable by engineers, with no closed-source black box.">
+        所有概率分布拟合、截尾似然、置信区间、容斥概率、蒙特卡洛事件处理均由 JavaScript 原生实现，可被工程师直接审查与复核，不存在闭源黑盒。
+      </span>
+    </p>
+    <p>
+      <strong data-zh="② 离线与隐私 · " data-en="② Offline & Privacy · ">② 离线与隐私 · </strong>
+      <span data-zh="全部计算在本地浏览器完成，数据不离开工程师的设备；不依赖账户体系，不进行使用追踪，满足企业内部敏感数据与断网环境的需求。"
+            data-en="Every computation runs locally in the browser. Data never leaves the engineer's machine. No accounts, no telemetry — suitable for sensitive corporate data and air-gapped environments.">
+        全部计算在本地浏览器完成，数据不离开工程师的设备；不依赖账户体系，不进行使用追踪，满足企业内部敏感数据与断网环境的需求。
+      </span>
+    </p>
+    <p>
+      <strong data-zh="③ 工程实用优先 · " data-en="③ Engineering Utility First · ">③ 工程实用优先 · </strong>
+      <span data-zh="每一模块均围绕"一名工程师能独立完成一项实际可靠性任务"设计——例如从失效时间清单直接产出 Weibull 概率纸、B-Life、置信区间与维修策略建议。"
+            data-en="Each module is designed around a complete engineering task that one engineer can finish end-to-end — e.g. from a failure-time list to a Weibull probability paper, B-Life, confidence intervals and a maintenance-strategy recommendation.">
+        每一模块均围绕"一名工程师能独立完成一项实际可靠性任务"设计——例如从失效时间清单直接产出 Weibull 概率纸、B-Life、置信区间与维修策略建议。
+      </span>
+    </p>
+    <p>
+      <strong data-zh="④ 标准对标 · " data-en="④ Standards Alignment · ">④ 标准对标 · </strong>
+      <span data-zh="方法学对标 IEC 61508/61511 (SIL)、API 580/581 (RBI)、MIL-HDBK-217 (可靠性预计)、MIL-HDBK-189 与 IEC 61164 (Crow-AMSAA 增长)、ISO 14224 (失效分类)。"
+            data-en="Methods align with IEC 61508/61511 (SIL), API 580/581 (RBI), MIL-HDBK-217 (prediction), MIL-HDBK-189 & IEC 61164 (Crow-AMSAA growth), ISO 14224 (failure taxonomy).">
+        方法学对标 IEC 61508/61511 (SIL)、API 580/581 (RBI)、MIL-HDBK-217 (可靠性预计)、MIL-HDBK-189 与 IEC 61164 (Crow-AMSAA 增长)、ISO 14224 (失效分类)。
+      </span>
+    </p>
+  </div>
+</div>
+
+<!-- Module catalogue -->
+<div class="card">
+  <div class="ct" data-zh="功能模块" data-en="Module Catalogue">功能模块</div>
 
   <div class="about-mod">
     <div class="am-icon">📉</div>
     <div class="am-body">
-      <div class="am-name">Weibull 分析 / Weibull Analysis</div>
-      <div class="am-desc" data-zh="寿命数据MLE拟合：Weibull / 指数 / 对数正态 / 正态四分布。B-Life特征寿命，AIC/BIC最优分布自动选择，支持右截尾数据，概率纸图，可靠度/危险率/CDF曲线，维修策略智能诊断（β<1早期故障/β≈1随机/β>1磨损）。高级模式：区间截尾+置信区间（Fisher信息矩阵）。"
-           data-en="MLE fitting for 4 distributions: Weibull/Exponential/Lognormal/Normal. B-Life, AIC/BIC auto-selection, right-censoring, probability plot, R(t)/h(t)/F(t) curves, maintenance strategy diagnosis. Advanced: interval censoring + confidence intervals via Fisher information matrix.">
-        寿命数据MLE拟合：Weibull / 指数 / 对数正态 / 正态四分布。B-Life特征寿命，AIC/BIC最优分布自动选择，支持右截尾数据，概率纸图，可靠度/危险率/CDF曲线，维修策略智能诊断（β&lt;1早期故障/β≈1随机/β&gt;1磨损）。高级模式：区间截尾+置信区间（Fisher信息矩阵）。
+      <div class="am-name" data-zh="寿命数据分析 / Weibull Analysis" data-en="Life Data Analysis / Weibull Analysis">寿命数据分析 / Weibull Analysis</div>
+      <div class="am-desc" data-zh="Weibull / 指数 / 对数正态 / 正态四分布极大似然拟合，AIC/BIC 自动选优，B-Life 特征寿命 (B1/B5/B10/B50)，标准双对数概率纸含 Fisher 置信区间带，R(t)/h(t)/F(t) 任意时刻查询，维修策略诊断 (β<1 早期失效 / β≈1 随机 / β>1 磨损)。进阶模块支持区间截尾与 Fisher 信息矩阵置信区间。"
+           data-en="MLE fitting for Weibull / Exponential / Lognormal / Normal distributions with AIC/BIC auto-selection; B-Life (B1/B5/B10/B50); standard double-log probability paper with Fisher confidence bands; R(t)/h(t)/F(t) queries at arbitrary time; maintenance-strategy diagnosis (β<1 infant / β≈1 random / β>1 wear-out). Advanced mode: interval censoring and Fisher-information confidence intervals.">
+        寿命数据分析：Weibull / 指数 / 对数正态 / 正态四分布极大似然拟合，AIC/BIC 自动选优，B-Life 特征寿命 (B1/B5/B10/B50)，标准双对数概率纸含 Fisher 置信区间带，R(t)/h(t)/F(t) 任意时刻查询，维修策略诊断 (β&lt;1 早期失效 / β≈1 随机 / β&gt;1 磨损)。进阶模块支持区间截尾与 Fisher 信息矩阵置信区间。
       </div>
-      <div class="am-tech">MLE · AIC/BIC · Fisher CI · Nelder-Mead · 截尾数据</div>
-    </div>
-  </div>
-
-  <div class="about-mod">
-    <div class="am-icon">📋</div>
-    <div class="am-body">
-      <div class="am-name">FMEA/RCM 工作表 / FMEA Worksheet</div>
-      <div class="am-desc" data-zh="失效模式与影响分析：RPN自动计算（严重性×频率×可探测性），实时颜色预警（红≥200/橙≥100），Pareto图显示高风险失效模式，支持CSV导入/导出，IndexedDB本地持久化，多工作集管理，与设备台账联动。"
-           data-en="Failure Mode & Effects Analysis: auto RPN (S×O×D), real-time color alerts (red≥200/amber≥100), Pareto chart, CSV import/export, IndexedDB persistence, multi-worksheet management, linked to Equipment Registry.">
-        失效模式与影响分析：RPN自动计算（严重性×频率×可探测性），实时颜色预警（红≥200/橙≥100），Pareto图显示高风险失效模式，支持CSV导入/导出，IndexedDB本地持久化，多工作集管理，与设备台账联动。
-      </div>
-      <div class="am-tech">FMEA · RPN · Pareto · IndexedDB · CSV</div>
-    </div>
-  </div>
-
-  <div class="about-mod">
-    <div class="am-icon">💰</div>
-    <div class="am-body">
-      <div class="am-name">LCC 生命周期成本 / Life Cycle Cost</div>
-      <div class="am-desc" data-zh="多方案NPV净现值和EAC等效年成本对比，支持最多4个方案（继续维修/更换新设备/升级改造），折现率和分析期可调，累计成本曲线，自动识别最优方案。"
-           data-en="Multi-scenario NPV and EAC comparison (up to 4 plans: keep/replace/upgrade). Adjustable discount rate and horizon. Cumulative cost curves. Auto-identifies optimal plan.">
-        多方案NPV净现值和EAC等效年成本对比，支持最多4个方案（继续维修/更换新设备/升级改造），折现率和分析期可调，累计成本曲线，自动识别最优方案。
-      </div>
-      <div class="am-tech">NPV · EAC · 折现现金流 · 多方案对比</div>
-    </div>
-  </div>
-
-  <div class="about-mod">
-    <div class="am-icon">⚙️</div>
-    <div class="am-body">
-      <div class="am-name">RAM 仿真分析 / RAM Simulation</div>
-      <div class="am-desc" data-zh="事件驱动蒙特卡洛仿真（最多5000次），k-out-of-n冗余结构，产能传递建模（串联系统容量=最小瓶颈），三级维修计划（设备级/装置级/全厂停车），指数/Weibull TTF，截断正态TTR，收敛曲线，Web Worker后台运行不阻塞UI。"
-           data-en="Event-driven Monte Carlo (up to 5000 runs), k-of-n redundancy, capacity propagation (series capacity = min bottleneck), 3-level maintenance schedule, Exponential/Weibull TTF, truncated normal TTR, convergence curves, Web Worker background execution.">
-        事件驱动蒙特卡洛仿真（最多5000次），k-out-of-n冗余结构，产能传递建模（串联系统容量=最小瓶颈），三级维修计划（设备级/装置级/全厂停车），指数/Weibull TTF，截断正态TTR，收敛曲线，Web Worker后台运行不阻塞UI。
-      </div>
-      <div class="am-tech">事件驱动MC · k-of-n · 产能传递 · Web Worker · Weibull/Exp TTF</div>
-    </div>
-  </div>
-
-  <div class="about-mod">
-    <div class="am-icon">🛡️</div>
-    <div class="am-body">
-      <div class="am-name">RBI 基于风险检验 / Risk Based Inspection</div>
-      <div class="am-desc" data-zh="基于API 580/581简化方法的5×5风险矩阵，失效可能性（PoF）和失效后果（CoF）分别1-5评分，剩余寿命计算（壁厚裕量/腐蚀速率），自动推荐检验间隔（1/3/5/10年），高风险设备优先排序。"
-           data-en="API 580/581 simplified 5×5 risk matrix. PoF & CoF scoring (1-5). Remaining life calculation (corrosion allowance/rate). Auto inspection interval recommendation (1/3/5/10yr). High-risk equipment prioritization.">
-        基于API 580/581简化方法的5×5风险矩阵，失效可能性（PoF）和失效后果（CoF）分别1-5评分，剩余寿命计算（壁厚裕量/腐蚀速率），自动推荐检验间隔（1/3/5/10年），高风险设备优先排序。
-      </div>
-      <div class="am-tech">API 580/581 · 5×5矩阵 · PoF/CoF · 剩余寿命 · 检验计划</div>
-    </div>
-  </div>
-
-  <div class="about-mod">
-    <div class="am-icon">🔧</div>
-    <div class="am-body">
-      <div class="am-name">备件库存优化 / Spare Parts Optimization</div>
-      <div class="am-desc" data-zh="基于Poisson需求模型的备件库存优化，针对目标服务水平（80%-99.9%）计算最优库存量，关键性系数（A/B/C）调整，当前库存状态评估（OK/需审查/短缺），库存成本对比。"
-           data-en="Poisson demand model for spare parts inventory optimization. Calculates optimal stock level for target service level (80-99.9%). Criticality multiplier (A/B/C). Stock status assessment (OK/Review/Shortage). Cost comparison.">
-        基于Poisson需求模型的备件库存优化，针对目标服务水平（80%-99.9%）计算最优库存量，关键性系数（A/B/C）调整，当前库存状态评估（OK/需审查/短缺），库存成本对比。
-      </div>
-      <div class="am-tech">Poisson CDF · 服务水平优化 · 关键性权重 · 库存成本</div>
-    </div>
-  </div>
-
-  <div class="about-mod">
-    <div class="am-icon">🚨</div>
-    <div class="am-body">
-      <div class="am-name">SIL 安全完整性等级 / SIL Verification</div>
-      <div class="am-desc" data-zh="基于IEC 61508/61511标准，计算安全仪表功能（SIF）的PFD（低要求模式）和PFH（高要求/连续模式），支持串联/并联架构，验证SIL等级（SIL1-4），考虑诊断覆盖率（DC）、共因失效（CCF β因子）、安全失效比例（SFF）。"
-           data-en="IEC 61508/61511 PFD (low demand) and PFH (high demand/continuous) for SIF verification. Series/parallel architecture. SIL1-4 verification with DC, CCF (β-factor), SFF.">
-        基于IEC 61508/61511标准，计算安全仪表功能（SIF）的PFD（低要求模式）和PFH（高要求/连续模式），支持串联/并联架构，验证SIL等级（SIL1-4），考虑诊断覆盖率（DC）、共因失效（CCF β因子）、安全失效比例（SFF）。
-      </div>
-      <div class="am-tech">IEC 61508/61511 · PFD · PFH · SIL1-4 · DC · CCF · SFF</div>
-    </div>
-  </div>
-
-  <div class="about-mod">
-    <div class="am-icon">📈</div>
-    <div class="am-body">
-      <div class="am-name">AMSAA 可靠性增长 / Reliability Growth</div>
-      <div class="am-desc" data-zh="Crow-AMSAA（NHPP幂律过程）分析：MLE拟合β（增长参数）和λ，Duane图，累计失效曲线，当前MTBF估算，增长趋势判断（β&lt;1改善中/β=1无变化/β&gt;1退化），适用于研发测试和在役设备可靠性增长跟踪。"
-           data-en="Crow-AMSAA (NHPP Power Law): MLE for β & λ. Duane plot, cumulative failure curve, current MTBF estimate, growth trend (β<1 improving/=1 stable/>1 degrading). For R&D testing and in-service reliability growth tracking.">
-        Crow-AMSAA（NHPP幂律过程）分析：MLE拟合β（增长参数）和λ，Duane图，累计失效曲线，当前MTBF估算，增长趋势判断（β&lt;1改善中/β=1无变化/β&gt;1退化），适用于研发测试和在役设备可靠性增长跟踪。
-      </div>
-      <div class="am-tech">Crow-AMSAA · NHPP · MLE · Duane图 · 增长趋势</div>
-    </div>
-  </div>
-
-  <div class="about-mod">
-    <div class="am-icon">🌳</div>
-    <div class="am-body">
-      <div class="am-name">FTA 故障树分析 / Fault Tree Analysis</div>
-      <div class="am-desc" data-zh="文本式门定义（AND/OR门），MOCUS算法求最小割集（MCS），Birnbaum重要度排序（识别最脆弱基本事件），顶事件概率精确计算（≤12割集容斥/&gt;12稀有事件上界），模型保存至IndexedDB。"
-           data-en="Text-based gate definitions (AND/OR). MOCUS algorithm for Minimal Cut Sets. Birnbaum importance ranking. Exact top-event probability (inclusion-exclusion for ≤12 MCS, rare-event bound for >12). Model persistence in IndexedDB.">
-        文本式门定义（AND/OR门），MOCUS算法求最小割集（MCS），Birnbaum重要度排序（识别最脆弱基本事件），顶事件概率精确计算（≤12割集容斥/&gt;12稀有事件上界），模型保存至IndexedDB。
-      </div>
-      <div class="am-tech">MOCUS · 最小割集 · Birnbaum重要度 · 容斥原理 · IndexedDB</div>
-    </div>
-  </div>
-
-  <div class="about-mod">
-    <div class="am-icon">📐</div>
-    <div class="am-body">
-      <div class="am-name">可用度分配 / Reliability Allocation</div>
-      <div class="am-desc" data-zh="三种分配方法：AGREE法（考虑子系统复杂度、重要度、单元数），等分配法，加权因子法（按失效率反比权重）。自动验证∏Rᵢ≥R_sys，输出每子系统Rᵢ/MTBFᵢ/λᵢ。"
-           data-en="Three allocation methods: AGREE (complexity, criticality, unit count), Equal allocation, Weighted-factor (inverse failure rate weight). Auto-verifies ∏Rᵢ≥R_sys. Outputs Rᵢ/MTBFᵢ/λᵢ per subsystem.">
-        三种分配方法：AGREE法（考虑子系统复杂度、重要度、单元数），等分配法，加权因子法（按失效率反比权重）。自动验证∏Rᵢ≥R_sys，输出每子系统Rᵢ/MTBFᵢ/λᵢ。
-      </div>
-      <div class="am-tech">AGREE · Equal · Weighted · 系统可靠度验证</div>
+      <div class="am-tech">MLE · AIC/BIC · Fisher Information · Nelder-Mead · Censored Data</div>
     </div>
   </div>
 
   <div class="about-mod">
     <div class="am-icon">🔗</div>
     <div class="am-body">
-      <div class="am-name">RBD 最小割集 / RBD Minimal Cut Sets</div>
-      <div class="am-desc" data-zh="接受RBD模型JSON，穷举法+超集剪枝求最小割集（支持最多18个节点），按阶数排序（1阶=单点失效=最危险），薄弱点分析（出现频率最高的节点），自动生成改进建议（单点失效警告、CCF提醒）。"
-           data-en="Accepts RBD JSON model. Exhaustive + superset pruning for MCS (≤18 nodes). Sorted by order (1st order = single point of failure). Weak point analysis. Auto improvement suggestions (SPF warnings, CCF alerts).">
-        接受RBD模型JSON，穷举法+超集剪枝求最小割集（支持最多18个节点），按阶数排序（1阶=单点失效=最危险），薄弱点分析（出现频率最高的节点），自动生成改进建议（单点失效警告、CCF提醒）。
+      <div class="am-name" data-zh="可靠性框图 (RBD)" data-en="Reliability Block Diagram (RBD)">可靠性框图 (RBD)</div>
+      <div class="am-desc" data-zh="通用拖拽式 RBD 构建器：任意节点、串并联混合、k/n 冗余；精确求解采用最小路集 + 容斥 (Sylvester-Poincaré)，大系统自动回退到 Esary–Proschan 上下界；提供系统级时域 R(t) 曲线与节点重要度排序 (Birnbaum)；模型以 JSON 形式持久化，可被 MCS 模块复用。"
+           data-en="General-purpose drag-and-drop RBD builder: arbitrary nodes, series/parallel mix, k-out-of-n redundancy. Exact evaluation via minimal path sets with inclusion–exclusion (Sylvester–Poincaré); large systems fall back to Esary–Proschan bounds. Provides system-level R(t) time curve and Birnbaum importance ranking. Models persist as JSON and are reusable by the MCS module.">
+        通用拖拽式 RBD 构建器：任意节点、串并联混合、k/n 冗余；精确求解采用最小路集 + 容斥 (Sylvester-Poincaré)，大系统自动回退到 Esary–Proschan 上下界；提供系统级时域 R(t) 曲线与节点重要度排序 (Birnbaum)；模型以 JSON 形式持久化，可被 MCS 模块复用。
       </div>
-      <div class="am-tech">最小割集 · 超集剪枝 · 单点失效 · CCF识别</div>
+      <div class="am-tech">Minimal Path Sets · Inclusion–Exclusion · Esary–Proschan · Birnbaum Importance · R(t) Curve</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🌳</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="故障树分析 (FTA)" data-en="Fault Tree Analysis (FTA)">故障树分析 (FTA)</div>
+      <div class="am-desc" data-zh="文本式 AND/OR 门定义，MOCUS 算法求最小割集，Birnbaum 重要度排序识别最脆弱基本事件；顶事件概率 ≤12 割集精确容斥，>12 割集稀有事件上界。"
+           data-en="Text-based AND/OR gate definition. MOCUS algorithm for minimal cut sets. Birnbaum importance ranking identifies the weakest basic events. Top-event probability: exact inclusion–exclusion for ≤12 MCS, rare-event upper bound for >12.">
+        文本式 AND/OR 门定义，MOCUS 算法求最小割集，Birnbaum 重要度排序识别最脆弱基本事件；顶事件概率 ≤12 割集精确容斥，&gt;12 割集稀有事件上界。
+      </div>
+      <div class="am-tech">MOCUS · Minimal Cut Sets · Birnbaum · Inclusion–Exclusion</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">📋</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="FMEA / RCM 工作表" data-en="FMEA / RCM Worksheet">FMEA / RCM 工作表</div>
+      <div class="am-desc" data-zh="失效模式与影响分析：RPN = S × O × D 自动计算，实时颜色预警 (红≥200 / 橙≥100)，Pareto 图识别高风险失效模式；多工作集管理，CSV 双向导入/导出；IndexedDB 本地持久化，与设备台账联动。"
+           data-en="RPN = S × O × D with real-time colour alerts (red ≥200 / amber ≥100). Pareto chart for risk ranking. Multi-worksheet management, CSV import/export, IndexedDB persistence, linked to the Equipment Registry.">
+        失效模式与影响分析：RPN = S × O × D 自动计算，实时颜色预警 (红≥200 / 橙≥100)，Pareto 图识别高风险失效模式；多工作集管理，CSV 双向导入/导出；IndexedDB 本地持久化，与设备台账联动。
+      </div>
+      <div class="am-tech">RPN · Pareto · IndexedDB · CSV</div>
     </div>
   </div>
 
   <div class="about-mod">
     <div class="am-icon">⚙️</div>
     <div class="am-body">
-      <div class="am-name">设备管理台账 / Equipment Registry</div>
-      <div class="am-desc" data-zh="统一设备数据中台：CRUD完整台账管理（35个字段，涵盖基本信息/可靠性参数/工艺参数/检验计划/成本），KPI仪表盘（总设备/A类关键/检验到期/高风险），CSV双向导入导出，与FMEA/RBI/Weibull共享IndexedDB数据。"
-           data-en="Unified equipment data hub: full CRUD (35 fields: basic info/reliability params/process params/inspection plan/cost). KPI dashboard (total/critical-A/inspection due/high risk). CSV import/export. Shared IndexedDB with FMEA/RBI/Weibull.">
-        统一设备数据中台：CRUD完整台账管理（35个字段，涵盖基本信息/可靠性参数/工艺参数/检验计划/成本），KPI仪表盘（总设备/A类关键/检验到期/高风险），CSV双向导入导出，与FMEA/RBI/Weibull共享IndexedDB数据。
+      <div class="am-name" data-zh="RAM 仿真分析" data-en="RAM Simulation">RAM 仿真分析</div>
+      <div class="am-desc" data-zh="事件驱动蒙特卡洛仿真（最多 5000 次迭代），k-out-of-n 冗余结构，产能传递建模（串联系统容量 = 最小瓶颈），三级维修计划（设备级 / 装置级 / 全厂停车），指数 / Weibull TTF，截断正态 TTR；Web Worker 后台运行不阻塞界面；输出可用度、可用产量、关键路径与收敛曲线。"
+           data-en="Event-driven Monte-Carlo (up to 5000 runs). k-out-of-n redundancy. Capacity propagation (series capacity = minimum bottleneck). Three-level maintenance schedule (unit / plant / turnaround). Exponential / Weibull TTF, truncated-normal TTR. Runs in a Web Worker, never blocking the UI. Outputs availability, producible throughput, critical paths and convergence curves.">
+        事件驱动蒙特卡洛仿真（最多 5000 次迭代），k-out-of-n 冗余结构，产能传递建模（串联系统容量 = 最小瓶颈），三级维修计划（设备级 / 装置级 / 全厂停车），指数 / Weibull TTF，截断正态 TTR；Web Worker 后台运行不阻塞界面；输出可用度、可用产量、关键路径与收敛曲线。
       </div>
-      <div class="am-tech">IndexedDB · CRUD · CSV双向 · KPI仪表盘 · 多模块联动</div>
+      <div class="am-tech">Event-driven MC · k-of-n · Capacity Propagation · Web Worker</div>
     </div>
   </div>
 
   <div class="about-mod">
-    <div class="am-icon">🖊️</div>
+    <div class="am-icon">🚨</div>
     <div class="am-body">
-      <div class="am-name">RBD 拖拽画布 / RBD Visual Builder</div>
-      <div class="am-desc" data-zh="可视化可靠性框图构建：拖拽节点，连接串/并联关系，导出JSON供MCS分析模块使用，支持门结构可视化编辑。"
-           data-en="Visual RBD builder: drag-and-drop nodes, series/parallel connections, JSON export for MCS analysis, gate structure visual editing.">
-        可视化可靠性框图构建：拖拽节点，连接串/并联关系，导出JSON供MCS分析模块使用，支持门结构可视化编辑。
+      <div class="am-name" data-zh="SIL 安全完整性等级验证" data-en="SIL Verification">SIL 安全完整性等级验证</div>
+      <div class="am-desc" data-zh="遵循 IEC 61508 / 61511，计算安全仪表功能 (SIF) 在低要求模式下的 PFD 与高要求/连续模式下的 PFH，支持 1oo1 / 1oo2 / 2oo2 / 2oo3 架构，考虑诊断覆盖率 (DC)、共因失效 (CCF β-factor)、安全失效比例 (SFF)；自动验证目标 SIL1–SIL4 等级。"
+           data-en="IEC 61508 / 61511. PFD (low demand) and PFH (high demand / continuous) for SIF. Architectures 1oo1 / 1oo2 / 2oo2 / 2oo3. Accounts for DC, CCF (β-factor), SFF. Verifies target SIL1–SIL4.">
+        遵循 IEC 61508 / 61511，计算安全仪表功能 (SIF) 在低要求模式下的 PFD 与高要求/连续模式下的 PFH，支持 1oo1 / 1oo2 / 2oo2 / 2oo3 架构，考虑诊断覆盖率 (DC)、共因失效 (CCF β-factor)、安全失效比例 (SFF)；自动验证目标 SIL1–SIL4 等级。
       </div>
-      <div class="am-tech">拖拽画布 · 串/并联 · JSON导出 · MCS联动</div>
+      <div class="am-tech">IEC 61508 / 61511 · PFD · PFH · DC · CCF · SFF</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🛡️</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="基于风险的检验 (RBI)" data-en="Risk-Based Inspection (RBI)">基于风险的检验 (RBI)</div>
+      <div class="am-desc" data-zh="基于 API 580 / 581 简化方法，PoF 与 CoF 各 1–5 评分形成 5×5 风险矩阵；剩余寿命计算（壁厚裕量 / 腐蚀速率）；自动推荐检验间隔（1 / 3 / 5 / 10 年）；高风险设备优先排序。"
+           data-en="API 580 / 581 simplified approach. PoF and CoF each scored 1–5, forming a 5×5 risk matrix. Remaining life from corrosion allowance and rate. Inspection interval (1 / 3 / 5 / 10 yr) recommended automatically. High-risk equipment prioritised.">
+        基于 API 580 / 581 简化方法，PoF 与 CoF 各 1–5 评分形成 5×5 风险矩阵；剩余寿命计算（壁厚裕量 / 腐蚀速率）；自动推荐检验间隔（1 / 3 / 5 / 10 年）；高风险设备优先排序。
+      </div>
+      <div class="am-tech">API 580/581 · 5×5 Matrix · PoF / CoF · Remaining Life</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">📈</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="可靠性增长分析 (Crow-AMSAA)" data-en="Reliability Growth (Crow-AMSAA)">可靠性增长分析 (Crow-AMSAA)</div>
+      <div class="am-desc" data-zh="NHPP 幂律过程模型，MLE 拟合形状参数 β 与尺度参数 λ，Duane 图，累计失效曲线，Fisher 置信区间，用户可设 MTBF 目标水平线；增长趋势判定（β<1 持续改善 / β=1 稳态 / β>1 退化）。"
+           data-en="NHPP Power-Law model. MLE for β and λ. Duane plot, cumulative failure curve, Fisher confidence interval, user-defined MTBF target line. Growth trend: β<1 improving / β=1 steady / β>1 degrading.">
+        NHPP 幂律过程模型，MLE 拟合形状参数 β 与尺度参数 λ，Duane 图，累计失效曲线，Fisher 置信区间，用户可设 MTBF 目标水平线；增长趋势判定（β&lt;1 持续改善 / β=1 稳态 / β&gt;1 退化）。
+      </div>
+      <div class="am-tech">NHPP · MLE · Duane Plot · Fisher CI · Growth Target</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">📐</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="可靠性分配" data-en="Reliability Allocation">可靠性分配</div>
+      <div class="am-desc" data-zh="三种方法：AGREE 法（考虑子系统复杂度、重要度、单元数）、等分配法、加权因子法（按失效率反比权重）；自动验证 ∏Rᵢ ≥ R_sys，输出每子系统的 Rᵢ / MTBFᵢ / λᵢ。"
+           data-en="Three methods: AGREE (complexity, criticality, unit count), Equal allocation, Weighted-factor (inverse failure rate). Auto-verifies ∏Rᵢ ≥ R_sys. Outputs Rᵢ / MTBFᵢ / λᵢ per subsystem.">
+        三种方法：AGREE 法（考虑子系统复杂度、重要度、单元数）、等分配法、加权因子法（按失效率反比权重）；自动验证 ∏Rᵢ ≥ R_sys，输出每子系统的 Rᵢ / MTBFᵢ / λᵢ。
+      </div>
+      <div class="am-tech">AGREE · Equal · Weighted · Reliability Apportionment</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🔧</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="备件库存优化" data-en="Spare Parts Optimisation">备件库存优化</div>
+      <div class="am-desc" data-zh="基于 Poisson 需求模型，对给定服务水平目标 (80 % – 99.9 %) 求解最优库存量；关键性系数 A / B / C；当前库存状态评估 (OK / 复核 / 短缺)；库存成本对比。"
+           data-en="Poisson demand model. Solves optimal stock level for target service level (80 % – 99.9 %). Criticality A / B / C. Current stock status (OK / Review / Shortage). Inventory cost comparison.">
+        基于 Poisson 需求模型，对给定服务水平目标 (80 % – 99.9 %) 求解最优库存量；关键性系数 A / B / C；当前库存状态评估 (OK / 复核 / 短缺)；库存成本对比。
+      </div>
+      <div class="am-tech">Poisson CDF · Service Level · Criticality Weight</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🛠️</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="预防维修优化 (PM)" data-en="Preventive Maintenance Optimisation">预防维修优化 (PM)</div>
+      <div class="am-desc" data-zh="基于年龄更换模型，给定预防维修成本 Cp 与失效维修成本 Cf，求使单位时间期望成本最小的最优更换周期 T*；结合 Weibull 拟合参数直接输出工程可执行的维修周期建议。"
+           data-en="Age-replacement model. Given preventive cost Cp and failure cost Cf, solves the optimal replacement interval T* that minimises expected cost per unit time. Combined with Weibull fits to produce ready-to-use maintenance intervals.">
+        基于年龄更换模型，给定预防维修成本 Cp 与失效维修成本 Cf，求使单位时间期望成本最小的最优更换周期 T*；结合 Weibull 拟合参数直接输出工程可执行的维修周期建议。
+      </div>
+      <div class="am-tech">Age Replacement · Cost Optimisation · T* Search</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">🔢</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="可靠性预计 (MIL-HDBK-217)" data-en="Reliability Prediction (MIL-HDBK-217)">可靠性预计 (MIL-HDBK-217)</div>
+      <div class="am-desc" data-zh="遵循 MIL-HDBK-217F Notice 2 Parts Count 方法，按元器件类别、质量等级、环境因子 πE 估算系统失效率 λ_sys；适用于电子系统早期设计阶段的可靠性预计。"
+           data-en="MIL-HDBK-217F Notice 2 Parts Count method. Estimates system failure rate λ_sys by part class, quality grade and environmental factor πE. Used for early-stage reliability prediction of electronic systems.">
+        遵循 MIL-HDBK-217F Notice 2 Parts Count 方法，按元器件类别、质量等级、环境因子 πE 估算系统失效率 λ_sys；适用于电子系统早期设计阶段的可靠性预计。
+      </div>
+      <div class="am-tech">MIL-HDBK-217F N2 · Parts Count · πE / πQ</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">💰</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="生命周期成本 (LCC)" data-en="Life Cycle Cost (LCC)">生命周期成本 (LCC)</div>
+      <div class="am-desc" data-zh="多方案 NPV 净现值与 EAC 等效年成本对比（最多 4 方案），折现率与分析期可调，累计成本曲线，自动识别最优方案。"
+           data-en="Multi-scenario NPV and EAC comparison (up to 4 plans). Adjustable discount rate and horizon. Cumulative cost curves. Automatically identifies the optimal plan.">
+        多方案 NPV 净现值与 EAC 等效年成本对比（最多 4 方案），折现率与分析期可调，累计成本曲线，自动识别最优方案。
+      </div>
+      <div class="am-tech">NPV · EAC · Discounted Cash Flow</div>
+    </div>
+  </div>
+
+  <div class="about-mod">
+    <div class="am-icon">⚙️</div>
+    <div class="am-body">
+      <div class="am-name" data-zh="设备台账中心" data-en="Equipment Registry">设备台账中心</div>
+      <div class="am-desc" data-zh="统一设备数据中台：CRUD 完整台账（涵盖基本信息、可靠性参数、工艺参数、检验计划、成本），KPI 仪表盘（总设备 / A 类关键 / 检验到期 / 高风险），CSV 双向导入导出；与 FMEA / RBI / Weibull 共享 IndexedDB 数据。"
+           data-en="Unified equipment data hub. Full CRUD (basic info, reliability parameters, process parameters, inspection plan, cost). KPI dashboard (total / critical-A / inspection due / high risk). CSV import/export. IndexedDB data shared with FMEA / RBI / Weibull.">
+        统一设备数据中台：CRUD 完整台账（涵盖基本信息、可靠性参数、工艺参数、检验计划、成本），KPI 仪表盘（总设备 / A 类关键 / 检验到期 / 高风险），CSV 双向导入导出；与 FMEA / RBI / Weibull 共享 IndexedDB 数据。
+      </div>
+      <div class="am-tech">IndexedDB · CRUD · CSV · KPI Dashboard</div>
     </div>
   </div>
 
 </div>
 
-<!-- 技术架构 -->
+<!-- Technical architecture -->
 <div class="card">
   <div class="ct" data-zh="技术架构" data-en="Technical Architecture">技术架构</div>
-  <div style="font-size:11px;color:var(--sec);line-height:1.9">
-    <div>🏗 <strong data-zh="架构：" data-en="Architecture:">架构：</strong>
-      <span data-zh="单文件HTML模块，无构建链，纯浏览器运行" data-en="Single-file HTML modules, no build chain, pure browser execution">
-        单文件HTML模块，无构建链，纯浏览器运行
+  <div style="font-size:11.5px;color:var(--sec);line-height:1.9">
+    <div>🏗 <strong data-zh="运行模型：" data-en="Runtime Model:">运行模型：</strong>
+      <span data-zh="单文件 HTML 模块，无构建链，纯浏览器执行，可整站打包离线运行"
+            data-en="Single-file HTML modules, no build chain, pure browser execution, fully packageable for offline use">
+        单文件 HTML 模块，无构建链，纯浏览器执行，可整站打包离线运行
       </span>
     </div>
-    <div>💾 <strong data-zh="数据：" data-en="Data:">数据：</strong>
-      <span data-zh="IndexedDB本地持久化（数据库 ReliToolbox，8张表），所有数据留在您的设备上" data-en="IndexedDB local persistence (DB: ReliToolbox, 8 tables). All data stays on your device.">
-        IndexedDB本地持久化（数据库 ReliToolbox，8张表），所有数据留在您的设备上
+    <div>💾 <strong data-zh="数据层：" data-en="Data Layer:">数据层：</strong>
+      <span data-zh="IndexedDB 本地持久化（共 8 张关系表），设备、FMEA、Weibull、RBD、RBI 等模块共享数据源"
+            data-en="IndexedDB (8 relational stores). Equipment, FMEA, Weibull, RBD and RBI modules share a common data source.">
+        IndexedDB 本地持久化（共 8 张关系表），设备、FMEA、Weibull、RBD、RBI 等模块共享数据源
       </span>
     </div>
-    <div>🚀 <strong data-zh="部署：" data-en="Deployment:">部署：</strong>
-      <span data-zh="Cloudflare Pages，全球CDN加速，reliability.chemcalc.cn" data-en="Cloudflare Pages, global CDN, reliability.chemcalc.cn">
-        Cloudflare Pages，全球CDN加速，reliability.chemcalc.cn
-      </span>
-    </div>
-    <div>🔢 <strong data-zh="算法：" data-en="Algorithms:">算法：</strong>
-      <span data-zh="纯JS实现：MLE/Nelder-Mead/蒙特卡洛/MOCUS/Poisson/Fisher信息矩阵，无Python依赖" data-en="Pure JS: MLE/Nelder-Mead/Monte Carlo/MOCUS/Poisson/Fisher info matrix, no Python dependency">
-        纯JS实现：MLE/Nelder-Mead/蒙特卡洛/MOCUS/Poisson/Fisher信息矩阵，无Python依赖
+    <div>🔢 <strong data-zh="算法实现：" data-en="Algorithms:">算法实现：</strong>
+      <span data-zh="MLE · Nelder-Mead · Fisher 信息矩阵 · 容斥原理 · MOCUS · 事件驱动蒙特卡洛 · Poisson CDF，全部原生 JS 实现，无 Python / WASM / 第三方统计库依赖"
+            data-en="MLE · Nelder-Mead · Fisher information · Inclusion–Exclusion · MOCUS · Event-driven Monte Carlo · Poisson CDF — all native JavaScript, no Python, WASM or third-party statistics libraries.">
+        MLE · Nelder-Mead · Fisher 信息矩阵 · 容斥原理 · MOCUS · 事件驱动蒙特卡洛 · Poisson CDF，全部原生 JS 实现，无 Python / WASM / 第三方统计库依赖
       </span>
     </div>
     <div>🔒 <strong data-zh="隐私：" data-en="Privacy:">隐私：</strong>
-      <span data-zh="无用户追踪，无数据上传，完全离线可用" data-en="No tracking, no data upload, fully offline capable">
-        无用户追踪，无数据上传，完全离线可用
+      <span data-zh="无账户系统，无使用追踪，无任何数据外发；断网环境完全可用"
+            data-en="No account system, no telemetry, no outbound network traffic. Fully operable in air-gapped environments.">
+        无账户系统，无使用追踪，无任何数据外发；断网环境完全可用
       </span>
     </div>
   </div>
 </div>
 
-<!-- 法律声明 -->
+<!-- Legal -->
 <div class="card">
   <div class="ct" data-zh="法律声明" data-en="Legal">法律声明</div>
-  <div style="font-size:11px;color:var(--sec);line-height:1.9">
-    <p><strong data-zh="版本：" data-en="Version:">版本：</strong> v0.1</p>
+  <div style="font-size:11.5px;color:var(--sec);line-height:1.9">
     <p><strong data-zh="版权：" data-en="Copyright:">版权：</strong>
-      <span data-zh="版权所有 © 作者保留一切权利。未经授权，禁止将本工具用于商业目的或进行二次开发分发。" data-en="Copyright © All rights reserved. Unauthorized commercial use or redistribution is prohibited.">
-        版权所有 © 作者保留一切权利。未经授权，禁止将本工具用于商业目的或进行二次开发分发。
+      <span data-zh="版权所有 © 作者保留一切权利。禁止对本软件进行反编译、反向工程、再分发或未经授权的商业使用；禁止将本软件全部或部分代码整合进第三方产品进行二次开发分发。"
+            data-en="Copyright © All rights reserved. Decompilation, reverse engineering, redistribution and unauthorised commercial use are prohibited. Integrating all or part of this software into third-party products for re-distribution is prohibited.">
+        版权所有 © 作者保留一切权利。禁止对本软件进行反编译、反向工程、再分发或未经授权的商业使用；禁止将本软件全部或部分代码整合进第三方产品进行二次开发分发。
       </span>
     </p>
     <p><strong data-zh="免责声明：" data-en="Disclaimer:">免责声明：</strong>
-      <span data-zh="本工具仅供工程参考，不构成正式工程判断依据。作者不承担因使用本工具的计算结果而引发的任何直接或间接损失及责任。重要工程决策请结合专业判断和现行标准。" data-en="This tool is for engineering reference only and does not constitute formal engineering judgment. The author assumes no liability for any direct or indirect losses arising from use of calculation results. Important engineering decisions must be combined with professional judgment and current standards.">
-        本工具仅供工程参考，不构成正式工程判断依据。作者不承担因使用本工具的计算结果而引发的任何直接或间接损失及责任。重要工程决策请结合专业判断和现行标准。
+      <span data-zh="本平台仅供工程参考，不构成正式工程判断依据。作者不对因使用本平台计算结果而产生的任何直接或间接损失承担责任。关键工程决策必须结合专业工程师判断及现行标准进行独立复核。"
+            data-en="This platform is provided for engineering reference only and does not constitute formal engineering judgement. The author accepts no liability for any direct or indirect loss arising from the use of its results. Critical engineering decisions must be independently verified by qualified engineers against current applicable standards.">
+        本平台仅供工程参考，不构成正式工程判断依据。作者不对因使用本平台计算结果而产生的任何直接或间接损失承担责任。关键工程决策必须结合专业工程师判断及现行标准进行独立复核。
       </span>
     </p>
     <p><strong data-zh="联系：" data-en="Contact:">联系：</strong>
       <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a>
-      <span data-zh="（欢迎技术讨论与反馈）" data-en="（Technical discussion & feedback welcome）">
+      <span data-zh="（欢迎技术讨论与反馈）" data-en=" (technical discussion &amp; feedback welcome)">
         （欢迎技术讨论与反馈）
       </span>
     </p>
@@ -281,11 +323,12 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
     </div>
   </div>
   <div class="ft-bottom">
-    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
-    <span data-zh="版权所有，作者不承担使用结果所引发的责任" data-en="All rights reserved. No liability for calculation results.">
-      版权所有，作者不承担使用结果所引发的责任
+    <span data-zh="版权所有 © ReliToolbox · 作者不承担计算结果引发的任何责任"
+          data-en="© ReliToolbox · No liability for calculation results">
+      版权所有 © ReliToolbox · 作者不承担计算结果引发的任何责任
     </span>
     &nbsp;·&nbsp; <a href="https://chemcalc.cn">chemcalc.cn</a>
+    &nbsp;·&nbsp; <span id="_ftVer">v0.5</span>
   </div>
 </footer>
 
@@ -295,7 +338,7 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
  function applyLang(l){
  _l=l;localStorage.setItem('rtLang',l);
  document.querySelectorAll('[data-zh]').forEach(function(el){
- el.textContent=l==='zh'?el.getAttribute('data-zh'):el.getAttribute('data-en');
+ el.innerHTML=l==='zh'?el.getAttribute('data-zh'):el.getAttribute('data-en');
  });
  var zh=document.getElementById('_lbZh'),en=document.getElementById('_lbEn');
  if(zh){zh.classList.toggle('on',l==='zh');en.classList.toggle('on',l==='en');}

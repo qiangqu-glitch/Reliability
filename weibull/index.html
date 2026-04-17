@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.1 | reliability.chemcalc.cn
+  ReliToolbox | reliability.chemcalc.cn
   Copyright © All rights reserved.
   Unauthorized reproduction or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
@@ -9,12 +9,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Weibull 分析 — ReliToolbox v0.1</title>
+<title>Weibull 分析 — ReliToolbox</title>
 <link rel="stylesheet" href="../shared/style.css">
 <style>/* weibull specific */</style>
 <script>
-// ReliToolbox v0.1 (c) reliability.chemcalc.cn
-(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+// ReliToolbox (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head>
@@ -226,6 +226,9 @@ function renderWB(){
  <div class="kpi"><div class="kl">B10</div><div class="kv">${RM.fmt(WB.res.bL.B10)}</div></div>
  <div class="kpi"><div class="kl">B50</div><div class="kv">${RM.fmt(WB.res.bL.B50)}</div></div>`:''}
  <div class="kpi"><div class="kl">${z?'最优拟合':'Best Fit'}</div><div class="kv" style="font-size:11px;color:var(--teal)">${WB.res.dists[0].name}</div></div>
+ ${WB.res.wb3?`<div class="kpi" style="border-top:2px solid var(--purple)"><div class="kl" style="color:var(--purple)">γ (3P ${z?'位置':'location'})</div>
+   <div class="kv" style="color:var(--purple);font-size:14px">${RM.fmt(WB.res.wb3.gamma)}</div>
+   <div class="ks">β=${WB.res.wb3.beta.toFixed(2)} η=${RM.fmt(WB.res.wb3.eta)} ΔAIC=${(WB.res.dists.find(d=>d.name==='Weibull').aic-WB.res.wb3.aic).toFixed(1)}</div></div>`:''}
  </div>
  ${WB.res.diag?`<div style="background:${WB.res.diag.cls};border:1px solid ${WB.res.diag.bc};border-radius:var(--r);padding:12px;margin-bottom:10px">
  <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
@@ -239,6 +242,13 @@ function renderWB(){
  <div class="tbr" id="wChartTabs">
  ${['R(t)','h(t)',z?'概率纸':'Prob Plot','F(t)',z?'💰 PM优化':'💰 PM Optimize'].map((l,i)=>`<button class="tb${WB.chartTab===i?' on':''}" onclick="WB.chartTab=${i};renderWB()">${l}</button>`).join('')}
  </div>
+ ${WB.chartTab===2?`<div style="display:flex;gap:6px;padding:6px 2px;flex-wrap:wrap;align-items:center">
+   <span style="font-size:11px;color:var(--muted)">${z?'分布纸张':'Paper'}:</span>
+   ${['Weibull','Lognormal','Normal'].map(d=>`<button class="tb${(WB.probDist||'Weibull')===d?' on':''}" style="padding:4px 10px;font-size:11px" onclick="WB.probDist='${d}';renderWB()">${d}</button>`).join('')}
+   <span style="flex:1"></span>
+   <button class="btn btsm" onclick="addOverlay()" title="${z?'把当前结果加入叠加对比':'Add current fit as overlay dataset'}">+ ${z?'加入数据集':'Add dataset'}</button>
+   ${(WB.overlays&&WB.overlays.length)?`<button class="btn btsm" onclick="clearOverlays()">${z?'清空叠加 ('+WB.overlays.length+')':'Clear ('+WB.overlays.length+')'}</button>`:''}
+ </div>`:''}
  ${WB.chartTab===4?`
  <div id="wPMPanel" style="min-height:200px">
  ${typeof renderPMTab==='function'?renderPMTab():'<p style="color:var(--muted)">Loading...</p>'}
@@ -286,16 +296,6 @@ function loadWBEx(k){WB.rawData=WBEx[k].d;WB.rawCens=WBEx[k].c;WB.name=WBEx[k].n
 let _dbInited = false;
 async function initDBLoad(){
   if(_dbInited) return;
-  if(typeof ReliDB==='undefined'){
-    const el=document.getElementById('dbLoadStatus');
-    if(el) el.textContent='数据库模块加载中...';
-    await new Promise(r=>setTimeout(r,200));
-    if(typeof ReliDB==='undefined'){
-      const el2=document.getElementById('dbLoadStatus');
-      if(el2) el2.textContent='数据库模块未加载，设备选择不可用';
-      return;
-    }
-  }
   _dbInited = true;
   await populateEquipSelect();
   // Check if redirected from equipment module
@@ -309,12 +309,17 @@ async function initDBLoad(){
 }
 
 async function populateEquipSelect(){
+  const sel = document.getElementById('dbEquipSel');
+  const st = document.getElementById('dbLoadStatus');
+  if(typeof ReliDB==='undefined'){
+    if(st) st.textContent='⚠ DB 模块未加载 / DB module not loaded (check ../db/relidb.js path, case-sensitive on Linux)';
+    return;
+  }
   try{
     const eqs = await ReliDB.all('equipments');
-    const sel = document.getElementById('dbEquipSel');
     if(!sel) return;
     if(!eqs.length){
-      document.getElementById('dbLoadStatus').textContent='设备台账为空，请先在 Equipment 模块录入设备';
+      if(st) st.textContent='此域名下暂无设备数据，请先在 Equipment 页导入 / No equipment on this origin (IndexedDB is origin-scoped); import in Equipment first';
       return;
     }
     sel.innerHTML='<option value="">(选择设备 / Select Equipment)</option>'+
@@ -327,36 +332,30 @@ async function populateEquipSelect(){
 }
 
 async function loadFromDB(){
-  if(typeof ReliDB==='undefined'){
-    const infoEl=document.getElementById('dbLoadInfo');
-    if(infoEl) infoEl.textContent='数据库模块未加载';
-    return;
-  }
   const sel=document.getElementById('dbEquipSel');
   const infoEl=document.getElementById('dbLoadInfo');
-  if(!sel||!sel.value){if(typeof toast==='function')toast('请先选择设备');return;}
+  if(typeof ReliDB==='undefined'){if(infoEl) infoEl.textContent='⚠ DB 模块未加载 / DB module not loaded';return;}
+  if(!sel||!sel.value){toast&&toast('请先选择设备');return;}
   const equipId=sel.value;
   try{
     const fails=await ReliDB.getFailuresByEquip(equipId);
     if(!fails.length){
-      if(infoEl) infoEl.textContent='该设备暂无故障记录，请先在 Equipment 模块录入';
+      infoEl.textContent='⚠️ 该设备暂无故障记录，请先在 Equipment 模块录入';
       return;
     }
+    // Sort by date
     fails.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-    const validFails=fails.filter(f=>f.ttf>0);
-    if(!validFails.length){
-      if(infoEl) infoEl.textContent='该设备故障记录中没有有效的 TTF 数据';
-      return;
-    }
-    const ttfs=validFails.map(f=>f.ttf);
-    const cens=validFails.map(f=>f.censored||0);
+    const ttfs=fails.map(f=>f.ttf).filter(v=>v>0);
+    const cens=fails.map(f=>f.censored||0);
     const eq=(await ReliDB.all('equipments')).find(e=>e.id===equipId);
+    // Fill weibull input fields
     WB.rawData=ttfs.join('\n');
     WB.rawCens=cens.join('\n');
     WB.name=(eq?eq.tag+' '+eq.name:'Equipment')+' [DB]';
     WB.unit='hrs';
     WB.chartTab=0;
     renderWB();
+    // After render, fill the textarea values
     setTimeout(()=>{
       const ta=document.getElementById('wData');
       const tc=document.getElementById('wCens');
@@ -365,7 +364,7 @@ async function loadFromDB(){
       if(tc) tc.value=cens.join('\n');
       if(tn) tn.value=WB.name;
     },50);
-    if(infoEl) infoEl.textContent='已加载 '+validFails.length+' 条记录（'+ttfs.length+' 失效, '+cens.filter(v=>v).length+' 截尾）。请确认后点击「执行Weibull分析」';
+    if(infoEl) infoEl.textContent=`✅ 已加载 ${fails.length} 条记录（${ttfs.length} 失效, ${cens.filter(v=>v).length} 截尾）。请确认后点击「执行Weibull分析」`;
   }catch(e){
     if(infoEl) infoEl.textContent='加载失败: '+e.message;
   }
@@ -422,7 +421,18 @@ function runWB(){
  WB.probData=probData;}
  const diag=wb?RM.diagBeta(wb.params.β):null;
  const probData = WB.probData || null;
- WB.res={dists,wb,bL,pts,fitLine,diag,probData};WB.sorted=sorted;WB.cens=cens;
+ // 3-parameter Weibull (profile likelihood on γ) — only shown if γ materially improves fit
+ let wb3=null;
+ try{
+   const cand=RM.fitWB3p(sorted,cens);
+   if(cand && wb){
+     const ll2p=wb.ll, aic2p=wb.aic, aic3p=cand.aic;
+     // Accept γ only if (a) γ is non-trivial relative to data range AND (b) AIC improves
+     const dataSpan=sorted[sorted.length-1]-sorted[0];
+     if(aic3p<aic2p-2 && cand.gamma>dataSpan*0.01) wb3=cand;
+   }
+ }catch(e){console.warn('3P Weibull failed',e);}
+ WB.res={dists,wb,bL,pts,fitLine,diag,probData,wb3};WB.sorted=sorted;WB.cens=cens;
  renderWB();
  saveWBtoDB().catch(e=>console.warn('DB save failed:',e));
  }catch(e){const el=document.getElementById('wErr');if(el){el.textContent='Error: '+e.message;el.style.display='block';}}
@@ -436,7 +446,83 @@ function drawWBChart(){
  const{dists,pts,probData,fitLine}=WB.res;
  const tab=WB.chartTab||0;
  if(tab===2){
- // ── Professional Weibull Probability Paper ──
+ // ── Multi-distribution Probability Paper ──
+ const probDist = WB.probDist || 'Weibull';
+ const distObj = dists.find(d=>d.name===probDist);
+ if(probDist !== 'Weibull' && distObj){
+  // Lognormal: x=ln(t), y=Φ⁻¹(F), line y=(ln t - μ)/σ
+  // Normal:    x=t,     y=Φ⁻¹(F), line y=(t - μ)/σ
+  const isLog = probDist==='Lognormal';
+  const p = distObj.params;
+  const mu  = isLog ? p.μ_log : p.μ;
+  const sig = isLog ? p.σ_log : p.σ;
+  const P2 = {l:62,r:18,t:18,b:38};
+  const iW=W-P2.l-P2.r, iH=H-P2.t-P2.b;
+  const fails=WB.sorted.filter((_,i)=>!WB.cens[i]);
+  const xOf = t => isLog ? Math.log(t) : t;
+  const pts2 = fails.map((t,i)=>({x:xOf(t), y:RM.nInv(RM.MR(i+1,WB.nF))}));
+  const xMin = Math.min(...pts2.map(p=>p.x)) - (isLog?.4:Math.abs(pts2[0].x)*0.08+1);
+  const xMax = Math.max(...pts2.map(p=>p.x)) + (isLog?.4:Math.abs(pts2[pts2.length-1].x)*0.08+1);
+  const yTicks=[.01,.05,.1,.25,.5,.75,.9,.95,.99];
+  const yMin=RM.nInv(.005), yMax=RM.nInv(.995);
+  const tX=v=>P2.l+iW*(v-xMin)/(xMax-xMin);
+  const tY=v=>P2.t+iH*(1-(v-yMin)/(yMax-yMin));
+  x.fillStyle='#fafbfc';x.fillRect(P2.l,P2.t,iW,iH);
+  x.strokeStyle='#e2e8f0';x.strokeRect(P2.l,P2.t,iW,iH);
+  // Y grid (F% via Φ)
+  yTicks.forEach(F=>{
+    const yy=tY(RM.nInv(F));
+    x.strokeStyle=F===.5?'rgba(13,148,136,.2)':'rgba(15,23,42,0.06)';
+    x.lineWidth=F===.5?1:.5;
+    x.beginPath();x.moveTo(P2.l,yy);x.lineTo(P2.l+iW,yy);x.stroke();
+    x.fillStyle='#64748b';x.font='8px monospace';x.textAlign='right';
+    x.fillText((F*100).toFixed(F<.1||F>.9?1:0)+'%',P2.l-4,yy+3);
+  });
+  // X grid
+  const nXT=6;
+  for(let i=0;i<=nXT;i++){
+    const v=xMin+(xMax-xMin)*i/nXT, xx=tX(v);
+    x.strokeStyle='rgba(15,23,42,0.06)';x.lineWidth=.5;
+    x.beginPath();x.moveTo(xx,P2.t);x.lineTo(xx,P2.t+iH);x.stroke();
+    const lbl = isLog ? Math.exp(v).toPrecision(3) : v.toPrecision(3);
+    x.fillStyle='#64748b';x.font='8px monospace';x.textAlign='center';
+    x.fillText(lbl, xx, P2.t+iH+11);
+  }
+  // Fitted line
+  x.strokeStyle='#f97316';x.lineWidth=2.5;x.beginPath();
+  for(let i=0;i<=60;i++){
+    const xv=xMin+(xMax-xMin)*i/60;
+    const tVal=isLog?xv:xv; // linearized y = (z-μ)/σ where z = xv (or ln xv for LN)
+    const yv = (tVal - mu)/sig;
+    const px=tX(xv), py=tY(yv);
+    i===0?x.moveTo(px,py):x.lineTo(px,py);
+  }
+  x.stroke();
+  // Data points
+  pts2.forEach(d=>{
+    const px=tX(d.x),py=tY(d.y);
+    if(px<P2.l||px>P2.l+iW||py<P2.t||py>P2.t+iH)return;
+    x.fillStyle='#fff';x.beginPath();x.arc(px,py,4.5,0,Math.PI*2);x.fill();
+    x.strokeStyle='#0d9488';x.lineWidth=2;x.beginPath();x.arc(px,py,4.5,0,Math.PI*2);x.stroke();
+    x.fillStyle='#0d9488';x.beginPath();x.arc(px,py,2,0,Math.PI*2);x.fill();
+  });
+  // Labels
+  x.fillStyle='#475569';x.font='10px sans-serif';x.textAlign='center';
+  x.fillText(isLog?(LANG==='zh'?'时间 t ('+WB.unit+', 对数刻度)':'Time t ('+WB.unit+', log scale)'):(LANG==='zh'?'时间 t ('+WB.unit+')':'Time t ('+WB.unit+')'),P2.l+iW/2,H-3);
+  x.save();x.translate(11,P2.t+iH/2);x.rotate(-Math.PI/2);
+  x.fillText(LANG==='zh'?'累积失效概率 F(t) (正态分位数刻度)':'Cumulative F(t) (normal quantile scale)',0,0);x.restore();
+  // Legend
+  x.textAlign='left';let lgx=P2.l+8,lgy=P2.t+11;
+  x.fillStyle='#f97316';x.fillRect(lgx,lgy-4,16,2.5);
+  x.fillStyle='#475569';x.font='9px sans-serif';
+  x.fillText(probDist+(isLog?' (μ_log='+mu.toFixed(3)+', σ_log='+sig.toFixed(3)+')':' (μ='+mu.toFixed(1)+', σ='+sig.toFixed(1)+')'),lgx+20,lgy);
+  lgy+=13;
+  x.fillStyle='#fff';x.beginPath();x.arc(lgx+8,lgy-3,3.5,0,Math.PI*2);x.fill();
+  x.strokeStyle='#0d9488';x.lineWidth=1.5;x.beginPath();x.arc(lgx+8,lgy-3,3.5,0,Math.PI*2);x.stroke();
+  x.fillStyle='#475569';x.fillText((LANG==='zh'?'中位秩 ':'Median Rank ')+'(n='+WB.nF+')',lgx+20,lgy);
+  return;
+ }
+ // Weibull default branch below
  if(!probData||!WB.res.wb)return;
  const wb=WB.res.wb, beta=wb.params.β, eta=wb.params.η;
  const PAD2={l:62,r:18,t:18,b:38};
@@ -564,6 +650,44 @@ function drawWBChart(){
  x.strokeStyle='#0d9488';x.lineWidth=1.5;x.beginPath();x.arc(lgx+8,lgy-3,3.5,0,Math.PI*2);x.stroke();
  x.fillStyle='#475569';x.fillText((LANG==='zh'?'中位秩 ':'Median Rank ')+'(n='+WB.nF+')',lgx+20,lgy);
 
+ // ── Overlay datasets (multi-dataset comparison) ──
+ if(WB.overlays&&WB.overlays.length){
+   WB.overlays.forEach(ov=>{
+     // Fitted line for overlay
+     x.strokeStyle=ov.color;x.lineWidth=1.8;x.setLineDash([6,3]);x.beginPath();
+     for(let i=0;i<=60;i++){
+       const lnT=lnTmin+(lnTmax-lnTmin)*i/60;
+       const yy=ov.beta*(lnT-Math.log(ov.eta));
+       const px=tX(lnT),py=tY(yy);
+       if(py<PAD2.t-5||py>PAD2.t+iH+5){i===0?x.moveTo(px,py):null;continue;}
+       i===0?x.moveTo(px,py):x.lineTo(px,py);
+     }
+     x.stroke();x.setLineDash([]);
+     // Overlay data points (triangles for distinction)
+     ov.probData.forEach(d=>{
+       const px=tX(d.lnT),py=tY(d.lnlnR);
+       if(px<PAD2.l||px>PAD2.l+iW||py<PAD2.t||py>PAD2.t+iH)return;
+       x.fillStyle=ov.color;x.beginPath();
+       x.moveTo(px,py-4);x.lineTo(px-3.5,py+3);x.lineTo(px+3.5,py+3);x.closePath();x.fill();
+     });
+   });
+   // Extended legend
+   x.textAlign='left';let olgx=PAD2.l+iW-150,olgy=PAD2.t+11;
+   x.fillStyle='rgba(255,255,255,.85)';x.fillRect(olgx-4,olgy-8,154,14+13*WB.overlays.length);
+   x.strokeStyle='#e2e8f0';x.strokeRect(olgx-4,olgy-8,154,14+13*WB.overlays.length);
+   x.fillStyle='#475569';x.font='bold 9px sans-serif';x.fillText((LANG==='zh'?'叠加数据集 ':'Overlays ')+'('+WB.overlays.length+')',olgx,olgy);olgy+=12;
+   WB.overlays.forEach(ov=>{
+     x.strokeStyle=ov.color;x.lineWidth=1.8;x.setLineDash([6,3]);
+     x.beginPath();x.moveTo(olgx,olgy-3);x.lineTo(olgx+16,olgy-3);x.stroke();x.setLineDash([]);
+     x.fillStyle=ov.color;x.beginPath();
+     x.moveTo(olgx+8,olgy-7);x.lineTo(olgx+4.5,olgy+0);x.lineTo(olgx+11.5,olgy+0);x.closePath();x.fill();
+     x.fillStyle='#475569';x.font='9px sans-serif';
+     const lbl=(ov.name.length>14?ov.name.slice(0,14)+'…':ov.name)+' β='+ov.beta.toFixed(2)+' η='+Math.round(ov.eta);
+     x.fillText(lbl,olgx+20,olgy);
+     olgy+=12;
+   });
+ }
+
  // η line (63.2%)
  const etaX=tX(Math.log(eta)),etaY=tY(yToPlot(.632));
  if(etaX>PAD2.l&&etaX<PAD2.l+iW){
@@ -602,6 +726,25 @@ function drawWBChart(){
  series.forEach(s=>{x.fillStyle=s.col;x.fillRect(lx,ly-5,10,2.5);
  x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(s.lbl,lx+13,ly);
  lx+=Math.max(85,x.measureText(s.lbl).width+18);if(lx>W-50){lx=PAD.l+5;ly+=12;}});}
+
+// Multi-dataset overlay on probability paper
+const OVERLAY_COLORS=['#7c3aed','#2563eb','#059669','#dc2626','#d97706','#0891b2'];
+function addOverlay(){
+ if(!WB.res?.wb||!WB.probData){alert(LANG==='zh'?'请先完成 Weibull 分析':'Run Weibull analysis first');return;}
+ WB.overlays=WB.overlays||[];
+ // Deep copy the snapshot we need
+ const snap={
+  name:(WB.name||('Dataset '+(WB.overlays.length+1))).replace(/\s*\[DB\]\s*$/,''),
+  nF:WB.nF,
+  beta:WB.res.wb.params.β,
+  eta:WB.res.wb.params.η,
+  probData:WB.probData.map(d=>({lnT:d.lnT,lnlnR:d.lnlnR})),
+  color:OVERLAY_COLORS[WB.overlays.length%OVERLAY_COLORS.length]
+ };
+ WB.overlays.push(snap);
+ renderWB();
+}
+function clearOverlays(){WB.overlays=[];renderWB();}
 
 function doWBQ(){
  const el=document.getElementById('wQR');
@@ -892,9 +1035,9 @@ document.addEventListener('change', function(ev){
     </div>
   </div>
   <div class="ft-bottom">
-    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    © ReliToolbox &nbsp;·&nbsp;
     <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
-    <a href="https://chemcalc.cn">chemcalc.cn</a>
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.5</span>
   </div>
 </footer>
 </body>

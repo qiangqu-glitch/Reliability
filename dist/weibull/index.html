@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<!-- ReliToolbox | reliability.chemcalc.cn | Copyright (c) All rights reserved. Unauthorized reproduction, decompilation, reverse engineering or redistribution is prohibited. Contact: CHEMCALC@outlook.com -->
+<!--
+  ReliToolbox | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Weibull 分析 — ReliToolbox</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>/* weibull specific */</style>
+<script>(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';if(typeof window!=='undefined')window._rtv='0.1';})();</script>
+</head>
+<body data-module="Weibull">
+<header class="hdr" id="hdr">
+  <div style="max-width:860px;margin:0 auto" id="hdrInner">
+    <div class="bc"><a href="../index.html">ReliToolbox</a> › Weibull</div>
+    <h1>📉 Weibull 分析</h1>
+    <p class="sub">MLE拟合 · B-Life · 截尾数据 · 4分布比较</p>
+    <a href="../index.html" class="btn btsm">← 首页</a>
+  <div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div>
+</header>
+<div id="wbDBCard" style="max-width:860px;margin:8px auto 0;padding:0 10px;display:none">
+  <div style="background:var(--card);border:1px solid var(--border);border-left:4px solid #0d9488;border-radius:12px;padding:12px;margin-bottom:8px">
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px">&#x1F5C4; &#x4ECE;&#x8BBE;&#x5907;&#x6545;&#x969C;&#x53F0;&#x8D26;&#x52A0;&#x8F7D; / Load from Equipment Failure Log</div>
+    <div id="dbLoadStatus" style="font-size:11px;color:var(--muted);margin-bottom:6px">&#x6B63;&#x5728;&#x8BFB;&#x53D6;&#x8BBE;&#x5907;&#x5217;&#x8868;...</div>
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+      <select id="dbEquipSel" style="flex:1;min-width:160px;padding:6px 10px;border-radius:7px;border:1px solid var(--border);font-size:12px;background:var(--card);color:var(--text)">
+        <option value="">(&#x9009;&#x62E9;&#x8BBE;&#x5907; / Select Equipment)</option>
+      </select>
+      <button class="btn btsm btp" onclick="loadFromDB()">&#x2B07; &#x52A0;&#x8F7D;&#x6545;&#x969C;&#x6570;&#x636E;</button>
+    </div>
+    <div id="dbLoadInfo" style="font-size:11px;color:var(--muted);margin-top:5px"></div>
+  </div>
+</div>
+<div class="ctn" id="app"></div>
+
+<script src="../shared/math.js"></script>
+<script src="../db/relidb.js"></script>
+<script>let LANG='zh';function setLang(l){LANG=l;document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===(l==='zh'?'中文':'EN')));if(CUR_MOD)renderMod(CUR_MOD);else renderHome();}const zh=k=>LANG==='zh'?k[0]:k[1];let CUR_MOD=null;function goMod(id){CUR_MOD=id;renderMod(id);}function showHome(){CUR_MOD=null;renderHome();}const app=()=>document.getElementById('app');const DCOL={Weibull:'#0d9488',Exponential:'#6366f1',Lognormal:'#f59e0b',Normal:'#ec4899'};const MODS=[{id:'wb',icon:'📉',name:'Weibull',zh:'Weibull 分析',desc_zh:'MLE拟合 · 4分布 · B-Life · 截尾数据',desc_en:'MLE fitting · 4 distributions · B-Life',t:'teal'},{id:'fm',icon:'📋',name:'FMEA',zh:'FMEA 工作表',desc_zh:'RPN自动计算 · Pareto图 · CSV导出',desc_en:'Auto RPN · Pareto chart · CSV export',t:'amber'},{id:'lc',icon:'💰',name:'LCC',zh:'生命周期成本',desc_zh:'NPV比较 · EAC · 累积成本曲线',desc_en:'NPV · EAC · Cumulative cost',t:'amber'},{id:'rm',icon:'⚙️',name:'RAM',zh:'RAM 仿真',desc_zh:'事件驱动MC · 产能传递 · 三级维修',desc_en:'Event-driven MC · Capacity propagation',t:'purple'},{id:'rb',icon:'🛡️',name:'RBI',zh:'基于风险检验',desc_zh:'API 580/581 · 5×5风险矩阵',desc_en:'API 580/581 · 5×5 risk matrix',t:'purple'},{id:'sp',icon:'🔧',name:'Spare',zh:'备件库存优化',desc_zh:'泊松模型 · 服务水平 · 成本曲线',desc_en:'Poisson model · Service level curve',t:'indigo'},{id:'sl',icon:'🚨',name:'SIL',zh:'SIL 计算',desc_zh:'IEC 61508/61511',desc_en:'IEC 61508/61511',t:'',soon:true},];function renderHome(){const live=MODS.filter(m=>!m.soon),soon=MODS.filter(m=>m.soon);app().innerHTML=`
+<div class="sl" style="margin-top:6px">${zh(['已上线模块','Live Modules'])}</div>
+<div class="mgrid">${live.map(m=>`<div class="mc"style="border-top:2px solid var(--${m.t})"onclick="goMod('${m.id}')"><span class="mbg bl">${zh(['已上线','Live'])}</span>
+<div class="mi">${m.icon}</div><div class="mn">${m.name}</div>
+<div class="mz">${m.zh}</div><div class="md">${LANG==='zh'?m.desc_zh:m.desc_en}</div>
+</div>`).join('')}</div>
+<div class="sl" style="margin-top:16px">${zh(['即将上线','Coming Soon'])}</div>
+<div class="mgrid">${soon.map(m=>`<div class="mc sn"><span class="mbg bs">${zh(['待上线','Soon'])}</span>
+<div class="mi">${m.icon}</div><div class="mn">${m.name}</div><div class="mz">${m.zh}</div></div>`).join('')}</div>`;}
+function renderMod(id){
+const mod=MODS.find(m=>m.id===id);
+document.getElementById('hdrInner').innerHTML=`<div class="bc"style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div><h1 style="font-size:18px">${mod.icon}${mod.zh}</h1>
+<div style="display:flex;gap:7px;margin-top:8px">
+<div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button><button class="lbtn ${LANG==='en'?'on':''}"onclick="setLang('en')">EN</button></div><button class="btn btsm"onclick="showHome()">←${zh(['首页','Home'])}</button>
+</div>`;
+(function(id){
+ const map={wb:typeof renderWB==='function'?renderWB:null};
+ if(map[id]) map[id]();
+ else renderWB();
+})(id);}
+function mkCanvas(id,H){return`<canvas id="${id}"height="${H}"></canvas>`;}
+function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.width=cv.offsetWidth||720;return{cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height};}
+function drawGrid(c,PAD,minY,maxY,yFmt){
+const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+[0,.2,.4,.6,.8,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+x.fillText(yFmt(minY+(maxY-minY)*v),PAD.l-3,y+3);});}
+function drawLines(c,PAD,data,series,xKey,xFmt,refY){
+const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+const xs=data.map(d=>d[xKey]),minX=Math.min(...xs),maxX=Math.max(...xs);
+const ys=series.flatMap(s=>data.map(d=>d[s.k])).filter(v=>isFinite(v)&&v>=0);
+if(!ys.length)return;
+const minY=0,maxY=Math.max(...ys)*1.08;
+const tX=v=>PAD.l+iW*(v-minX)/(maxX-minX||1);const tY=v=>PAD.t+iH*(1-(v-minY)/(maxY-minY||1));drawGrid(c,PAD,minY,maxY,v=>v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(1));if(refY!=null){x.strokeStyle='#ef444466';x.lineWidth=1;x.setLineDash([4,3]);x.beginPath();x.moveTo(PAD.l,tY(refY));x.lineTo(W-PAD.r,tY(refY));x.stroke();x.setLineDash([]);}x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';[0,.25,.5,.75,1].forEach(v=>{const val=minX+(maxX-minX)*v;x.fillText(xFmt(val),tX(val),H-PAD.b+13);});series.forEach(s=>{x.strokeStyle=s.col;x.lineWidth=s.bold?2.2:1.2;if(!s.bold)x.setLineDash([5,3]);x.beginPath();let first=true;data.forEach(d=>{const v=d[s.k];if(!isFinite(v)||v<0)return;first?x.moveTo(tX(d[xKey]),tY(v)):x.lineTo(tX(d[xKey]),tY(v));first=false;});x.stroke();x.setLineDash([]);});x.textAlign='left';let lx=PAD.l+6,ly=PAD.t+13;series.forEach(s=>{x.fillStyle=s.col;x.fillRect(lx,ly-6,12,2.5);x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(s.lbl,lx+15,ly);lx+=Math.max(90,x.measureText(s.lbl).width+20);if(lx>W-60){lx=PAD.l+6;ly+=12;}});}function drawHist(id,vals,bins=22){const c=ctx(id);if(!c)return;const{ctx:x,W,H}=c;x.clearRect(0,0,W,H);const PAD={l:10,r:10,t:16,b:24};const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;const mn=Math.min(...vals),mx=Math.max(...vals),bw=(mx-mn)/bins||.1;const counts=new Array(bins).fill(0);vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/bw));counts[b]++;});const maxC=Math.max(...counts),bpx=iW/bins;counts.forEach((c,i)=>{const bh=iH*c/maxC,bx=PAD.l+i*bpx;const midV=mn+i*bw+bw/2;const col=midV>=95?'#10b981':midV>=85?'#f59e0b':'#ef4444';x.fillStyle=col+'88';x.fillRect(bx,PAD.t+iH-bh,bpx-1,bh);x.strokeStyle=col;x.lineWidth=.5;x.strokeRect(bx,PAD.t+iH-bh,bpx-1,bh);});const mV=(mn+mx)/2,mx2=PAD.l+iW*(mV-mn)/(mx-mn||1);x.strokeStyle='#0d9488';x.lineWidth=1.5;x.setLineDash([4,3]);x.beginPath();x.moveTo(mx2,PAD.t);x.lineTo(mx2,PAD.t+iH);x.stroke();x.setLineDash([]);x.fillStyle='#0d9488';x.font='8px monospace';x.textAlign='center';x.fillText('μ='+mV.toFixed(1)+'%',mx2,PAD.t-1);x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';[0,.25,.5,.75,1].forEach(v=>{x.fillText((mn+v*(mx-mn)).toFixed(1)+'%',PAD.l+v*iW,H-6);});}function dl(content,filename){const blob=new Blob([content],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();}(function(){CUR_MOD='weibull';document.title='Weibull 分析 — ReliToolbox';})();</script>
+<script>let WB={};function renderWB(){const z=LANG==='zh';const dbCard=document.getElementById('wbDBCard');if(dbCard)dbCard.style.display=WB.res?'none':'block';if(!WB.res&&typeof initDBLoad==='function')initDBLoad();app().innerHTML=`
+${!WB.res?`<div class="card"><div class="g2"style="margin-bottom:9px"><div><label class="lbl">${z?'设备名称':'Equipment'}</label><input id="wName" placeholder="P-101A"></div><div><label class="lbl">${z?'时间单位':'Time Unit'}</label>
+<select id="wUnit"><option>hrs</option><option>days</option><option>months</option><option>years</option><option>cycles</option><option>Mrev</option></select></div>
+</div><label class="lbl">${z?'失效时间数据（每行一个，或逗号分隔）':'Failure Times (one per line or comma-separated)'}*</label>
+<textarea id="wData" rows="6" placeholder="1250&#10;1890&#10;2350&#10;3100&#10;...">${WB.rawData||''}</textarea><label class="lbl"style="margin-top:8px">${z?'截尾标记（0=失效,1=截尾；留空=全部失效）':'Censoring (0=failure,1=censored; blank=all failures)'}</label>
+<textarea id="wCens" rows="2" placeholder="${z?'留空=全部失效':'Blank=all failures'}">${WB.rawCens||''}</textarea><div id="wErr"style="display:none"class="alert aerr"></div>
+<div style="display:flex;gap:6px;margin-top:9px;align-items:center;flex-wrap:wrap">
+<label class="btn btsm" style="cursor:pointer">📄 ${z?'导入 CSV':'Import CSV'}
+ <input type="file" id="wCsv" accept=".csv,.txt" style="display:none">
+</label><span style="font-size:10px;color:var(--muted)">${z?'支持 “t” 或 “t,R/L” 格式':'Format: "t" or "t,R/L"'}</span>
+</div><button class="btn btp btf"style="margin-top:9px"onclick="runWB()">▶${z?'执行 Weibull 分析':'Run Weibull Analysis'}</button>
+</div><div class="card"><div class="ct">${z?'示例数据':'Examples'}</div>
+<div style="display:flex;gap:5px;flex-wrap:wrap">
+<button class="btn btsm" onclick="loadWBEx('pump')">${z?'离心泵':'Centrifugal Pump'}</button><button class="btn btsm"onclick="loadWBEx('valve')">${z?'调节阀（截尾）':'Control Valve (censored)'}</button>
+<button class="btn btsm" onclick="loadWBEx('bearing')">${z?'轴承':'Bearing'}</button></div></div>`
+:`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:7px"><div><span style="font-size:14px;font-weight:700">${WB.name}</span>
+<span style="font-size:10px;color:var(--sec);margin-left:6px">N=${WB.n} F=${WB.nF} C=${WB.n-WB.nF}</span></div>
+<div style="display:flex;gap:5px">
+<button class="btn btsm" onclick="exportWBCSV()">${z?'导出CSV':'Export CSV'}</button><button class="btn btsm"onclick="WB.res=null;renderWB()">←${z?'返回':'Back'}</button>
+</div></div>
+<div class="gkpi" style="margin-bottom:10px">
+${WB.res.wb?`
+<div class="kpi" style="border-top:2px solid ${WB.res.diag.tc}"><div class="kl">β</div><div class="kv"style="color:${WB.res.diag.tc}">${RM.fmt(WB.res.wb.params.β,3)}</div></div><div class="kpi"><div class="kl">η(${WB.unit})</div><div class="kv">${RM.fmt(WB.res.wb.params.η)}</div></div>
+<div class="kpi"><div class="kl">MTTF</div><div class="kv">${RM.fmt(WB.res.wb.mttf)}</div></div><div class="kpi"><div class="kl">B10</div><div class="kv">${RM.fmt(WB.res.bL.B10)}</div></div>
+<div class="kpi"><div class="kl">B50</div><div class="kv">${RM.fmt(WB.res.bL.B50)}</div></div>`:''}
+<div class="kpi"><div class="kl">${z?'最优拟合':'Best Fit'}</div><div class="kv" style="font-size:11px;color:var(--teal)">${WB.res.dists[0].name}</div></div>
+</div>
+${WB.res.diag?`<div style="background:${WB.res.diag.cls};border:1px solid ${WB.res.diag.bc};border-radius:var(--r);padding:12px;margin-bottom:10px"><div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="padding:2px 8px;border-radius:8px;background:${WB.res.diag.bc};color:${WB.res.diag.tc};font-size:10px;font-weight:700">β=${RM.fmt(WB.res.wb.params.β,3)}</span>
+<span style="font-size:12px;font-weight:700;color:${WB.res.diag.tc}">${LANG==='zh'?WB.res.diag.zh:WB.res.diag.en}</span></div>
+<p style="font-size:11px;line-height:1.6;color:${WB.res.diag.tc};opacity:.9">${LANG==='zh'?WB.res.diag.tz:WB.res.diag.te}</p><div style="font-size:11px;font-weight:600;margin-top:5px;color:${WB.res.diag.tc}">${z?'维修策略':'Strategy'}:<span style="opacity:.8">${WB.res.diag.s}</span></div></div>`:''}
+<div class="card">
+<div class="tbr" id="wChartTabs">
+${['R(t)','h(t)',z?'概率纸':'Prob Plot','F(t)',z?'💰 PM优化':'💰 PM Optimize'].map((l,i)=>`<button class="tb${WB.chartTab===i?' on':''}" onclick="WB.chartTab=${i};renderWB()">${l}</button>`).join('')}
+</div>
+${WB.chartTab===2?`<div style="display:flex;gap:6px;padding:6px 2px;flex-wrap:wrap;align-items:center"><span style="font-size:11px;color:var(--muted)">${z?'分布纸张':'Paper'}:</span>
+  ${['Weibull','Lognormal','Normal'].map(d=>`<button class="tb${(WB.probDist||'Weibull')===d?' on':''}" style="padding:4px 10px;font-size:11px" onclick="WB.probDist='${d}';renderWB()">${d}</button>`).join('')}
+</div>`:''}${WB.chartTab===4?`
+<div id="wPMPanel" style="min-height:200px">
+${typeof renderPMTab==='function'?renderPMTab():'<p style="color:var(--muted)">Loading...</p>'}
+</div>`:mkCanvas('wChart',WB.chartTab===2?340:260)}</div>
+</div><div class="card"><div class="ct">${z?'分布拟合对比':'Distribution Comparison'}</div>
+<div style="overflow-x:auto"><table>
+<thead><tr><th>#</th><th>${z?'分布':'Dist'}</th><th>${z?'参数':'Params'}</th><th>AIC</th><th>MTTF</th></tr></thead><tbody>${WB.res.dists.map((d,i)=>`<tr class="${i===0?'best':''}">
+<td style="font-weight:700;color:${i===0?'#34d399':''}">${i===0?'★':i+1}</td>
+<td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${DCOL[d.name]};margin-right:4px;vertical-align:middle"></span>${d.name}</td>
+<td style="font-size:9px">${Object.entries(d.params).map(([k,v])=>k+'='+RM.fmt(v)).join(' ')}</td>
+<td style="font-weight:${i===0?700:400}">${RM.fmt(d.aic,5)}</td>
+<td>${RM.fmt(d.mttf)} ${WB.unit}</td>
+</tr>`).join('')}</tbody>
+</table></div>
+</div>${WB.res.bL?`<div class="card"><div class="ct">B-Life</div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px">
+${['B1','B5','B10','B50','MTTF'].map(k=>`<div class="kpi"><div class="kl"style="color:var(--teal)">${k}</div>
+<div class="kv" style="font-size:12px">${RM.fmt(k==='MTTF'?WB.res.wb.mttf:WB.res.bL[k])}</div><div class="ks">${WB.unit}</div>
+</div>`).join('')}
+</div></div>`:''}<div class="card"><div class="ct">${z?'可靠度查询':'R(t) Query'}</div>
+<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+<div><label class="lbl">t (${WB.unit})</label><input type="number"id="wQT"style="width:120px"placeholder="5000"></div>
+<button class="btn btp" onclick="doWBQ()">${z?'计算':'Calc'}</button><div id="wQR"style="font-size:12px;font-family:monospace;padding-top:6px;color:var(--text)"></div>
+</div></div>`}`;
+if(WB.res){setTimeout(()=>drawWBChart(),60);if(WB.chartTab===4)setTimeout(drawPMChart,80);}}
+const WBEx={
+pump:{name:'P-101A 离心泵',unit:'hrs',d:'1250\n1890\n2350\n2780\n3100\n3450\n3890\n4200\n4580\n4950\n5300\n5780\n6200\n6890\n7500',c:''},
+valve:{name:'FV-201 调节阀',unit:'hrs',d:'800\n1200\n1500\n1800\n2000\n2100\n2400\n2700\n2900\n3000\n3200\n3500\n3800\n4000\n4200\n4500\n5000\n5500\n6000\n6500',c:'0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n1\n1\n1\n1\n1'},
+bearing:{name:'B-301 轴承',unit:'Mrev',d:'17.88\n28.92\n33.00\n41.52\n42.12\n45.60\n48.48\n51.84\n51.96\n54.12\n55.56\n67.80\n68.64\n68.64\n68.88\n84.12\n93.12\n98.64\n105.12\n105.84\n127.92\n128.04\n173.40',c:''}};
+function loadWBEx(k){WB.rawData=WBEx[k].d;WB.rawCens=WBEx[k].c;WB.name=WBEx[k].name;WB.unit=WBEx[k].unit;WB.chartTab=0;renderWB();}
+// ── DB LOAD FROM EQUIPMENT FAILURES ─────────────────────────────
+let _dbInited = false;
+async function initDBLoad(){
+ if(_dbInited) return;
+ _dbInited = true;
+ await populateEquipSelect();
+ // Check if redirected from equipment module
+ const presel = sessionStorage.getItem('rt_weibull_equipId');
+ if(presel){
+   sessionStorage.removeItem('rt_weibull_equipId');
+   const sel = document.getElementById('dbEquipSel');
+   if(sel) sel.value = presel;
+   await loadFromDB();
+ }
+}
+async function populateEquipSelect(){
+ try{
+   const eqs = await ReliDB.all('equipments');
+   const sel = document.getElementById('dbEquipSel');
+   if(!sel) return;
+   if(!eqs.length){
+     document.getElementById('dbLoadStatus').textContent='设备台账为空，请先在 Equipment 模块录入设备';
+     return;
+   }
+   sel.innerHTML='<option value="">(选择设备 /Select Equipment)</option>'+
+     eqs.map(e=>`<option value="${e.id}">${e.tag||e.id} — ${e.name||''}</option>`).join('');
+   document.getElementById('dbLoadStatus').textContent=`已找到${eqs.length}台设备，选择后点击加载`;
+ }catch(e){
+   const el=document.getElementById('dbLoadStatus');
+   if(el) el.textContent='DB读取失败: '+e.message;
+ }
+}
+async function loadFromDB(){
+ const sel=document.getElementById('dbEquipSel');
+ const infoEl=document.getElementById('dbLoadInfo');
+ if(!sel||!sel.value){toast&&toast('请先选择设备');return;}
+ const equipId=sel.value;
+ try{
+   const fails=await ReliDB.getFailuresByEquip(equipId);
+   if(!fails.length){
+     infoEl.textContent='⚠️ 该设备暂无故障记录，请先在 Equipment 模块录入';
+     return;
+   }
+   // Sort by date
+   fails.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+   const ttfs=fails.map(f=>f.ttf).filter(v=>v>0);
+   const cens=fails.map(f=>f.censored||0);
+   const eq=(await ReliDB.all('equipments')).find(e=>e.id===equipId);
+   // Fill weibull input fields
+   WB.rawData=ttfs.join('\n');
+   WB.rawCens=cens.join('\n');
+   WB.name=(eq?eq.tag+' '+eq.name:'Equipment')+' [DB]';
+   WB.unit='hrs';
+   WB.chartTab=0;
+   renderWB();
+   // After render, fill the textarea values
+   setTimeout(()=>{
+     const ta=document.getElementById('wData');
+     const tc=document.getElementById('wCens');
+     const tn=document.getElementById('wName');
+     if(ta) ta.value=ttfs.join('\n');
+     if(tc) tc.value=cens.join('\n');
+     if(tn) tn.value=WB.name;
+   },50);
+   if(infoEl) infoEl.textContent=`✅已加载${fails.length}条记录（${ttfs.length}失效,${cens.filter(v=>v).length}截尾）。请确认后点击「执行Weibull分析」`;
+ }catch(e){
+   if(infoEl) infoEl.textContent='加载失败: '+e.message;
+ }
+}
+// ── END DB LOAD ──────────────────────────────────────────────────
+async function saveWBtoDB(){
+ if(typeof ReliDB==='undefined') return;
+ if(!WB.res||!WB.res.wb) return;
+ const wb=WB.res.wb,bl=WB.res.bL||{};
+ let equipId=null;
+ try{
+   const eqs=await ReliDB.all('equipments');
+   const nm=(WB.name||'').split('[')[0].trim();
+   const found=eqs.find(e=>(e.tag&&nm.includes(e.tag))||(e.name&&nm.includes(e.name)));
+   if(found) equipId=found.id;
+ }catch(_){}
+ await ReliDB.saveWeibullResult(equipId||'manual',{
+   name:WB.name||'',unit:WB.unit||'hrs',
+   beta:+wb.params.β.toFixed(4),eta:+wb.params.η.toFixed(2),
+   mttf:+wb.mttf.toFixed(2),
+   b10:bl.B10?+bl.B10.toFixed(2):null,
+   b50:bl.B50?+bl.B50.toFixed(2):null,
+   bestFit:WB.res.dists[0].name,
+   aic:+WB.res.dists[0].aic.toFixed(3),
+   n:WB.n,nF:WB.nF,rawData:WB.rawData||'',
+ });
+}
+function runWB(){
+const raw=document.getElementById('wData')?.value||'';
+const nums=raw.trim().split(/[\n,\s]+/).filter(Boolean).map(Number).filter(v=>!isNaN(v)&&v>0);
+const errEl=document.getElementById('wErr');
+if(nums.length<3){errEl.textContent=LANG==='zh'?'至少需要3个有效正数数据点':'Need 3+ positive data points';errEl.style.display='block';return;}
+const sorted=[...nums].sort((a,b)=>a-b);
+WB.rawData=raw;WB.rawCens=document.getElementById('wCens')?.value||'';
+WB.unit=document.getElementById('wUnit')?.value||'hrs';
+WB.name=document.getElementById('wName')?.value||'Equipment';
+WB.n=sorted.length;WB.chartTab=0;
+let cens=new Array(sorted.length).fill(false);
+if(WB.rawCens.trim()){const cv=WB.rawCens.trim().split(/[\n,\s]+/).map(Number);if(cv.length===sorted.length)cens=cv.map(v=>v===1);}
+try{
+const dists=RM.fitAll(sorted,cens);if(!dists.length)throw new Error('Cannot fit');
+const wb=dists.find(d=>d.name==='Weibull');
+const fails=sorted.filter((_,i)=>!cens[i]);WB.nF=fails.length;
+const bL=wb?{B1:RM.bLife(wb,1),B5:RM.bLife(wb,5),B10:RM.bLife(wb,10),B50:RM.bLife(wb,50)}:null;
+const tMax=sorted[sorted.length-1]*1.5;
+const pts=[];for(let i=1;i<=120;i++){const t=tMax*i/120;const p={t};dists.forEach(d=>{p[d.name+'_R']=d.R(t);p[d.name+'_h']=d.h(t);p[d.name+'_F']=d.F(t);});pts.push(p);}
+let fitLine=[];
+if(wb){const probData=fails.map((t,i)=>({lnT:Math.log(t),lnlnR:Math.log(-Math.log(1-RM.MR(i+1,WB.nF)))}));
+const mn=Math.min(...probData.map(d=>d.lnT))-.5,mx=Math.max(...probData.map(d=>d.lnT))+.5;
+for(let i=0;i<=50;i++){const x=mn+(mx-mn)*i/50;fitLine.push({x,y:wb.params.β*(x-Math.log(wb.params.η))});}
+WB.probData=probData;}
+const diag=wb?RM.diagBeta(wb.params.β):null;
+const probData = WB.probData || null;
+WB.res={dists,wb,bL,pts,fitLine,diag,probData};WB.sorted=sorted;WB.cens=cens;
+renderWB();
+saveWBtoDB().catch(e=>console.warn('DB save failed:',e));
+}catch(e){const el=document.getElementById('wErr');if(el){el.textContent='Error: '+e.message;el.style.display='block';}}
+}
+function drawWBChart(){
+if(WB.chartTab===4)return;
+const c=ctx('wChart');if(!c||!WB.res)return;
+const{ctx:x,W,H}=c;x.clearRect(0,0,W,H);
+const PAD={l:50,r:16,t:12,b:32};
+const{dists,pts,probData,fitLine}=WB.res;
+const tab=WB.chartTab||0;
+if(tab===2){
+// ── Multi-distribution Probability Paper ──
+const probDist = WB.probDist || 'Weibull';
+const distObj = dists.find(d=>d.name===probDist);
+if(probDist !== 'Weibull' && distObj){
+ // Lognormal: x=ln(t), y=Φ⁻¹(F), line y=(ln t - μ)/σ
+ // Normal:    x=t,     y=Φ⁻¹(F), line y=(t - μ)/σ
+ const isLog = probDist==='Lognormal';
+ const p = distObj.params;
+ const mu  = isLog ? p.μ_log : p.μ;
+ const sig = isLog ? p.σ_log : p.σ;
+ const P2 = {l:62,r:18,t:18,b:38};
+ const iW=W-P2.l-P2.r, iH=H-P2.t-P2.b;
+ const fails=WB.sorted.filter((_,i)=>!WB.cens[i]);
+ const xOf = t => isLog ? Math.log(t) : t;
+ const pts2 = fails.map((t,i)=>({x:xOf(t), y:RM.nInv(RM.MR(i+1,WB.nF))}));
+ const xMin = Math.min(...pts2.map(p=>p.x)) - (isLog?.4:Math.abs(pts2[0].x)*0.08+1);
+ const xMax = Math.max(...pts2.map(p=>p.x)) + (isLog?.4:Math.abs(pts2[pts2.length-1].x)*0.08+1);
+ const yTicks=[.01,.05,.1,.25,.5,.75,.9,.95,.99];
+ const yMin=RM.nInv(.005), yMax=RM.nInv(.995);
+ const tX=v=>P2.l+iW*(v-xMin)/(xMax-xMin);
+ const tY=v=>P2.t+iH*(1-(v-yMin)/(yMax-yMin));
+ x.fillStyle='#fafbfc';x.fillRect(P2.l,P2.t,iW,iH);
+ x.strokeStyle='#e2e8f0';x.strokeRect(P2.l,P2.t,iW,iH);
+ // Y grid (F% via Φ)
+ yTicks.forEach(F=>{
+   const yy=tY(RM.nInv(F));
+   x.strokeStyle=F===.5?'rgba(13,148,136,.2)':'rgba(15,23,42,0.06)';
+   x.lineWidth=F===.5?1:.5;
+   x.beginPath();x.moveTo(P2.l,yy);x.lineTo(P2.l+iW,yy);x.stroke();
+   x.fillStyle='#64748b';x.font='8px monospace';x.textAlign='right';
+   x.fillText((F*100).toFixed(F<.1||F>.9?1:0)+'%',P2.l-4,yy+3);
+ });
+ // X grid
+ const nXT=6;
+ for(let i=0;i<=nXT;i++){
+   const v=xMin+(xMax-xMin)*i/nXT, xx=tX(v);
+   x.strokeStyle='rgba(15,23,42,0.06)';x.lineWidth=.5;
+   x.beginPath();x.moveTo(xx,P2.t);x.lineTo(xx,P2.t+iH);x.stroke();
+   const lbl = isLog ? Math.exp(v).toPrecision(3) : v.toPrecision(3);
+   x.fillStyle='#64748b';x.font='8px monospace';x.textAlign='center';
+   x.fillText(lbl, xx, P2.t+iH+11);
+ }
+ // Fitted line
+ x.strokeStyle='#f97316';x.lineWidth=2.5;x.beginPath();
+ for(let i=0;i<=60;i++){
+   const xv=xMin+(xMax-xMin)*i/60;
+   const tVal=isLog?xv:xv; // linearized y = (z-μ)/σ where z = xv (or ln xv for LN)
+   const yv = (tVal - mu)/sig;
+   const px=tX(xv), py=tY(yv);
+   i===0?x.moveTo(px,py):x.lineTo(px,py);
+ }
+ x.stroke();
+ // Data points
+ pts2.forEach(d=>{
+   const px=tX(d.x),py=tY(d.y);
+   if(px<P2.l||px>P2.l+iW||py<P2.t||py>P2.t+iH)return;
+   x.fillStyle='#fff';x.beginPath();x.arc(px,py,4.5,0,Math.PI*2);x.fill();
+   x.strokeStyle='#0d9488';x.lineWidth=2;x.beginPath();x.arc(px,py,4.5,0,Math.PI*2);x.stroke();
+   x.fillStyle='#0d9488';x.beginPath();x.arc(px,py,2,0,Math.PI*2);x.fill();
+ });
+ // Labels
+ x.fillStyle='#475569';x.font='10px sans-serif';x.textAlign='center';
+ x.fillText(isLog?(LANG==='zh'?'时间 t ('+WB.unit+', 对数刻度)':'Time t ('+WB.unit+', log scale)'):(LANG==='zh'?'时间 t ('+WB.unit+')':'Time t ('+WB.unit+')'),P2.l+iW/2,H-3);
+ x.save();x.translate(11,P2.t+iH/2);x.rotate(-Math.PI/2);
+ x.fillText(LANG==='zh'?'累积失效概率 F(t) (正态分位数刻度)':'Cumulative F(t) (normal quantile scale)',0,0);x.restore();
+ // Legend
+ x.textAlign='left';let lgx=P2.l+8,lgy=P2.t+11;
+ x.fillStyle='#f97316';x.fillRect(lgx,lgy-4,16,2.5);
+ x.fillStyle='#475569';x.font='9px sans-serif';
+ x.fillText(probDist+(isLog?' (μ_log='+mu.toFixed(3)+', σ_log='+sig.toFixed(3)+')':' (μ='+mu.toFixed(1)+', σ='+sig.toFixed(1)+')'),lgx+20,lgy);
+ lgy+=13;
+ x.fillStyle='#fff';x.beginPath();x.arc(lgx+8,lgy-3,3.5,0,Math.PI*2);x.fill();
+ x.strokeStyle='#0d9488';x.lineWidth=1.5;x.beginPath();x.arc(lgx+8,lgy-3,3.5,0,Math.PI*2);x.stroke();
+ x.fillStyle='#475569';x.fillText((LANG==='zh'?'中位秩 ':'Median Rank ')+'(n='+WB.nF+')',lgx+20,lgy);
+ return;
+}
+// Weibull default branch below
+if(!probData||!WB.res.wb)return;
+const wb=WB.res.wb, beta=wb.params.β, eta=wb.params.η;
+const PAD2={l:62,r:18,t:18,b:38};
+const iW=W-PAD2.l-PAD2.r, iH=H-PAD2.t-PAD2.b;
+// Y-axis: F(t) probability scale — standard Weibull paper ticks
+const yTicks=[.01,.02,.05,.1,.2,.3,.5,.632,.9,.95,.99];
+const yToPlot=F=>Math.log(-Math.log(1-Math.max(1e-12,Math.min(1-1e-12,F))));
+const yMin=yToPlot(.005), yMax=yToPlot(.995);
+// X-axis: ln(t) — derive range from data
+const fails=WB.sorted.filter((_,i)=>!WB.cens[i]);
+const lnTmin=Math.log(fails[0])-.6, lnTmax=Math.log(fails[fails.length-1])+.6;
+const tX=v=>PAD2.l+iW*(v-lnTmin)/(lnTmax-lnTmin);
+const tY=v=>PAD2.t+iH*(1-(v-yMin)/(yMax-yMin));
+// Background
+x.fillStyle='#fafbfc';x.fillRect(PAD2.l,PAD2.t,iW,iH);
+x.strokeStyle='#e2e8f0';x.lineWidth=1;x.strokeRect(PAD2.l,PAD2.t,iW,iH);
+// Y grid + labels (F% probability scale)
+yTicks.forEach(F=>{
+  const yy=tY(yToPlot(F));
+  if(yy<PAD2.t||yy>PAD2.t+iH)return;
+  x.strokeStyle=F===.5||F===.632?'rgba(13,148,136,.2)':'rgba(15,23,42,0.06)';
+  x.lineWidth=F===.5||F===.632?1:.5;
+  x.beginPath();x.moveTo(PAD2.l,yy);x.lineTo(PAD2.l+iW,yy);x.stroke();
+  x.fillStyle=F===.632?'#0d9488':'#64748b';x.font=F===.632?'bold 8px monospace':'8px monospace';
+  x.textAlign='right';
+  const lbl=F>=.01?(F*100).toFixed(F<.1?1:0)+'%':(F*100).toFixed(1)+'%';
+  x.fillText(lbl,PAD2.l-4,yy+3);
+});
+// X grid + labels (time scale, log-spaced)
+const logTicks=[];
+const dec0=Math.floor(lnTmin/Math.LN10), dec1=Math.ceil(lnTmax/Math.LN10);
+for(let d=dec0;d<=dec1;d++){
+  [1,2,5].forEach(m=>{const v=Math.log(m*Math.pow(10,d));if(v>=lnTmin&&v<=lnTmax)logTicks.push({v,lbl:m*Math.pow(10,d)});});
+}
+logTicks.forEach(tk=>{
+  const xx=tX(tk.v);
+  x.strokeStyle='rgba(15,23,42,0.06)';x.lineWidth=.5;
+  x.beginPath();x.moveTo(xx,PAD2.t);x.lineTo(xx,PAD2.t+iH);x.stroke();
+  x.fillStyle='#64748b';x.font='8px monospace';x.textAlign='center';
+  const s=tk.lbl>=1e6?(tk.lbl/1e6)+'M':tk.lbl>=1000?(tk.lbl/1000)+'k':tk.lbl>=1?Math.round(tk.lbl):tk.lbl.toPrecision(2);
+  x.fillText(s,xx,PAD2.t+iH+11);
+});
+// 95% CI bands (Fisher information based)
+x.fillStyle='rgba(13,148,136,.10)';
+const z95=1.96, nPts2=80;
+// Compute variance of ln(-ln(1-F(t))) = β·ln(t/η) via delta method
+// Var(y) ≈ (∂y/∂β)² Var(β) + (∂y/∂η)² Var(η) + 2·(∂y/∂β)(∂y/∂η)·Cov(β,η)
+// ∂y/∂β = ln(t/η),  ∂y/∂η = -β/η
+// Use asymptotic Fisher: Var(β)≈β²/nF, Var(η)≈η²/(nF·β²), Cov≈-η/(nF·β)·ψ
+// Simplified: use Var(ln η̂) ≈ 1/(nF·β²), Var(ln β̂) ≈ 0.608/nF (Meeker-Escobar approx)
+const nF=WB.nF;
+const varLnBeta=.608/nF, varLnEta=1/(nF*beta*beta);
+// Cov(lnβ, lnη) ≈ 0.257/(nF·β)  (Meeker-Escobar)
+const covLnBE=.257/(nF*beta);
+const ciUpper=[],ciLower=[];
+for(let i=0;i<=nPts2;i++){
+  const lnT=lnTmin+(lnTmax-lnTmin)*i/nPts2;
+  const u=lnT-Math.log(eta); // ln(t/η)
+  // y = β·u → Var(y) = u²·β²·varLnBeta + β²·varLnEta - 2·u·β²·covLnBE
+  const vy=beta*beta*(u*u*varLnBeta + varLnEta - 2*u*covLnBE);
+  const sy=Math.sqrt(Math.max(0,vy));
+  const yMid=beta*u;
+  ciUpper.push({x:lnT,y:yMid+z95*sy});
+  ciLower.push({x:lnT,y:yMid-z95*sy});
+}
+// Draw CI band as filled polygon
+x.beginPath();
+ciUpper.forEach((p,i)=>{const px=tX(p.x),py=Math.max(PAD2.t,Math.min(PAD2.t+iH,tY(p.y)));i===0?x.moveTo(px,py):x.lineTo(px,py);});
+for(let i=nPts2;i>=0;i--){const p=ciLower[i];const px=tX(p.x),py=Math.max(PAD2.t,Math.min(PAD2.t+iH,tY(p.y)));x.lineTo(px,py);}
+x.closePath();x.fill();
+// CI boundary lines (dashed)
+x.strokeStyle='rgba(13,148,136,.35)';x.lineWidth=1;x.setLineDash([4,3]);
+[ciUpper,ciLower].forEach(ci=>{x.beginPath();
+  ci.forEach((p,i)=>{const px=tX(p.x),py=Math.max(PAD2.t,Math.min(PAD2.t+iH,tY(p.y)));i===0?x.moveTo(px,py):x.lineTo(px,py);});
+  x.stroke();});
+x.setLineDash([]);
+// Fitted line (solid)
+x.strokeStyle='#f97316';x.lineWidth=2.5;x.beginPath();
+for(let i=0;i<=60;i++){
+  const lnT=lnTmin+(lnTmax-lnTmin)*i/60;
+  const yy=beta*(lnT-Math.log(eta));
+  const px=tX(lnT),py=tY(yy);
+  i===0?x.moveTo(px,py):x.lineTo(px,py);
+}
+x.stroke();
+// Data points (median rank)
+probData.forEach((d,idx)=>{
+  const px=tX(d.lnT),py=tY(d.lnlnR);
+  if(px<PAD2.l||px>PAD2.l+iW||py<PAD2.t||py>PAD2.t+iH)return;
+  // Circle with white fill + teal border
+  x.fillStyle='#fff';x.beginPath();x.arc(px,py,4.5,0,Math.PI*2);x.fill();
+  x.strokeStyle='#0d9488';x.lineWidth=2;x.beginPath();x.arc(px,py,4.5,0,Math.PI*2);x.stroke();
+  x.fillStyle='#0d9488';x.beginPath();x.arc(px,py,2,0,Math.PI*2);x.fill();
+});
+// Axis labels
+x.fillStyle='#475569';x.font='10px sans-serif';x.textAlign='center';
+x.fillText(LANG==='zh'?'时间 t ('+WB.unit+')':'Time t ('+WB.unit+')',PAD2.l+iW/2,H-3);
+x.save();x.translate(11,PAD2.t+iH/2);x.rotate(-Math.PI/2);
+x.fillText(LANG==='zh'?'累积失效概率 F(t)':'Cumulative Failure Probability F(t)',0,0);x.restore();
+// Legend
+x.textAlign='left';let lgx=PAD2.l+8,lgy=PAD2.t+11;
+x.fillStyle='#f97316';x.fillRect(lgx,lgy-4,16,2.5);
+x.fillStyle='#475569';x.font='9px sans-serif';
+x.fillText('Weibull (β='+beta.toFixed(2)+', η='+Math.round(eta)+')',lgx+20,lgy);
+lgy+=13;
+x.fillStyle='rgba(13,148,136,.25)';x.fillRect(lgx,lgy-6,16,10);
+x.strokeStyle='rgba(13,148,136,.5)';x.lineWidth=1;x.strokeRect(lgx,lgy-6,16,10);
+x.fillStyle='#475569';x.fillText('95% CI',lgx+20,lgy);
+lgy+=13;
+x.fillStyle='#fff';x.beginPath();x.arc(lgx+8,lgy-3,3.5,0,Math.PI*2);x.fill();
+x.strokeStyle='#0d9488';x.lineWidth=1.5;x.beginPath();x.arc(lgx+8,lgy-3,3.5,0,Math.PI*2);x.stroke();
+x.fillStyle='#475569';x.fillText((LANG==='zh'?'中位秩 ':'Median Rank ')+'(n='+WB.nF+')',lgx+20,lgy);
+// η line (63.2%)
+const etaX=tX(Math.log(eta)),etaY=tY(yToPlot(.632));
+if(etaX>PAD2.l&&etaX<PAD2.l+iW){
+  x.strokeStyle='#0d948866';x.lineWidth=1;x.setLineDash([3,3]);
+  x.beginPath();x.moveTo(etaX,PAD2.t);x.lineTo(etaX,PAD2.t+iH);x.stroke();
+  x.beginPath();x.moveTo(PAD2.l,etaY);x.lineTo(PAD2.l+iW,etaY);x.stroke();
+  x.setLineDash([]);
+  x.fillStyle='#0d9488';x.font='bold 8px monospace';x.textAlign='left';
+  x.fillText('η='+Math.round(eta),etaX+3,PAD2.t+iH-3);
+}
+return;}
+const key=tab===0?'_R':tab===1?'_h':'_F';
+const refY=tab===0?.9:tab===3?.1:null;
+const series=dists.map(d=>({k:d.name+key,col:DCOL[d.name],lbl:d.name,bold:d===dists[0]}));
+const ys=series.flatMap(s=>pts.map(p=>p[s.k])).filter(v=>isFinite(v)&&v>=0);
+if(!ys.length)return;
+const minY=0,maxY=tab===0||tab===3?1.02:Math.max(...ys)*1.15;
+const tX=v=>PAD.l+(W-PAD.l-PAD.r)*(v-pts[0].t)/(pts[pts.length-1].t-pts[0].t);
+const tY=v=>PAD.t+(H-PAD.t-PAD.b)*(1-(v-minY)/(maxY-minY));
+x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+[0,.2,.4,.6,.8,1].forEach(v=>{x.beginPath();x.moveTo(PAD.l,tY(minY+(maxY-minY)*v));x.lineTo(W-PAD.r,tY(minY+(maxY-minY)*v));x.stroke();
+x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+x.fillText((minY+(maxY-minY)*v).toFixed(1),PAD.l-3,tY(minY+(maxY-minY)*v)+3);});
+if(refY!=null){x.strokeStyle='#ef444466';x.lineWidth=1;x.setLineDash([4,3]);
+x.beginPath();x.moveTo(PAD.l,tY(refY));x.lineTo(W-PAD.r,tY(refY));x.stroke();x.setLineDash([]);}
+x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+[0,.25,.5,.75,1].forEach(v=>{const val=pts[0].t+(pts[pts.length-1].t-pts[0].t)*v;
+x.fillText(val>=1000?(val/1000).toFixed(1)+'k':Math.round(val),tX(val),H-PAD.b+12);});
+x.fillText(WB.unit,PAD.l+(W-PAD.l-PAD.r)/2,H-2);
+series.forEach(s=>{x.strokeStyle=s.col;x.lineWidth=s.bold?2.5:1.2;
+if(!s.bold)x.setLineDash([5,3]);x.beginPath();let first=true;
+pts.forEach(p=>{const v=p[s.k];if(!isFinite(v)||v<0)return;first?x.moveTo(tX(p.t),tY(v)):x.lineTo(tX(p.t),tY(v));first=false;});
+x.stroke();x.setLineDash([]);});
+x.textAlign='left';let lx=PAD.l+5,ly=PAD.t+12;
+series.forEach(s=>{x.fillStyle=s.col;x.fillRect(lx,ly-5,10,2.5);
+x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(s.lbl,lx+13,ly);
+lx+=Math.max(85,x.measureText(s.lbl).width+18);if(lx>W-50){lx=PAD.l+5;ly+=12;}});}
+function doWBQ(){
+const el=document.getElementById('wQR');
+if(!WB.res?.wb){if(el)el.innerHTML='<span style="color:#ef4444">⚠ 请先运行 Weibull 分析 / Run analysis first</span>';return;}
+const raw=document.getElementById('wQT')?.value;
+const t=parseFloat(raw);
+if(isNaN(t)||t<=0){if(el)el.innerHTML='<span style="color:#ef4444">⚠ 请输入正数 t 值 / Enter positive t</span>';return;}
+const R=WB.res.wb.R(t),F=WB.res.wb.F(t),h=WB.res.wb.h(t);
+const col=R>=.9?'#34d399':R>=.7?'#fbbf24':'#f87171';
+if(el)el.innerHTML=`R(t)=<b style="color:${col}">${(R*100).toFixed(2)}%</b>　F=${RM.fmt(F)}　h=${RM.fmt(h)}`;
+}
+let WB_PM = {
+Cp: 5000,
+Cf: 50000,
+Ch: 0,
+};
+function calcPMCostRate(T, wb, Cp, Cf) {
+const R_T = wb.R(T);
+const F_T = wb.F(T);
+const costPerCycle = Cp * R_T + Cf * F_T;
+const n = 200;
+let integral = 0;
+for (let i = 0; i < n; i++) {
+const t1 = T * i /n,t2=T*(i+1)/n;integral+=(wb.R(t1)+wb.R(t2))/2*(t2-t1);}const cycleLength=integral;return cycleLength>0?costPerCycle/cycleLength:Infinity;}function optimizePM(){const wb=WB.res?.wb;if(!wb)return null;const Cp=+WB_PM.Cp,Cf=+WB_PM.Cf;if(!(Cp>0)||!(Cf>0)||Cp>=Cf)return null;const mttf=wb.mttf;const b10=WB.res.bL?.B10||mttf*0.3;const Tmin=b10*0.1,Tmax=mttf*3;const nPts=300;let bestT=Tmin,bestC=Infinity;const curve=[];for(let i=0;i<=nPts;i++){const T=Tmin+(Tmax-Tmin)*i/nPts;const C=calcPMCostRate(T,wb,Cp,Cf);curve.push({T,C});if(C<bestC){bestC=C;bestT=T;}}const C_RTF=Cf/mttf;const saving=(C_RTF-bestC)/C_RTF*100;return{bestT,bestC,C_RTF,saving,curve,mttf};}function renderPMTab(){const z=LANG==='zh';const wb=WB.res?.wb;if(!wb)return`<p style="color:var(--muted);padding:20px">${z?'请先运行Weibull分析':'Run Weibull analysis first'}</p>`;if(wb.params.β<=1.0){return`<div class="alert aerr" style="margin:12px 0">
+<b>${z?'β ≤ 1，无法优化PM间隔':'β ≤ 1: PM optimization not applicable'}</b><br>
+<span style="font-size:11px">${z?'对于随机或早期失效（β≤1），定期更换不能降低失效率。建议使用CBM或冗余设计。':'Random/early failure (β≤1): scheduled replacement cannot reduce failure rate. Use CBM instead.'}</span>
+</div>`;}const res=optimizePM();if(!res)return'';return`
+<!-- Cost inputs -->
+<div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:10px">
+<div class="sl">${z?'成本参数输入':'Cost Parameters'}</div>
+<div class="g2" style="gap:8px;margin-bottom:8px">
+<div><label class="lbl">Cp — ${z?'预防性维修成本':'PM Cost'}</label>
+<input type="number" value="${WB_PM.Cp}" oninput="WB_PM.Cp=+this.value||1;document.getElementById('wPMPanel').innerHTML=renderPMTab();setTimeout(drawPMChart,60)" style="font-family:monospace">
+</div>
+<div><label class="lbl">Cf — ${z?'故障修复成本（含停机损失）':'Failure Cost (incl downtime)'}</label>
+<input type="number" value="${WB_PM.Cf}" oninput="WB_PM.Cf=+this.value||1;document.getElementById('wPMPanel').innerHTML=renderPMTab();setTimeout(drawPMChart,60)" style="font-family:monospace">
+</div>
+</div>
+<div style="font-size:10px;color:var(--muted)">${z?'成本单位保持一致即可（元/次 或 USD/event）':'Any consistent unit (¥/event or $/event)'}</div>
+</div>
+<!-- Result banner -->
+<div style="background:rgba(13,148,136,.15);border:2px solid var(--teal);border-radius:10px;padding:14px;margin-bottom:10px;text-align:center">
+<div style="font-size:10px;color:var(--teal);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">${z?'最优PM间隔':'Optimal PM Interval'}</div>
+<div style="font-size:40px;font-weight:900;color:var(--teal);font-family:monospace;line-height:1">${RM.fmt(res.bestT,4)}</div>
+<div style="font-size:12px;color:var(--sec);margin-top:4px">${WB.unit}</div>
+</div>
+<!-- KPIs -->
+<div class="gkpi" style="margin-bottom:12px">
+<div class="kpi" style="border-top:2px solid var(--teal)">
+<div class="kl">${z?'最优期望费率':'Optimal Cost Rate'}</div>
+<div class="kv" style="font-size:12px">${RM.fmt(res.bestC,4)}</div>
+<div class="ks">${z?'成本/小时':'cost/hr'}</div>
+</div>
+<div class="kpi">
+<div class="kl">${z?'纯故障修复费率':'Run-to-Fail Rate'}</div>
+<div class="kv" style="font-size:12px">${RM.fmt(res.C_RTF,4)}</div>
+<div class="ks">${z?'成本/小时':'cost/hr'}</div>
+</div>
+<div class="kpi" style="border-top:2px solid var(--success)">
+<div class="kl">${z?'相比不维修节省':'Saving vs RTF'}</div>
+<div class="kv gd">${res.saving.toFixed(1)}%</div>
+</div>
+<div class="kpi">
+<div class="kl">MTTF</div>
+<div class="kv" style="font-size:13px">${RM.fmt(res.mttf)}</div>
+<div class="ks">${WB.unit}</div>
+</div>
+<div class="kpi">
+<div class="kl">T* / MTTF</div>
+<div class="kv">${(res.bestT/res.mttf).toFixed(2)}</div>
+<div class="ks">${z?'建议在MTTF前更换':'Replace before MTTF'}</div>
+</div>
+<div class="kpi">
+<div class="kl">R(T*)</div>
+<div class="kv gd">${(wb.R(res.bestT)*100).toFixed(1)}%</div>
+<div class="ks">${z?'最优点可靠度':'Reliability at T*'}</div>
+</div>
+</div>
+<!-- Cost curve chart -->
+<div style="background:var(--bg);border-radius:8px;padding:8px;margin-bottom:10px">
+<div class="sl">${z?'成本率曲线 — 找最小值对应的T*':'Cost Rate Curve — Find minimum T*'}</div>
+<canvas id="pmCostChart" height="200"></canvas>
+</div>
+<!-- Interpretation -->
+<div style="background:rgba(13,148,136,.08);border:1px solid rgba(13,148,136,.3);border-radius:8px;padding:12px;font-size:11px;color:var(--sec);line-height:1.9">
+<b style="color:var(--text)">${z?'工程解读':'Interpretation'}</b><br>
+${z?
+`β=${RM.fmt(wb.params.β,3)}（${wb.params.β>2.5?'剧烈磨损':wb.params.β>1?'磨损失效':'接近随机'}）。最优PM间隔<b style="color:var(--teal)">T*=${RM.fmt(res.bestT,4)}${WB.unit}</b>，此时可靠度 R(T*)=${(wb.R(res.bestT)*100).toFixed(1)}%。
+相比"等到坏了再修"，PM策略节省成本 <b style="color:var(--success)">${res.saving.toFixed(1)}%</b>。Cp/Cf=${(WB_PM.Cp/WB_PM.Cf).toFixed(3)}（比值越小，PM越值得做）。`
+:
+`β=${RM.fmt(wb.params.β,3)}(${wb.params.β>2.5?'severe wear':wb.params.β>1?'wear-out':'near random'}).Optimal PM interval<b style="color:var(--teal)">T*=${RM.fmt(res.bestT,4)}${WB.unit}</b>, reliability R(T*)=${(wb.R(res.bestT)*100).toFixed(1)}%.
+PM saves <b style="color:var(--success)">${res.saving.toFixed(1)}%</b>cost vs run-to-failure.Cp/Cf=${(WB_PM.Cp/WB_PM.Cf).toFixed(3)}(lower ratio→PM more worthwhile).`
+}
+</div>`;}function drawPMChart(){const wb=WB.res?.wb;if(!wb||wb.params.β<=1)return;const cv=document.getElementById('pmCostChart');if(!cv)return;cv.width=cv.offsetWidth||700;const W=cv.width,H=200;const x=cv.getContext('2d');x.clearRect(0,0,W,H);const PAD={l:56,r:16,t:14,b:32};const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;const res=optimizePM();if(!res)return;const pts=res.curve;const validPts=pts.filter(p=>isFinite(p.C)&&p.C>0&&p.C<res.C_RTF*3);if(!validPts.length)return;const maxC=Math.min(res.C_RTF*1.5,Math.max(...validPts.map(p=>p.C))*1.1);const minC=Math.max(0,res.bestC*0.5);const maxT=pts[pts.length-1].T;const tX=t=>PAD.l+iW*t/maxT;const tY=c=>PAD.t+iH*(1-(c-minC)/(maxC-minC));x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;[0,.25,.5,.75,1].forEach(v=>{const y=PAD.t+iH*(1-v);x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';const val=minC+(maxC-minC)*v;x.fillText(val>=1000?(val/1000).toFixed(1)+'k':val.toFixed(0),PAD.l-3,y+3);});if(res.C_RTF<=maxC){x.strokeStyle='rgba(239,68,68,.5)';x.lineWidth=1;x.setLineDash([5,4]);x.beginPath();x.moveTo(PAD.l,tY(res.C_RTF));x.lineTo(W-PAD.r,tY(res.C_RTF));x.stroke();x.setLineDash([]);x.fillStyle='#ef4444';x.font='8px sans-serif';x.textAlign='left';x.fillText(LANG==='zh'?'不维修成本率':'RTF rate',PAD.l+4,tY(res.C_RTF)-3);}x.strokeStyle='#6366f1';x.lineWidth=2;x.beginPath();let first=true;validPts.forEach(p=>{const cy=tY(p.C);if(cy<PAD.t||cy>PAD.t+iH){first=true;return;}first?x.moveTo(tX(p.T),cy):x.lineTo(tX(p.T),cy);first=false;});x.stroke();const ox=tX(res.bestT),oy=tY(res.bestC);x.strokeStyle='#0d9488';x.lineWidth=1;x.setLineDash([3,3]);x.beginPath();x.moveTo(ox,PAD.t);x.lineTo(ox,PAD.t+iH);x.stroke();x.setLineDash([]);x.fillStyle='#0d9488';x.beginPath();x.arc(ox,oy,5,0,Math.PI*2);x.fill();x.fillStyle='#34d399';x.font='bold 9px sans-serif';x.textAlign='center';x.fillText('T*='+RM.fmt(res.bestT,3),ox,oy-9);x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';[0,.25,.5,.75,1].forEach(v=>{const t=maxT*v;x.fillText(t>=1000?(t/1000).toFixed(1)+'k':Math.round(t),tX(t),H-PAD.b+12);});x.fillText(WB.unit,PAD.l+iW/2,H-2);x.fillStyle='#6366f1';x.fillRect(PAD.l,8,14,2.5);x.fillStyle='#94a3b8';x.font='9px sans-serif';x.textAlign='left';x.fillText(LANG==='zh'?'期望费用率 C(T)':'Expected cost rate C(T)',PAD.l+18,14);}function exportWBCSV(){if(!WB.res)return;const d=WB.res,lines=['ReliToolbox Weibull','','Distribution,AIC,MTTF,Params',...d.dists.map(dd=>`${dd.name},${RM.fmt(dd.aic,5)},${RM.fmt(dd.mttf)},${Object.entries(dd.params).map(([k,v])=>k+'='+RM.fmt(v)).join(';')}`),'','B-Life',d.bL?['B1,B5,B10,B50,MTTF',[d.bL.B1,d.bL.B5,d.bL.B10,d.bL.B50,d.wb.mttf].map(v=>RM.fmt(v)).join(',')].join('\n'):'','','Raw','t,censored',...WB.sorted.map((v,i)=>`${v},${WB.cens[i]?1:0}`)];dl(lines.join('\n'),'Weibull.csv');}</script>
+<script>(function(){if(typeof renderWB==='function')renderWB();else document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Module load error: renderWB not found</p>';const obs=new MutationObserver(()=>{if(typeof drawRAMCharts==='function'&&document.getElementById('rmAnn')&&RAM&&RAM.res)drawRAMCharts();if(typeof drawWBChart==='function'&&document.getElementById('wChart')&&WB&&WB.res)setTimeout(drawWBChart,30);if(typeof drawPMChart==='function'&&document.getElementById('pmCostChart'))setTimeout(drawPMChart,60);});obs.observe(document.getElementById('app'),{childList:true,subtree:true});})();document.addEventListener('change',function(ev){if(ev.target&&ev.target.id==='wCsv'&&ev.target.files&&ev.target.files[0]){const f=ev.target.files[0];const r=new FileReader();r.onload=()=>{try{const parsed=(window.ReliCSV&&ReliCSV.parse)?ReliCSV.parse(r.result):null;if(!parsed||!parsed.rows.length){alert('CSV 解析到 0 条记录');return;}const ts=parsed.rows.map(x=>x.t);const cens=parsed.rows.map(x=>x.type==='right'?1:0);const ta=document.getElementById('wData');const tc=document.getElementById('wCens');if(ta){ta.value=ts.join('\n');}if(tc){tc.value=cens.some(c=>c===1)?cens.join('\n'):'';}if(typeof WB!=='undefined'){WB.rawData=ts.join('\n');WB.rawCens=tc?tc.value:'';}alert(`已导入 ${ts.length} 条（截尾 ${cens.filter(c=>c).length} 条）。点"执行 Weibull 分析"。`);}catch(e){alert('CSV 解析失败: '+e.message);}};r.readAsText(f);}});</script>
+<script src="../shared/csv.js"></script>
+<script src="../shared/topnav.js"></script>
+
+<div class="no-print" style="text-align:right;max-width:860px;margin:0 auto 8px;padding:0 10px"><button onclick="window.print()" style="padding:7px 18px;border-radius:18px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:600">&#x1F5A8;&#xFE0F; &#x6253;&#x5370; / &#x5BFC;&#x51FA; PDF</button></div>
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.4</span>
+  </div>
+</footer>
+</body>
+</html>

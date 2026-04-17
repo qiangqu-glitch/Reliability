@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.1 | reliability.chemcalc.cn
+  ReliToolbox | reliability.chemcalc.cn
   Copyright © All rights reserved.
   Unauthorized reproduction or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
 -->
 <html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>可用度分配 — ReliToolbox v0.1</title>
+<title>可用度分配 — ReliToolbox</title>
 <style>
 body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0}
 header{background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:20px 16px}
@@ -33,8 +33,8 @@ td{padding:6px;border-bottom:1px solid var(--border);font-family:monospace}
 small{color:var(--sec);font-size:11px;line-height:1.5}
 </style><link rel="stylesheet" href="../shared/style.css">
 <script>
-// ReliToolbox v0.1 (c) reliability.chemcalc.cn
-(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+// ReliToolbox (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head><body>
@@ -82,6 +82,7 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 </div>
 
 <script src="../db/relidb.js"></script>
+<script>if(typeof ReliDB==='undefined'){document.addEventListener('DOMContentLoaded',()=>{const d=document.createElement('div');d.style.cssText='background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px;margin:10px;border-radius:6px;font-size:13px';d.innerHTML='⚠ <b>DB 模块未加载 / DB module not loaded</b> — check <code>../db/relidb.js</code> (case-sensitive on GitHub Pages).';document.body&&document.body.insertBefore(d,document.body.firstChild);});}</script>
 <script>
 let rows = [];
 function addRow(name='',N=10,n=1,w=1,tp=100){
@@ -223,9 +224,9 @@ addRow('控制系统',15,1,1.0,100);
     </div>
   </div>
   <div class="ft-bottom">
-    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    © ReliToolbox &nbsp;·&nbsp;
     <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
-    <a href="https://chemcalc.cn">chemcalc.cn</a>
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.5</span>
   </div>
 </footer>
 <script src="../shared/topnav.js"></script>

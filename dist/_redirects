@@ -1,0 +1,6 @@
+# Cloudflare Pages _redirects — ReliToolbox v0.1
+# Directory requests (/dir/) auto-serve /dir/index.html by default.
+# We only keep path aliases here.
+
+# Path alias (hyphen <-> underscore)
+/rbd-mcs       /rbd_mcs/index.html       200

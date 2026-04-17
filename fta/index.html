@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.1 | reliability.chemcalc.cn
+  ReliToolbox | reliability.chemcalc.cn
   Copyright © All rights reserved.
   Unauthorized reproduction or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
 -->
 <html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FTA 故障树分析 — ReliToolbox v0.1</title>
+<title>FTA 故障树分析 — ReliToolbox</title>
 <style>
 body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0}
 header{background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;padding:20px 16px}
@@ -35,8 +35,8 @@ td{padding:6px;border-bottom:1px solid var(--border);font-family:monospace}
 small{color:var(--sec);font-size:11px}
 </style><link rel="stylesheet" href="../shared/style.css">
 <script>
-// ReliToolbox v0.1 (c) reliability.chemcalc.cn
-(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
+// ReliToolbox (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';
 if(typeof window!=='undefined')window._rtv='0.1';})();
 </script>
 </head><body>
@@ -71,6 +71,10 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 
 <div id="results" style="display:none">
 <div class="kpi" id="kpis"></div>
+<div class="card"><div class="title" data-zh="故障树图 / Fault Tree Diagram" data-en="Fault Tree Diagram">故障树图 / Fault Tree Diagram</div>
+<div id="ftaTreeHost" style="overflow-x:auto;background:#fafbfc;border:1px solid var(--border);border-radius:6px;padding:8px"></div>
+<div style="font-size:10px;color:var(--muted);margin-top:6px" data-zh="■ AND 门 (与) · ⬡ OR 门 (或) · ○ 基本事件 — 数字为失效概率 P" data-en="■ AND gate · ⬡ OR gate · ○ Basic event — number shows failure probability P">■ AND 门 (与) · ⬡ OR 门 (或) · ○ 基本事件 — 数字为失效概率 P</div>
+</div>
 <div class="card"><div class="title">最小割集 Minimal Cut Sets (MOCUS)</div>
 <div id="mcs"></div></div>
 <div class="card"><div class="title">Birnbaum 重要度排序</div>
@@ -80,6 +84,7 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 </div>
 
 <script src="../db/relidb.js"></script>
+<script>if(typeof ReliDB==='undefined'){document.addEventListener('DOMContentLoaded',()=>{const d=document.createElement('div');d.style.cssText='background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px;margin:10px;border-radius:6px;font-size:13px';d.innerHTML='⚠ <b>DB 模块未加载 / DB module not loaded</b> — check <code>../db/relidb.js</code> (case-sensitive on GitHub Pages).';document.body&&document.body.insertBefore(d,document.body.firstChild);});}</script>
 <script>
 
 let events = [];
@@ -208,8 +213,118 @@ function solve(){
  <td><div style="display:flex;align-items:center;gap:4px"><div class="bar" style="width:${pct}%"></div><span>${pct.toFixed(1)}%</span></div></td></tr>`;
  }).join('');
  document.getElementById('results').style.display='block';
+ drawFTATree(gates,pmap);
  window._ftaLast = {events,gateText,mcs,ptop,imps};
  }catch(e){document.getElementById('err').textContent='错误: '+e.message;}
+}
+
+// ── FTA SVG Tree Visualization ─────────────────────────────
+// Build AST recursively from gate definitions; detect cycles; lay out with
+// post-order subtree width; render gates and events as SVG.
+function buildFTATree(gates, nodeName, pmap, seen){
+  seen = seen || new Set();
+  if(seen.has(nodeName)) return {type:'CYCLE', id:nodeName, children:[]};
+  const g = gates[nodeName];
+  if(!g){ // basic event
+    return {type:'EVENT', id:nodeName, p:pmap[nodeName]||0, children:[]};
+  }
+  seen.add(nodeName);
+  const node = {type:g.type, id:nodeName, children:g.children.map(c=>buildFTATree(gates,c,pmap,new Set(seen)))};
+  return node;
+}
+
+// Simple bottom-up width layout: leaves=1 unit wide, parent width = sum of children widths
+function layoutFTA(node, depth, xOffset, slotW, rowH){
+  node.depth = depth;
+  if(!node.children.length){
+    node.w = 1;
+    node.x = xOffset + slotW/2;
+    node.y = depth*rowH + 40;
+    return 1;
+  }
+  let used = 0;
+  for(const c of node.children) used += layoutFTA(c, depth+1, xOffset+used*slotW, slotW, rowH);
+  node.w = Math.max(1, used);
+  // Center parent over children
+  const first = node.children[0], last = node.children[node.children.length-1];
+  node.x = (first.x + last.x)/2;
+  node.y = depth*rowH + 40;
+  return node.w;
+}
+
+function collectLeaves(node, out){
+  if(!node.children.length){ out.push(node); return; }
+  for(const c of node.children) collectLeaves(c,out);
+}
+
+function drawFTATree(gates, pmap){
+  const host = document.getElementById('ftaTreeHost');
+  if(!host) return;
+  let root;
+  try{ root = buildFTATree(gates,'TOP',pmap); }
+  catch(e){ host.innerHTML='<div style="padding:10px;color:#ef4444">树构建失败: '+e.message+'</div>'; return; }
+
+  // Count leaves to determine canvas width
+  const leaves=[]; collectLeaves(root,leaves);
+  const slotW = 110, rowH = 90;
+  layoutFTA(root, 0, 10, slotW, rowH);
+
+  // Compute tree max depth
+  function depthOf(n){ return 1 + (n.children.length?Math.max(...n.children.map(depthOf)):0); }
+  const maxDepth = depthOf(root);
+  const W = Math.max(320, (leaves.length||1) * slotW + 40);
+  const H = maxDepth * rowH + 60;
+
+  // Flatten all nodes
+  const nodes = [];
+  (function walk(n){ nodes.push(n); n.children.forEach(walk); })(root);
+
+  const svgParts = [];
+  svgParts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">`);
+  // Defs
+  svgParts.push(`<defs>
+    <marker id="ftaarr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+  </defs>`);
+
+  // Edges (parent → child). Use bezier.
+  for(const n of nodes){
+    for(const c of n.children){
+      svgParts.push(`<path d="M${n.x} ${n.y+22} C ${n.x} ${(n.y+c.y)/2}, ${c.x} ${(n.y+c.y)/2}, ${c.x} ${c.y-22}" fill="none" stroke="#94a3b8" stroke-width="1.5"/>`);
+    }
+  }
+
+  // Nodes
+  for(const n of nodes){
+    const isAND = n.type==='AND', isOR = n.type==='OR', isEvt = n.type==='EVENT', isCyc = n.type==='CYCLE';
+    if(isAND){
+      // AND gate: rounded-top "D" shape
+      svgParts.push(`<path d="M${n.x-22} ${n.y+18} L${n.x-22} ${n.y-2} A22 22 0 0 1 ${n.x+22} ${n.y-2} L${n.x+22} ${n.y+18} Z"
+        fill="#e0f2fe" stroke="#0369a1" stroke-width="2"/>`);
+      svgParts.push(`<text x="${n.x}" y="${n.y+8}" text-anchor="middle" font-size="10" font-weight="700" fill="#0369a1" font-family="monospace">AND</text>`);
+    } else if(isOR){
+      // OR gate: shield with concave bottom
+      svgParts.push(`<path d="M${n.x-22} ${n.y+18} Q${n.x} ${n.y+8} ${n.x+22} ${n.y+18} L${n.x+22} ${n.y-2} A22 22 0 0 0 ${n.x-22} ${n.y-2} Z"
+        fill="#fef3c7" stroke="#b45309" stroke-width="2"/>`);
+      svgParts.push(`<text x="${n.x}" y="${n.y+6}" text-anchor="middle" font-size="10" font-weight="700" fill="#b45309" font-family="monospace">OR</text>`);
+    } else if(isEvt){
+      const p = n.p||0;
+      const col = p>0.05?'#fecaca':p>0.01?'#fde68a':'#dcfce7';
+      const br = p>0.05?'#dc2626':p>0.01?'#d97706':'#059669';
+      svgParts.push(`<circle cx="${n.x}" cy="${n.y}" r="20" fill="${col}" stroke="${br}" stroke-width="2"/>`);
+      svgParts.push(`<text x="${n.x}" y="${n.y+3}" text-anchor="middle" font-size="9" fill="${br}" font-family="monospace">${p.toExponential(1)}</text>`);
+    } else { // CYCLE
+      svgParts.push(`<rect x="${n.x-22}" y="${n.y-16}" width="44" height="32" fill="#fef2f2" stroke="#dc2626" stroke-width="2" stroke-dasharray="3,3"/>`);
+      svgParts.push(`<text x="${n.x}" y="${n.y+3}" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="700">⚠cycle</text>`);
+    }
+    // Node label (id) above the symbol
+    const lbl = n.id.length>14?n.id.slice(0,14)+'…':n.id;
+    svgParts.push(`<text x="${n.x}" y="${n.y-26}" text-anchor="middle" font-size="10" font-weight="600" fill="#334155" font-family="monospace">${lbl}</text>`);
+  }
+
+  svgParts.push('</svg>');
+  host.innerHTML = svgParts.join('');
 }
 
 function loadDemo(){
@@ -274,9 +389,9 @@ addEvent('PUMP_B_FAIL',0.02);
     </div>
   </div>
   <div class="ft-bottom">
-    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    © ReliToolbox &nbsp;·&nbsp;
     <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
-    <a href="https://chemcalc.cn">chemcalc.cn</a>
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.5</span>
   </div>
 </footer>
 <script src="../shared/topnav.js"></script>

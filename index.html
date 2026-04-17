@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
-  ReliToolbox v0.1 | reliability.chemcalc.cn
+  ReliToolbox | reliability.chemcalc.cn
   Copyright © All rights reserved.
   Unauthorized reproduction or commercial use is prohibited.
   Contact: CHEMCALC@outlook.com
 -->
 <html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ReliToolbox v0.1 · 可靠性工程师工具箱</title>
+<title>ReliToolbox · 可靠性工程师工具箱</title>
 <link rel="stylesheet" href="shared/style.css">
 <style>
 /* Home-specific tweaks */
@@ -22,15 +22,15 @@
 .grp-tab.on{background:linear-gradient(135deg,var(--prid),var(--pri));color:#fff;border-color:var(--pri)}
 </style>
 <script>
-// ReliToolbox v0.1 (c) reliability.chemcalc.cn
-(function(){var _w='版权所有©ReliToolbox v0.1 | reliability.chemcalc.cn';
-if(typeof window!=='undefined')window._rtv='0.1';})();
+// ReliToolbox (c) reliability.chemcalc.cn
+(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';
+if(typeof window!=='undefined')window._rtv='0.4';})();
 </script>
 </head><body>
 
 <header class="hdr"><div class="container" style="padding-bottom:4px">
   <h1>🛠 ReliToolbox</h1>
-  <div class="sub" id="subtitle">可靠性工程师工具箱 · Reliability Engineer Toolbox · v0.1</div>
+  <div class="sub" id="subtitle">可靠性工程师工具箱 · Reliability Engineer Toolbox</div>
   <div class="lang-bar">
     <button class="lbtn2 on" id="zhBtn" onclick="setLang('zh')">中文</button>
     <button class="lbtn2" id="enBtn" onclick="setLang('en')">EN</button>
@@ -51,23 +51,17 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 
 <div class="section-title" id="sec-data" data-zh="核心模块 · 数据分析" data-en="Core · Data Analysis">核心模块 · 数据分析</div>
 <div class="mgrid">
-  <a class="mc" href="./weibull/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">📉</div>
+  <a class="mc" href="./weibull/index.html"><div class="mi">📉</div>
     <div class="mn">Weibull</div>
     <div class="mz" data-zh="威布尔分析 (基础)" data-en="Weibull Analysis (basic)">威布尔分析 (基础)</div>
     <div class="md" data-zh="失效数据 MLE 拟合" data-en="Failure data MLE fitting">失效数据 MLE 拟合</div>
   </a>
-  <a class="mc" href="./weibull/weibull_advanced.html">
-    <span class="mbg b-new">v0.1 新</span>
-    <div class="mi">📊</div>
+  <a class="mc" href="./weibull/weibull_advanced.html"><div class="mi">📊</div>
     <div class="mn">Weibull+</div>
     <div class="mz" data-zh="高级模式 (混合截尾)" data-en="Advanced (mixed censoring)">高级模式 (混合截尾)</div>
     <div class="md" data-zh="区间截尾 + Fisher CI" data-en="Interval censoring + Fisher CI">区间截尾 + Fisher CI</div>
   </a>
-  <a class="mc" href="./amsaa/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">📈</div>
+  <a class="mc" href="./amsaa/index.html"><div class="mi">📈</div>
     <div class="mn">AMSAA</div>
     <div class="mz" data-zh="可靠性增长" data-en="Reliability Growth">可靠性增长</div>
     <div class="md" data-zh="Crow-AMSAA · 增长趋势" data-en="Crow-AMSAA trend">Crow-AMSAA 趋势</div>
@@ -76,30 +70,22 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 
 <div class="section-title" id="sec-system" data-zh="系统级建模" data-en="System Modeling">系统级建模</div>
 <div class="mgrid">
-  <a class="mc" href="./rbd/index.html">
-    <span class="mbg b-new">v0.1 精确</span>
-    <div class="mi">🔗</div>
+  <a class="mc" href="./rbd/index.html"><div class="mi">🔗</div>
     <div class="mn">RBD v2</div>
     <div class="mz" data-zh="可靠性框图 (精确)" data-en="Reliability Block Diagram">可靠性框图 (精确)</div>
     <div class="md" data-zh="最小路径集 + 最小割集" data-en="Min path + cut sets">最小路径 + 最小割集</div>
   </a>
-  <a class="mc" href="./fta/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">🌳</div>
+  <a class="mc" href="./fta/index.html"><div class="mi">🌳</div>
     <div class="mn">FTA</div>
     <div class="mz" data-zh="故障树分析" data-en="Fault Tree Analysis">故障树分析</div>
     <div class="md" data-zh="MOCUS + Birnbaum 重要度" data-en="MOCUS + Birnbaum">MOCUS + Birnbaum</div>
   </a>
-  <a class="mc" href="./alloc/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">📐</div>
+  <a class="mc" href="./alloc/index.html"><div class="mi">📐</div>
     <div class="mn">Alloc</div>
     <div class="mz" data-zh="可靠性分配" data-en="Reliability Allocation">可靠性分配</div>
     <div class="md" data-zh="AGREE / Equal / Weighted" data-en="AGREE / Equal / Weighted">AGREE / Equal / Weighted</div>
   </a>
-  <a class="mc" href="./ram/index.html">
-    <span class="mbg b-new">v0.1</span>
-    <div class="mi">⚙️</div>
+  <a class="mc" href="./ram/index.html"><div class="mi">⚙️</div>
     <div class="mn">RAM MC</div>
     <div class="mz" data-zh="RAM 仿真 (Worker)" data-en="RAM (Web Worker)">RAM 仿真 (Worker)</div>
     <div class="md" data-zh="事件驱动 Monte Carlo" data-en="Event-driven MC">事件驱动 Monte Carlo</div>
@@ -108,30 +94,22 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 
 <div class="section-title" id="sec-risk" data-zh="风险 · 安全" data-en="Risk & Safety">风险 · 安全</div>
 <div class="mgrid">
-  <a class="mc" href="./fmea/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">📋</div>
+  <a class="mc" href="./fmea/index.html"><div class="mi">📋</div>
     <div class="mn">FMEA</div>
     <div class="mz" data-zh="失效模式分析" data-en="Failure Mode Analysis">失效模式分析</div>
     <div class="md" data-zh="RPN + IndexedDB" data-en="RPN + IndexedDB">RPN + IndexedDB</div>
   </a>
-  <a class="mc" href="./sil/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">🚨</div>
+  <a class="mc" href="./sil/index.html"><div class="mi">🚨</div>
     <div class="mn">SIL</div>
     <div class="mz" data-zh="SIL 验证" data-en="SIL Verification">SIL 验证</div>
     <div class="md">IEC 61508/61511 · PFD/PFH</div>
   </a>
-  <a class="mc" href="./rbi/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">🛡️</div>
+  <a class="mc" href="./rbi/index.html"><div class="mi">🛡️</div>
     <div class="mn">RBI</div>
     <div class="mz" data-zh="基于风险检验" data-en="Risk Based Inspection">基于风险检验</div>
     <div class="md">API 580 / 581</div>
   </a>
-  <a class="mc" href="./predict/index.html">
-    <span class="mbg b-new">v0.2 新</span>
-    <div class="mi">🔬</div>
+  <a class="mc" href="./predict/index.html"><div class="mi">🔬</div>
     <div class="mn">Predict</div>
     <div class="mz" data-zh="MIL-HDBK-217F" data-en="MIL-HDBK-217F">MIL-HDBK-217F</div>
     <div class="md" data-zh="电子零件数法预测" data-en="Parts Count prediction">电子零件数法预测</div>
@@ -140,30 +118,22 @@ if(typeof window!=='undefined')window._rtv='0.1';})();
 
 <div class="section-title" id="sec-maint" data-zh="维修 · 成本 · 库存" data-en="Maintenance · Cost · Inventory">维修 · 成本 · 库存</div>
 <div class="mgrid">
-  <a class="mc" href="./lcc/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">💰</div>
+  <a class="mc" href="./lcc/index.html"><div class="mi">💰</div>
     <div class="mn">LCC</div>
     <div class="mz" data-zh="生命周期成本" data-en="Life Cycle Cost">生命周期成本</div>
     <div class="md" data-zh="NPV + EAC 对比" data-en="NPV + EAC">NPV + EAC 对比</div>
   </a>
-  <a class="mc" href="./spa/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">🔧</div>
+  <a class="mc" href="./spa/index.html"><div class="mi">🔧</div>
     <div class="mn">Spares</div>
     <div class="mz" data-zh="备件优化" data-en="Spare Parts">备件优化</div>
     <div class="md" data-zh="Poisson 库存模型" data-en="Poisson inventory">Poisson 库存模型</div>
   </a>
-  <a class="mc" href="./pm/index.html">
-    <span class="mbg b-live">已上线</span>
-    <div class="mi">📅</div>
+  <a class="mc" href="./pm/index.html"><div class="mi">📅</div>
     <div class="mn">PM Opt</div>
     <div class="mz" data-zh="PM 间隔优化" data-en="PM Interval Optimization">PM 间隔优化</div>
     <div class="md" data-zh="最优预防性更换周期" data-en="Age replacement model">最优预防性更换周期</div>
   </a>
-  <a class="mc" href="./equipment/index.html">
-    <span class="mbg b-new">v0.1 新</span>
-    <div class="mi">🏭</div>
+  <a class="mc" href="./equipment/index.html"><div class="mi">🏭</div>
     <div class="mn">Equipment</div>
     <div class="mz" data-zh="设备管理台账" data-en="Equipment Registry">设备管理台账</div>
     <div class="md" data-zh="CRUD · MTBF · 检验台账" data-en="CRUD · MTBF · Inspection log">CRUD · MTBF · 检验台账</div>
@@ -180,8 +150,8 @@ function setLang(l){
   document.getElementById('zhBtn').classList.toggle('on',l==='zh');
   document.getElementById('enBtn').classList.toggle('on',l==='en');
   document.getElementById('subtitle').textContent = l==='zh'
-    ? '可靠性工程师工具箱 · Reliability Engineer Toolbox · v0.1'
-    : 'Reliability Engineer Toolbox · v0.1';
+    ? '可靠性工程师工具箱 · Reliability Engineer Toolbox'
+    : 'Reliability Engineer Toolbox';
   document.documentElement.lang = l==='zh'?'zh':'en';
 }
 
@@ -242,9 +212,9 @@ loadStats();
     </div>
   </div>
   <div class="ft-bottom">
-    v0.1 &nbsp;·&nbsp; © ReliToolbox &nbsp;·&nbsp;
+    © ReliToolbox &nbsp;·&nbsp;
     <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
-    <a href="https://chemcalc.cn">chemcalc.cn</a>
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.5</span>
   </div>
 </footer>
 </body></html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<!-- ReliToolbox | reliability.chemcalc.cn | Copyright (c) All rights reserved. Unauthorized reproduction, decompilation, reverse engineering or redistribution is prohibited. Contact: CHEMCALC@outlook.com -->
+<!--
+  ReliToolbox | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>LCC 生命周期成本 — ReliToolbox</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style></style>
+<script>(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';if(typeof window!=='undefined')window._rtv='0.1';})();</script>
+</head>
+<body>
+<header class="hdr" id="hdr">
+  <div style="max-width:860px;margin:0 auto" id="hdrInner">
+    <div class="bc"><a href="../index.html">ReliToolbox</a> › LCC</div>
+    <h1>💰 LCC 生命周期成本</h1>
+    <p class="sub">NPV · EAC · 多方案对比 · 累积成本曲线</p>
+    <a href="../index.html" class="btn btsm">← 首页</a>
+  <div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div>
+</header>
+<div class="ctn" id="app"></div>
+
+<script src="../shared/math.js"></script>
+<script>let LANG='zh';function setLang(l){LANG=l;document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===(l==='zh'?'中文':'EN')));if(CUR_MOD)renderMod(CUR_MOD);else renderHome();}const zh=k=>LANG==='zh'?k[0]:k[1];let CUR_MOD=null;function goMod(id){CUR_MOD=id;renderMod(id);}function showHome(){CUR_MOD=null;renderHome();}const app=()=>document.getElementById('app');const DCOL={Weibull:'#0d9488',Exponential:'#6366f1',Lognormal:'#f59e0b',Normal:'#ec4899'};const MODS=[{id:'wb',icon:'📉',name:'Weibull',zh:'Weibull 分析',desc_zh:'MLE拟合 · 4分布 · B-Life · 截尾数据',desc_en:'MLE fitting · 4 distributions · B-Life',t:'teal'},{id:'fm',icon:'📋',name:'FMEA',zh:'FMEA 工作表',desc_zh:'RPN自动计算 · Pareto图 · CSV导出',desc_en:'Auto RPN · Pareto chart · CSV export',t:'amber'},{id:'lc',icon:'💰',name:'LCC',zh:'生命周期成本',desc_zh:'NPV比较 · EAC · 累积成本曲线',desc_en:'NPV · EAC · Cumulative cost',t:'amber'},{id:'rm',icon:'⚙️',name:'RAM',zh:'RAM 仿真',desc_zh:'事件驱动MC · 产能传递 · 三级维修',desc_en:'Event-driven MC · Capacity propagation',t:'purple'},{id:'rb',icon:'🛡️',name:'RBI',zh:'基于风险检验',desc_zh:'API 580/581 · 5×5风险矩阵',desc_en:'API 580/581 · 5×5 risk matrix',t:'purple'},{id:'sp',icon:'🔧',name:'Spare',zh:'备件库存优化',desc_zh:'泊松模型 · 服务水平 · 成本曲线',desc_en:'Poisson model · Service level curve',t:'indigo'},{id:'sl',icon:'🚨',name:'SIL',zh:'SIL 计算',desc_zh:'IEC 61508/61511',desc_en:'IEC 61508/61511',t:'',soon:true},];function renderHome(){const live=MODS.filter(m=>!m.soon),soon=MODS.filter(m=>m.soon);app().innerHTML=`
+<div class="sl" style="margin-top:6px">${zh(['已上线模块','Live Modules'])}</div>
+<div class="mgrid">${live.map(m=>`<div class="mc"style="border-top:2px solid var(--${m.t})"onclick="goMod('${m.id}')"><span class="mbg bl">${zh(['已上线','Live'])}</span>
+<div class="mi">${m.icon}</div><div class="mn">${m.name}</div>
+<div class="mz">${m.zh}</div><div class="md">${LANG==='zh'?m.desc_zh:m.desc_en}</div>
+</div>`).join('')}</div>
+<div class="sl" style="margin-top:16px">${zh(['即将上线','Coming Soon'])}</div>
+<div class="mgrid">${soon.map(m=>`<div class="mc sn"><span class="mbg bs">${zh(['待上线','Soon'])}</span>
+<div class="mi">${m.icon}</div><div class="mn">${m.name}</div><div class="mz">${m.zh}</div></div>`).join('')}</div>`;}
+function renderMod(id){
+const mod=MODS.find(m=>m.id===id);
+document.getElementById('hdrInner').innerHTML=`<div class="bc"style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div><h1 style="font-size:18px">${mod.icon}${mod.zh}</h1>
+<div style="display:flex;gap:7px;margin-top:8px">
+<div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button><button class="lbtn ${LANG==='en'?'on':''}"onclick="setLang('en')">EN</button></div><button class="btn btsm"onclick="showHome()">←${zh(['首页','Home'])}</button>
+</div>`;
+(function(id){
+ var fn={wb:null,fm:null,lc:null,rm:null,rb:null,sp:null};
+ // Only this module's render is available in standalone mode
+ if(typeof renderLCC==='function') fn={wb:renderLCC,fm:renderLCC,lc:renderLCC,rm:renderLCC,rb:renderLCC,sp:renderLCC};
+ if(fn[id]) fn[id](); else if(typeof renderLCC==='function') renderLCC();
+})(id);}
+function mkCanvas(id,H){return`<canvas id="${id}"height="${H}"></canvas>`;}
+function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.width=cv.offsetWidth||720;return{cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height};}
+function drawGrid(c,PAD,minY,maxY,yFmt){
+const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+[0,.2,.4,.6,.8,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+x.fillText(yFmt(minY+(maxY-minY)*v),PAD.l-3,y+3);});}
+function drawLines(c,PAD,data,series,xKey,xFmt,refY){
+const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+const xs=data.map(d=>d[xKey]),minX=Math.min(...xs),maxX=Math.max(...xs);
+const ys=series.flatMap(s=>data.map(d=>d[s.k])).filter(v=>isFinite(v)&&v>=0);
+if(!ys.length)return;
+const minY=0,maxY=Math.max(...ys)*1.08;
+const tX=v=>PAD.l+iW*(v-minX)/(maxX-minX||1);const tY=v=>PAD.t+iH*(1-(v-minY)/(maxY-minY||1));drawGrid(c,PAD,minY,maxY,v=>v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(1));if(refY!=null){x.strokeStyle='#ef444466';x.lineWidth=1;x.setLineDash([4,3]);x.beginPath();x.moveTo(PAD.l,tY(refY));x.lineTo(W-PAD.r,tY(refY));x.stroke();x.setLineDash([]);}x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';[0,.25,.5,.75,1].forEach(v=>{const val=minX+(maxX-minX)*v;x.fillText(xFmt(val),tX(val),H-PAD.b+13);});series.forEach(s=>{x.strokeStyle=s.col;x.lineWidth=s.bold?2.2:1.2;if(!s.bold)x.setLineDash([5,3]);x.beginPath();let first=true;data.forEach(d=>{const v=d[s.k];if(!isFinite(v)||v<0)return;first?x.moveTo(tX(d[xKey]),tY(v)):x.lineTo(tX(d[xKey]),tY(v));first=false;});x.stroke();x.setLineDash([]);});x.textAlign='left';let lx=PAD.l+6,ly=PAD.t+13;series.forEach(s=>{x.fillStyle=s.col;x.fillRect(lx,ly-6,12,2.5);x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(s.lbl,lx+15,ly);lx+=Math.max(90,x.measureText(s.lbl).width+20);if(lx>W-60){lx=PAD.l+6;ly+=12;}});}function drawHist(id,vals,bins=22){const c=ctx(id);if(!c)return;const{ctx:x,W,H}=c;x.clearRect(0,0,W,H);const PAD={l:10,r:10,t:16,b:24};const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;const mn=Math.min(...vals),mx=Math.max(...vals),bw=(mx-mn)/bins||.1;const counts=new Array(bins).fill(0);vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/bw));counts[b]++;});const maxC=Math.max(...counts),bpx=iW/bins;counts.forEach((c,i)=>{const bh=iH*c/maxC,bx=PAD.l+i*bpx;const midV=mn+i*bw+bw/2;const col=midV>=95?'#10b981':midV>=85?'#f59e0b':'#ef4444';x.fillStyle=col+'88';x.fillRect(bx,PAD.t+iH-bh,bpx-1,bh);x.strokeStyle=col;x.lineWidth=.5;x.strokeRect(bx,PAD.t+iH-bh,bpx-1,bh);});const mV=(mn+mx)/2,mx2=PAD.l+iW*(mV-mn)/(mx-mn||1);x.strokeStyle='#0d9488';x.lineWidth=1.5;x.setLineDash([4,3]);x.beginPath();x.moveTo(mx2,PAD.t);x.lineTo(mx2,PAD.t+iH);x.stroke();x.setLineDash([]);x.fillStyle='#0d9488';x.font='8px monospace';x.textAlign='center';x.fillText('μ='+mV.toFixed(1)+'%',mx2,PAD.t-1);x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';[0,.25,.5,.75,1].forEach(v=>{x.fillText((mn+v*(mx-mn)).toFixed(1)+'%',PAD.l+v*iW,H-6);});}function dl(content,filename){const blob=new Blob([content],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();}(function(){CUR_MOD='lcc';document.title='LCC 生命周期成本 — ReliToolbox';})();</script>
+<script>let LC={h:20,r:8,plans:[{id:1,name:'继续维修',capex:0,maint:150000,loss:200000,sal:0},{id:2,name:'更换新设备',capex:1200000,maint:50000,loss:30000,sal:200000},{id:3,name:'升级改造',capex:500000,maint:80000,loss:80000,sal:100000}]};const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const PCOL=['#0d9488','#6366f1','#f59e0b','#ec4899'];function lcNPV(p){const r=LC.r/100;let n=p.capex;for(let y=1;y<=LC.h;y++)n+=(p.maint+p.loss)/Math.pow(1+r,y);n-=p.sal/Math.pow(1+r,LC.h);return n;}function lcEAC(n){const r=LC.r/100;return r===0?n/LC.h:n*r/(1-Math.pow(1+r,-LC.h));}function renderLCC(){const z=LANG==='zh';const npvs=LC.plans.map(p=>({...p,npv:lcNPV(p),eac:lcEAC(lcNPV(p))}));const best=npvs.reduce((a,b)=>a.npv<b.npv?a:b);app().innerHTML=`
+<div class="card">
+<div class="g2">
+<div><label class="lbl">${z?'分析期限(年)':'Horizon (yrs)'}</label>
+<input type="number" value="${LC.h}" oninput="LC.h=Math.max(1,+this.value)||1;renderLCC()"></div>
+<div><label class="lbl">${z?'折现率(%)':'Discount Rate (%)'}</label>
+<input type="number" value="${LC.r}" oninput="LC.r=+this.value||0;renderLCC()"></div>
+</div>
+</div>
+${LC.plans.map((p,i)=>`<div class="card"style="border-left:3px solid ${PCOL[i%4]}"><input value="${esc(p.name)}"oninput="LC.plans[${i}].name=this.value;renderLCC()"style="font-weight:700;font-size:13px;margin-bottom:8px"><div class="g2"><div><label class="lbl">CAPEX</label><input type="number" value="${p.capex}" oninput="LC.plans[${i}].capex=+this.value||0;renderLCC()"></div><div><label class="lbl">${z?'年维护':'Ann. Maint'}</label><input type="number" value="${p.maint}" oninput="LC.plans[${i}].maint=+this.value||0;renderLCC()"></div><div><label class="lbl">${z?'年损失':'Ann. Loss'}</label><input type="number" value="${p.loss}" oninput="LC.plans[${i}].loss=+this.value||0;renderLCC()"></div><div><label class="lbl">${z?'残值':'Salvage'}</label><input type="number" value="${p.sal}" oninput="LC.plans[${i}].sal=+this.value||0;renderLCC()"></div></div>
+</div>`).join('')}
+<div class="card" style="border-top:2px solid var(--success)">
+<div class="ct">${z?'NPV 对比':'NPV Comparison'}</div>
+${npvs.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)"><div style="width:8px;height:8px;border-radius:50%;background:${PCOL[i%4]}"></div>
+<span style="flex:1;font-size:12px">${p.name}</span><span style="font-family:monospace;font-weight:700;font-size:13px;color:${p.id===best.id?'#34d399':PCOL[i%4]}">${(p.npv/1e6).toFixed(2)}M</span>
+${p.id===best.id?`<span style="font-size:9px;padding:2px 6px;background:rgba(16,185,129,.15);color:#34d399;border-radius:6px">★ ${z?'最优':'Best'}</span>`:''}
+</div>`).join('')}<div style="font-size:11px;color:var(--success);font-weight:700;text-align:center;margin-top:8px">✅${z?'最优方案':'Best'}:${best.name}&nbsp;·&nbsp;EAC=${(best.eac/1e3).toFixed(0)}k/${z?'年':'yr'}</div>
+</div><div class="card"><div class="ct">${z?'累积成本曲线':'Cumulative Cost Curve'}</div>${mkCanvas('lcChart',220)}</div><div class="card"><div class="ct">${z?'方案汇总':'Summary'}</div>
+<div style="overflow-x:auto"><table>
+<thead><tr><th>${z?'方案':'Plan'}</th><th>CAPEX</th><th>${z?'年费用':'Annual'}</th><th>NPV</th><th>EAC</th><th>${z?'对比最优':'vs Best'}</th></tr></thead>
+<tbody>${npvs.map((p,i)=>`<tr class="${p.id===best.id?'best':''}">
+<td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${PCOL[i%4]};margin-right:5px;vertical-align:middle"></span>${p.name}</td>
+<td>${(p.capex/1e3).toFixed(0)}k</td><td>${((p.maint+p.loss)/1e3).toFixed(0)}k</td>
+<td style="font-weight:${p.id===best.id?700:400}">${(p.npv/1e6).toFixed(2)}M</td>
+<td>${(p.eac/1e3).toFixed(0)}k</td>
+<td style="color:${p.id===best.id?'#34d399':''}">${p.id===best.id?`★ ${z?'最优':'Best'}`:`+${((p.npv-best.npv)/1e3).toFixed(0)}k`}</td>
+</tr>`).join('')}</tbody>
+</table></div>
+</div>`;
+setTimeout(()=>drawLCChart(npvs),60);}
+function drawLCChart(npvs){
+const c=ctx('lcChart');if(!c)return;const{ctx:x,W,H}=c;x.clearRect(0,0,W,H);
+const PAD={l:56,r:16,t:10,b:30};const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+const curve=[];const r=LC.r/100;
+for(let y=0;y<=LC.h;y++){const pt={y};
+npvs.forEach(p=>{let c=p.capex;for(let j=1;j<=y;j++)c+=(p.maint+p.loss)/Math.pow(1+r,j);
+if(y===LC.h)c-=p.sal/Math.pow(1+r,LC.h);pt['p'+p.id]=Math.round(c);});
+curve.push(pt);}
+const ys=npvs.flatMap(p=>curve.map(d=>d['p'+p.id]));
+const maxV=Math.max(...ys)*1.05;
+const tX=y=>PAD.l+iW*y/LC.h;const tY=v=>PAD.t+iH*(1-v/maxV);
+x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+[0,.25,.5,.75,1].forEach(v=>{x.beginPath();x.moveTo(PAD.l,tY(maxV*v));x.lineTo(W-PAD.r,tY(maxV*v));x.stroke();
+x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+x.fillText((maxV*v/1e6).toFixed(1)+'M',PAD.l-3,tY(maxV*v)+3);});
+npvs.forEach((p,i)=>{x.strokeStyle=PCOL[i%4];x.lineWidth=2;x.beginPath();
+curve.forEach((d,j)=>{j===0?x.moveTo(tX(d.y),tY(d['p'+p.id])):x.lineTo(tX(d.y),tY(d['p'+p.id]));});x.stroke();});
+x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';
+[0,5,10,15,20].filter(v=>v<=LC.h).forEach(v=>x.fillText(v+'yr',tX(v),H-PAD.b+12));
+x.textAlign='left';let lx=PAD.l,ly=PAD.t+12;
+npvs.forEach((p,i)=>{x.fillStyle=PCOL[i%4];x.fillRect(lx,ly-5,10,2.5);
+x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(p.name.slice(0,10),lx+13,ly);lx+=100;});}</script>
+<script>(function(){if(typeof renderLCC==="function")renderLCC();else document.getElementById('app').innerHTML='<p style="color:var(--danger);padding:20px">Module load error</p>';const obs=new MutationObserver(()=>{if(typeof drawRAMCharts==='function'&&document.getElementById('rmAnn')&&RAM&&RAM.res)drawRAMCharts();if(typeof drawWBChart==='function'&&document.getElementById('wChart')&&WB&&WB.res)setTimeout(drawWBChart,30);});obs.observe(document.getElementById('app'),{childList:true,subtree:true});})();</script>
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.4</span>
+  </div>
+</footer>
+<script src="../shared/topnav.js"></script>
+</body>
+</html>

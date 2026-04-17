@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<!-- ReliToolbox | reliability.chemcalc.cn | Copyright (c) All rights reserved. Unauthorized reproduction, decompilation, reverse engineering or redistribution is prohibited. Contact: CHEMCALC@outlook.com -->
+<!--
+  ReliToolbox | reliability.chemcalc.cn
+  Copyright © All rights reserved.
+  Unauthorized reproduction or commercial use is prohibited.
+  Contact: CHEMCALC@outlook.com
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SIL 计算 — ReliToolbox</title>
+<link rel="stylesheet" href="../shared/style.css">
+<script>(function(){var _w='版权所有©ReliToolbox | reliability.chemcalc.cn';if(typeof window!=='undefined')window._rtv='0.1';})();</script>
+</head>
+<body>
+<header class="hdr" id="hdr">
+  <div style="max-width:860px;margin:0 auto" id="hdrInner">
+    <div class="bc"><a href="../index.html">ReliToolbox</a> › SIL</div>
+    <h1>🚨 SIL 安全完整性等级</h1>
+    <p class="sub">IEC 61508/61511 PFD/PFH计算 · 冗余架构 · 共因失效</p>
+    <a href="../index.html" class="btn btsm">← 首页</a>
+  <div class="lang-bar" style="margin-top:6px">
+    <button class="lbtn2 on" id="_lbZh" onclick="setLang('zh')">中文</button>
+    <button class="lbtn2" id="_lbEn" onclick="setLang('en')">EN</button>
+    <a href="../about/index.html" class="lbtn2" style="text-decoration:none" data-zh="关于" data-en="About">关于</a>
+  </div>
+</div>
+</header>
+<div class="ctn" id="app"></div>
+
+<script src="../shared/math.js"></script>
+<script>let LANG='zh';function setLang(l){LANG=l;document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===(l==='zh'?'中文':'EN')));if(CUR_MOD)renderMod(CUR_MOD);else renderHome();}const zh=k=>LANG==='zh'?k[0]:k[1];let CUR_MOD=null;function goMod(id){CUR_MOD=id;renderMod(id);}function showHome(){CUR_MOD=null;renderHome();}const app=()=>document.getElementById('app');const DCOL={Weibull:'#0d9488',Exponential:'#6366f1',Lognormal:'#f59e0b',Normal:'#ec4899'};const MODS=[{id:'wb',icon:'📉',name:'Weibull',zh:'Weibull 分析',desc_zh:'MLE拟合 · 4分布 · B-Life · 截尾数据',desc_en:'MLE fitting · 4 distributions · B-Life',t:'teal'},{id:'fm',icon:'📋',name:'FMEA',zh:'FMEA 工作表',desc_zh:'RPN自动计算 · Pareto图 · CSV导出',desc_en:'Auto RPN · Pareto chart · CSV export',t:'amber'},{id:'lc',icon:'💰',name:'LCC',zh:'生命周期成本',desc_zh:'NPV比较 · EAC · 累积成本曲线',desc_en:'NPV · EAC · Cumulative cost',t:'amber'},{id:'rm',icon:'⚙️',name:'RAM',zh:'RAM 仿真',desc_zh:'事件驱动MC · 产能传递 · 三级维修',desc_en:'Event-driven MC · Capacity propagation',t:'purple'},{id:'rb',icon:'🛡️',name:'RBI',zh:'基于风险检验',desc_zh:'API 580/581 · 5×5风险矩阵',desc_en:'API 580/581 · 5×5 risk matrix',t:'purple'},{id:'sp',icon:'🔧',name:'Spare',zh:'备件库存优化',desc_zh:'泊松模型 · 服务水平 · 成本曲线',desc_en:'Poisson model · Service level curve',t:'indigo'},{id:'sl',icon:'🚨',name:'SIL',zh:'SIL 计算',desc_zh:'IEC 61508/61511',desc_en:'IEC 61508/61511',t:'',soon:true},];function renderHome(){const live=MODS.filter(m=>!m.soon),soon=MODS.filter(m=>m.soon);app().innerHTML=`
+<div class="sl" style="margin-top:6px">${zh(['已上线模块','Live Modules'])}</div>
+<div class="mgrid">${live.map(m=>`<div class="mc"style="border-top:2px solid var(--${m.t})"onclick="goMod('${m.id}')"><span class="mbg bl">${zh(['已上线','Live'])}</span>
+<div class="mi">${m.icon}</div><div class="mn">${m.name}</div>
+<div class="mz">${m.zh}</div><div class="md">${LANG==='zh'?m.desc_zh:m.desc_en}</div>
+</div>`).join('')}</div>
+<div class="sl" style="margin-top:16px">${zh(['即将上线','Coming Soon'])}</div>
+<div class="mgrid">${soon.map(m=>`<div class="mc sn"><span class="mbg bs">${zh(['待上线','Soon'])}</span>
+<div class="mi">${m.icon}</div><div class="mn">${m.name}</div><div class="mz">${m.zh}</div></div>`).join('')}</div>`;}
+function renderMod(id){
+const mod=MODS.find(m=>m.id===id);
+document.getElementById('hdrInner').innerHTML=`<div class="bc"style="margin-bottom:3px"><a onclick="showHome()">ReliToolbox</a> › ${mod.name}</div><h1 style="font-size:18px">${mod.icon}${mod.zh}</h1>
+<div style="display:flex;gap:7px;margin-top:8px">
+<div class="lb"><button class="lbtn ${LANG==='zh'?'on':''}" onclick="setLang('zh')">中文</button><button class="lbtn ${LANG==='en'?'on':''}"onclick="setLang('en')">EN</button></div><button class="btn btsm"onclick="showHome()">←${zh(['首页','Home'])}</button>
+</div>`;
+({wb:renderWB,fm:renderFM,lc:renderLC,rm:renderRAM,rb:renderRBI,sp:renderSPA})[id]();}
+function mkCanvas(id,H){return`<canvas id="${id}"height="${H}"></canvas>`;}
+function ctx(id){const cv=document.getElementById(id);if(!cv)return null;cv.width=cv.offsetWidth||720;return{cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height};}
+function drawGrid(c,PAD,minY,maxY,yFmt){
+const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+x.strokeStyle='rgba(15,23,42,0.08)';x.lineWidth=.5;
+[0,.2,.4,.6,.8,1].forEach(v=>{const y=PAD.t+iH*(1-v);
+x.beginPath();x.moveTo(PAD.l,y);x.lineTo(W-PAD.r,y);x.stroke();
+x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='right';
+x.fillText(yFmt(minY+(maxY-minY)*v),PAD.l-3,y+3);});}
+function drawLines(c,PAD,data,series,xKey,xFmt,refY){
+const{ctx:x,W,H}=c;const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;
+const xs=data.map(d=>d[xKey]),minX=Math.min(...xs),maxX=Math.max(...xs);
+const ys=series.flatMap(s=>data.map(d=>d[s.k])).filter(v=>isFinite(v)&&v>=0);
+if(!ys.length)return;
+const minY=0,maxY=Math.max(...ys)*1.08;
+const tX=v=>PAD.l+iW*(v-minX)/(maxX-minX||1);const tY=v=>PAD.t+iH*(1-(v-minY)/(maxY-minY||1));drawGrid(c,PAD,minY,maxY,v=>v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(1));if(refY!=null){x.strokeStyle='#ef444466';x.lineWidth=1;x.setLineDash([4,3]);x.beginPath();x.moveTo(PAD.l,tY(refY));x.lineTo(W-PAD.r,tY(refY));x.stroke();x.setLineDash([]);}x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';[0,.25,.5,.75,1].forEach(v=>{const val=minX+(maxX-minX)*v;x.fillText(xFmt(val),tX(val),H-PAD.b+13);});series.forEach(s=>{x.strokeStyle=s.col;x.lineWidth=s.bold?2.2:1.2;if(!s.bold)x.setLineDash([5,3]);x.beginPath();let first=true;data.forEach(d=>{const v=d[s.k];if(!isFinite(v)||v<0)return;first?x.moveTo(tX(d[xKey]),tY(v)):x.lineTo(tX(d[xKey]),tY(v));first=false;});x.stroke();x.setLineDash([]);});x.textAlign='left';let lx=PAD.l+6,ly=PAD.t+13;series.forEach(s=>{x.fillStyle=s.col;x.fillRect(lx,ly-6,12,2.5);x.fillStyle='#94a3b8';x.font='9px sans-serif';x.fillText(s.lbl,lx+15,ly);lx+=Math.max(90,x.measureText(s.lbl).width+20);if(lx>W-60){lx=PAD.l+6;ly+=12;}});}function drawHist(id,vals,bins=22){const c=ctx(id);if(!c)return;const{ctx:x,W,H}=c;x.clearRect(0,0,W,H);const PAD={l:10,r:10,t:16,b:24};const iW=W-PAD.l-PAD.r,iH=H-PAD.t-PAD.b;const mn=Math.min(...vals),mx=Math.max(...vals),bw=(mx-mn)/bins||.1;const counts=new Array(bins).fill(0);vals.forEach(v=>{const b=Math.min(bins-1,Math.floor((v-mn)/bw));counts[b]++;});const maxC=Math.max(...counts),bpx=iW/bins;counts.forEach((c,i)=>{const bh=iH*c/maxC,bx=PAD.l+i*bpx;const midV=mn+i*bw+bw/2;const col=midV>=95?'#10b981':midV>=85?'#f59e0b':'#ef4444';x.fillStyle=col+'88';x.fillRect(bx,PAD.t+iH-bh,bpx-1,bh);x.strokeStyle=col;x.lineWidth=.5;x.strokeRect(bx,PAD.t+iH-bh,bpx-1,bh);});const mV=(mn+mx)/2,mx2=PAD.l+iW*(mV-mn)/(mx-mn||1);x.strokeStyle='#0d9488';x.lineWidth=1.5;x.setLineDash([4,3]);x.beginPath();x.moveTo(mx2,PAD.t);x.lineTo(mx2,PAD.t+iH);x.stroke();x.setLineDash([]);x.fillStyle='#0d9488';x.font='8px monospace';x.textAlign='center';x.fillText('μ='+mV.toFixed(1)+'%',mx2,PAD.t-1);x.fillStyle='#64748b';x.font='9px monospace';x.textAlign='center';[0,.25,.5,.75,1].forEach(v=>{x.fillText((mn+v*(mx-mn)).toFixed(1)+'%',PAD.l+v*iW,H-6);});}function dl(content,filename){const blob=new Blob([content],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();}(function(){CUR_MOD='weibull';document.title='Weibull 分析 — ReliToolbox';})();</script>
+<script>let SIL={mode:'low',nid:4,elements:[{id:1,tag:'PT-101',type:'sensor',desc:'Pressure Transmitter',lambda:1e-6,TI:8760,dc:0.9,beta:0.1,red:'1oo1'},{id:2,tag:'LS-201',type:'logic',desc:'Safety PLC',lambda:1e-7,TI:8760,dc:0.99,beta:0.02,red:'1oo1'},{id:3,tag:'XV-301',type:'actuator',desc:'Emergency Shutoff Valve',lambda:5e-7,TI:8760,dc:0.6,beta:0.1,red:'1oo1'},]};const SIL_TABLE_PFD=[[1e-5,1e-4,'SIL 4'],[1e-4,1e-3,'SIL 3'],[1e-3,1e-2,'SIL 2'],[1e-2,0.1,'SIL 1'],[0.1,1,'<SIL 1']];const SIL_TABLE_PFH=[[1e-9,1e-8,'SIL 4'],[1e-8,1e-7,'SIL 3'],[1e-7,1e-6,'SIL 2'],[1e-6,1e-5,'SIL 1'],[1e-5,1,'<SIL 1']];const silLv=(v,m)=>(m==='low'?SIL_TABLE_PFD:SIL_TABLE_PFH).find(([lo,hi])=>v>=lo&&v<hi)?.[2]||'<SIL 1';const silCol=lv=>lv==='SIL 4'?'#10b981':lv==='SIL 3'?'#0d9488':lv==='SIL 2'?'#f59e0b':lv==='SIL 1'?'#ea580c':'#ef4444';function calcPFD(el){const ldu=el.lambda*(1-el.dc);if(el.red==='1oo2'){const s=(1-el.beta)*ldu*el.TI/2;return(1-el.beta)*s*s+el.beta*ldu*el.TI/2;}if(el.red==='2oo3'){const s=(1-el.beta)*ldu*el.TI/2;return 3*(1-el.beta)*s*s+el.beta*ldu*el.TI/2;}if(el.red==='2oo2'){const s=(1-el.beta)*ldu*el.TI/2;return 2*(1-el.beta)*s+el.beta*ldu*el.TI/2;}return(1-el.beta)*ldu*el.TI/2+el.beta*ldu*el.TI/2;}function calcPFH(el){const ldu=el.lambda*(1-el.dc);if(el.red==='1oo2')return(1-el.beta)*ldu*ldu+el.beta*ldu;return ldu;}function renderSIL(){const z=LANG==='zh';const vals=SIL.elements.map(el=>SIL.mode==='low'?calcPFD(el):calcPFH(el));const total=vals.reduce((s,v)=>s+v,0);const lv=silLv(total,SIL.mode),col=silCol(lv);const unit=SIL.mode==='low'?'PFD':'PFH';document.getElementById('app').innerHTML=`
+<div class="card">
+<div class="sl">${z?'分析模式':'Analysis Mode'}</div>
+<div class="tbr">
+<button class="tb${SIL.mode==='low'?' on':''}" onclick="SIL.mode='low';renderSIL()">${z?'低要求模式 PFD':'Low Demand PFD'}</button>
+<button class="tb${SIL.mode==='high'?' on':''}" onclick="SIL.mode='high';renderSIL()">${z?'高要求模式 PFH':'High Demand PFH'}</button>
+</div>
+<p style="font-size:11px;color:var(--muted);line-height:1.7">${z?'低要求(IEC 61511)：安全功能每年触发<1次 | 高要求(IEC 61508)：安全功能频繁触发':'Low demand (IEC 61511): SIF &lt;1/yr | High demand (IEC 61508): SIF frequent'}</p>
+</div>
+<div style="background:${col}18;border:2px solid ${col};border-radius:12px;padding:18px;margin-bottom:12px;text-align:center">
+<div style="font-size:10px;color:${col};font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">${z?'安全完整性等级':'Safety Integrity Level'}</div>
+<div style="font-size:52px;font-weight:900;color:${col};font-family:monospace;line-height:1">${lv}</div>
+<div style="font-size:13px;color:var(--sec);margin-top:8px">${unit} = <b style="color:${col};font-family:monospace">${total.toExponential(3)}</b>
+&nbsp;|&nbsp; RRF = <b style="color:var(--text)">${total>0?(1/total).toFixed(0):'∞'}</b></div>
+</div>
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+<div class="sl" style="margin:0">${z?'SIF 元件清单':'SIF Element List'}</div>
+<button class="btn btp btsm" onclick="SIL.elements.push({id:SIL.nid++,tag:'EL-'+SIL.nid,type:'sensor',desc:'Element',lambda:1e-6,TI:8760,dc:0.9,beta:0.1,red:'1oo1'});renderSIL()">+ ${z?'添加':'Add'}</button>
+</div>
+${SIL.elements.map((el,i)=>{
+const v=SIL.mode==='low'?calcPFD(el):calcPFH(el);
+const elLv=silLv(v,SIL.mode),elC=silCol(elLv);
+return`<div style="border:1px solid var(--border);border-left:3px solid ${elC};border-radius:8px;padding:12px;margin-bottom:8px"><div class="g3"style="gap:7px;margin-bottom:8px"><div><label class="lbl">${z?'位号':'Tag'}</label><input value="${el.tag}" oninput="SIL.elements[${i}].tag=this.value"></div><div><label class="lbl">${z?'类型':'Type'}</label>
+<select onchange="SIL.elements[${i}].type=this.value;renderSIL()">
+<option value="sensor" ${el.type==='sensor'?'selected':''}>${z?'传感器':'Sensor'}</option><option value="logic"${el.type==='logic'?'selected':''}>${z?'逻辑控制器':'Logic Solver'}</option>
+<option value="actuator" ${el.type==='actuator'?'selected':''}>${z?'执行机构':'Actuator'}</option></select></div><div><label class="lbl">${z?'描述':'Desc'}</label><input value="${el.desc}" oninput="SIL.elements[${i}].desc=this.value"></div></div>
+<div class="g4" style="gap:7px;margin-bottom:8px">
+<div><label class="lbl">λ (/hr)</label><input type="number" step="1e-8" value="${el.lambda}" oninput="SIL.elements[${i}].lambda=+this.value||1e-9;renderSIL()" style="font-family:monospace;font-size:11px"></div><div><label class="lbl">${z?'检验间隔(hr)':'Test Intv'}</label><input type="number" value="${el.TI}" oninput="SIL.elements[${i}].TI=+this.value||1;renderSIL()"></div><div><label class="lbl">DC ${z?'诊断覆盖':'Diag Cov'}</label><input type="number" step=".01" min="0" max="1" value="${el.dc}" oninput="SIL.elements[${i}].dc=Math.min(1,Math.max(0,+this.value));renderSIL()"></div><div><label class="lbl">βCCF</label><input type="number" step=".01" min="0" max=".5" value="${el.beta}" oninput="SIL.elements[${i}].beta=+this.value;renderSIL()"></div></div>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<div><label class="lbl">${z?'冗余':'Redundancy'}</label><select onchange="SIL.elements[${i}].red=this.value;renderSIL()"style="width:auto;min-width:80px">${['1oo1','1oo2','2oo2','2oo3'].map(r=>`<option ${el.red===r?'selected':''}>${r}</option>`).join('')}</select></div><div style="font-family:monospace;font-size:11px;background:${elC}18;border:1px solid ${elC}44;padding:4px 10px;border-radius:6px;color:${elC}">${unit}=${v.toExponential(2)}→<b>${elLv}</b>
+</div>${SIL.elements.length>1?`<button class="btn btsm" style="color:var(--danger);margin-left:auto" onclick="SIL.elements.splice(${i},1);renderSIL()">×</button>`:''}</div>
+</div>`;
+}).join('')}
+</div>
+<div class="card">
+<div class="sl">${z?'SIF 架构示意':'SIF Architecture'}</div>
+<div style="display:flex;align-items:center;gap:6px;overflow-x:auto;padding:8px 0;flex-wrap:nowrap">
+<div style="background:rgba(16,185,129,.15);border:1px solid #10b981;border-radius:6px;padding:5px 9px;font-size:10px;font-weight:700;color:#10b981;white-space:nowrap;flex-shrink:0">${z?'过程':'Process'}</div>
+${['sensor','logic','actuator'].map(type=>{
+const els=SIL.elements.filter(e=>e.type===type);
+if(!els.length)return'';
+const typeColor=type==='sensor'?'var(--teal)':type==='logic'?'var(--blue)':'var(--warn)';
+return`<span style="color:var(--muted)">→</span>
+<div style="border:1px solid ${typeColor};border-radius:6px;padding:5px 9px;text-align:center;font-size:10px;flex-shrink:0;background:var(--bg)">
+${els.map(e=>`<div style="font-weight:700">${e.tag}</div>`).join('')}
+<div style="color:${typeColor}">${type}</div>
+</div>`;}).join('')}<span style="color:var(--muted)">→</span>
+<div style="background:rgba(239,68,68,.15);border:1px solid #ef4444;border-radius:6px;padding:5px 9px;font-size:10px;font-weight:700;color:#ef4444;flex-shrink:0">${z?'安全状态':'Safe State'}</div></div>
+</div><div class="card"><div class="sl">${z?'SIL等级参考 (IEC 61508)':'SIL Reference Table (IEC 61508)'}</div>
+<table><thead><tr><th>${z?'等级':'Level'}</th><th>PFD(${z?'低要求':'Low Demand'})</th><th>PFH (${z?'高要求':'High Demand'})</th><th>RRF</th></tr></thead>
+<tbody>
+${[['SIL 4','10⁻⁵~10⁻⁴','10⁻⁹~10⁻⁸','10k~100k'],['SIL 3','10⁻⁴~10⁻³','10⁻⁸~10⁻⁷','1k~10k'],
+['SIL 2','10⁻³~10⁻²','10⁻⁷~10⁻⁶','100~1k'],['SIL 1','10⁻²~10⁻¹','10⁻⁶~10⁻⁵','10~100']].map(([l,pfd,pfh,rrf])=>
+`<tr${l===lv?` style="background:${silCol(l)}15"`:''}>
+<td style="font-weight:700;color:${silCol(l)}">${l}</td><td style="font-family:monospace">${pfd}</td><td style="font-family:monospace">${pfh}</td><td style="font-family:monospace">${rrf}</td></tr>`).join('')}
+</tbody></table>
+</div>`;}</script>
+<script>(function(){renderSIL();})();</script>
+<footer class="site-footer">
+  <div class="ft-grid">
+    <div class="ft-col">
+      <h4>ReliToolbox</h4>
+      <p data-zh="可靠性工程师在线工具箱" data-en="Reliability Engineer Toolbox">可靠性工程师在线工具箱</p>
+      <a href="https://chemcalc.cn" target="_blank">🔗 ChemCalc</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="模块导航" data-en="Modules">模块导航</h4>
+      <a href="../index.html">← <span data-zh="返回主页" data-en="Home">返回主页</span></a>
+      <a href="../about/index.html" data-zh="关于本工具" data-en="About">关于本工具</a>
+    </div>
+    <div class="ft-col">
+      <h4 data-zh="联系与版权" data-en="Contact & Legal">联系与版权</h4>
+      <a href="mailto:CHEMCALC@outlook.com">✉ CHEMCALC@outlook.com</a>
+      <p data-zh="版权所有 © 作者保留一切权利" data-en="Copyright © All rights reserved">版权所有 © 作者保留一切权利</p>
+      <p data-zh="免责：结果仅供参考，作者不承担任何责任" data-en="Disclaimer: For reference only, no liability assumed">免责：结果仅供参考，作者不承担任何责任</p>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    © ReliToolbox &nbsp;·&nbsp;
+    <a href="mailto:CHEMCALC@outlook.com">CHEMCALC@outlook.com</a> &nbsp;·&nbsp;
+    <a href="https://chemcalc.cn">chemcalc.cn</a> &nbsp;·&nbsp; <span id="_ftVer">v0.4</span>
+  </div>
+</footer>
+<script src="../shared/topnav.js"></script>
+</body>
+</html>
